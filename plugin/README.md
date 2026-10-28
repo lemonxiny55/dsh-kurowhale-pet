@@ -6,9 +6,10 @@ Target: Windows, **DSH Desktop 0.2.1-rc.3**. No `dsh.client` declaration or lega
 
 - `64b3717` / `0.0.1-dev.0`: loaded in the owner's existing Desktop profile, cold-started successfully, uninstalled and restored successfully.
 - `e1c8293` / `0.0.2-dev.0`: host loaded and a real Neutralino/WebView2 canvas acknowledged all 57 sprite frames, but **the character was not visible on the desktop**. Screenshot checks and the owner both confirmed failure. It was uninstalled; no further build was installed after this failure.
-- Current `0.0.2-dev.1`: offline safety changes after rollback. **Not reinstalled or Desktop-qualified.** Renderer now requires explicit opt-in. The `rendererReady` field means protocol/atlas readiness, never a visual pass; `visibilityVerified` remains false.
+- `0.0.2-dev.1`: offline safety changes after rollback; it was not reinstalled.
+- Current `0.0.2-dev.2`: GUI `windowsHide:false` fixes the reproduced blank WebView. The owner confirmed the character was visible in their current Desktop. Uninstall restored all seven configuration hashes; reinstall and cold startup showed the character again. Renderer still requires explicit opt-in. The `rendererReady` field means protocol/atlas readiness, never a visual pass; `visibilityVerified` remains false because visibility is manually qualified in the report.
 
-See [the actual test report](../docs/WINDOWS-TEST-REPORT-2026-10-28.md). This is not a release or a finished desktop pet.
+See [the visibility fix report](../docs/WINDOWS-VISIBILITY-FIX-2026-10-28.md) and [the earlier failed test](../docs/WINDOWS-TEST-REPORT-2026-10-28.md). This is not a release or a finished desktop pet.
 
 ## Structure
 
@@ -28,7 +29,7 @@ node --test plugin/test/*.test.mjs
 
 Tests cover structural metadata, activity mapping, opt-in behavior, stale-command protection and cleanup. They do **not** substitute for Desktop tests. On this Work host the restricted command environment blocks atomic rename in its temporary directory; tests passed in a normal Windows process.
 
-Configuration belongs only to `~/.dsh/kurowhale-pet/local.json`. The future experimental renderer accepts:
+Configuration belongs only to `~/.dsh/kurowhale-pet/local.json`. The experimental renderer accepts:
 
 ```json
 {
@@ -39,7 +40,7 @@ Configuration belongs only to `~/.dsh/kurowhale-pet/local.json`. The future expe
 }
 ```
 
-Keep `rendererEnabled` false until the visibility defect is fixed and qualified. A successful canvas acknowledgement does not justify enabling it in a release. Existing local configuration is not overwritten by the package.
+Default is off; set `rendererEnabled` true explicitly to use the local renderer. Visibility is qualified on the tested machine at 150% DPI; broader feature/DPI tests are pending. Existing local configuration is not overwritten by the package.
 
 `scripts/pet-control.mjs` sends commands through the plugin's own local file queue, without accessing the Desktop authentication transport:
 
@@ -53,7 +54,11 @@ node scripts/pet-control.mjs hide
 node scripts/pet-control.mjs show
 ```
 
-These are development controls, not proof of live Agent behavior. `all` and `state` are explicitly diagnostic. Real tool/approval mapping remains untested because visual qualification failed first.
+These are development controls, not proof of live Agent behavior. `all` and `state` are explicitly diagnostic. Real tool/approval mapping remains untested; this follow-up only fixed native visibility.
+
+## Reproduce native visibility
+
+`node scripts/probe-native-window.mjs '<official-runtime.exe>' opaque 60` creates a centered 400×400 bright test window without installing anything. Compare `hidden` (same config with `windowsHide:true`), then `transparent`, `borderless`, `topmost`, `skip-taskbar`, one run at a time. Inspect the actual desktop; `isVisible()` alone is not acceptance. See the linked report for commands, screenshot boundaries and tested DPI sizes.
 
 ## Recovery
 

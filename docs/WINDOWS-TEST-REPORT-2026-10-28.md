@@ -1,5 +1,7 @@
 # Windows Desktop 实测：最小宿主通过，窗口可见性失败
 
+> 此文件记录较早的失败测试。后续 `0.0.2-dev.2` 已修复并通过本机视觉验收，见 [窗口显示修复报告](WINDOWS-VISIBILITY-FIX-2026-10-28.md)。保留以下历史记录，不把原失败结果改写为成功。
+
 日期：2026-10-28，Asia/Shanghai。对象：**用户当前正常使用的 DSH Desktop 0.2.1-rc.3 / Windows x64 / Cordis 4.0.5**。本轮没有建立或使用隔离 profile；使用桌面内置 `dsh.cmd` 管理现有 `desktop` profile。PATH 中另一个旧版 CLI 未用于本轮安装。
 
 ## 结论

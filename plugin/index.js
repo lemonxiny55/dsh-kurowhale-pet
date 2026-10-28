@@ -6,7 +6,7 @@ import { createOverlay } from './overlay.js';
 
 export const name = 'dsh-kurowhale-pet';
 export const inject = [];
-const version='0.0.2-dev.1';
+const version='0.0.2-dev.2';
 const read = (path, fallback) => {try{return JSON.parse(readFileSync(path,'utf8'));}catch{return fallback;}};
 
 export function apply(ctx) {
@@ -19,8 +19,7 @@ export function apply(ctx) {
     let closed=false,overlay,frameTimer,statusTimer,pollTimer,cycleTimer,hoverTimer,queue=Promise.resolve(),lastCommand,lastSeen;
     const abort=new AbortController();
     const config=read(join(directory,'local.json'),{});
-    // dev.0 drew canvas frames but failed on-screen visibility qualification.
-    // Keep the renderer opt-in until that separate native issue is fixed.
+    // Keep renderer activation explicit. IPC readiness is not visual acceptance.
     const overlayEnabled=config.rendererEnabled===true;
     const saved=read(join(directory,'position.json'),{});
     let scale=Number.isFinite(saved.scale)?saved.scale:(config.scale??1.25);
@@ -60,6 +59,7 @@ export function apply(ctx) {
       if(!manifest||basename(manifest.spritesheetPath??'')!==manifest.spritesheetPath||!manifest.spritesheetPath?.endsWith('.webp'))throw Error('A local pet.json with a safe WebP filename is required');
       overlay=await createOverlay({sheet:resolve(config.assetDirectory,manifest.spritesheetPath),runtimePath:config.runtimePath,scale,x,y,topmost,signal:abort.signal,onEvent:(event,data)=>{
         if(closed)return;
+        if(event==='ready'&&data.canvas)status.canvasLayout=data;
         if(event==='drawn'&&Number.isInteger(data.row)&&Number.isInteger(data.index)){
           const key=animations[data.row]?.[0];if(key){if(!seen.has(key))seen.set(key,new Set());seen.get(key).add(data.index);}
         }
@@ -72,6 +72,7 @@ export function apply(ctx) {
       }});
       if(closed){overlay.destroy();return;}
       status.rendererReady=true;status.nativePid=overlay.pid;status.lastError=null;
+      status.nativeWindow=await overlay.inspect();
       if(!visible)await overlay.hide();tick();snapshot();audit('renderer-ready',{nativePid:overlay.pid});
     };
     const command=async c=>{

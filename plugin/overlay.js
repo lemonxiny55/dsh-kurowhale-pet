@@ -23,7 +23,9 @@ export async function createOverlay(options) {
     nativeAllowList:['app.*','events.*','window.*'],
     modes:{window:{title:'KuroWhale · DSH',width,height,x:options.x,y:options.y,transparent:true,borderless:true,alwaysOnTop:options.topmost!==false,skipTaskbar:true,exitProcessOnClose:true,useSavedState:false,resizable:false,enableInspector:false}},
   }));
-  const child = spawn(options.runtimePath,[`--path=${work}`,'--res-mode=directory'],{cwd:work,stdio:['ignore','pipe','pipe'],windowsHide:true});
+  // This is a GUI executable. On the tested Windows/WebView2 runtime,
+  // windowsHide:true leaves the outer window visible but hides its web content.
+  const child = spawn(options.runtimePath,[`--path=${work}`,'--res-mode=directory'],{cwd:work,stdio:['ignore','pipe','pipe'],windowsHide:false});
   child.stdout.resume();child.stderr.resume();
   let exited=false,closed=false,ws,auth;
   child.on('exit',()=>{exited=true;if(!closed)options.onEvent('native-exited',{});});
@@ -85,6 +87,7 @@ export async function createOverlay(options) {
       frame: directive=>{void broadcast('kw.frame',directive).catch(()=>{});},
       show:()=>call('window.show'),hide:()=>call('window.hide'),
       topmost:enabled=>call('window.setAlwaysOnTop',{enabled}),
+      inspect:async()=>({visible:await call('window.isVisible'),position:await call('window.getPosition'),size:await call('window.getSize'),minimized:await call('window.isMinimized')}),
     };
   }catch(error){destroy();throw error;}
 }

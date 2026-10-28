@@ -1,12 +1,12 @@
 # DSH KuroWhale Pet 🐳
 
-> **2026-10-28 实测更新：** 最小宿主插件已在用户当前 Windows DSH Desktop 0.2.1-rc.3 中通过加载、冷启动和卸载恢复。窗口实验版未通过桌面可见性验收，已经回滚；当前开发分支默认关闭渲染，不是可用桌宠发行版。详见 [真实测试报告](docs/WINDOWS-TEST-REPORT-2026-10-28.md)。
+> **2026-10-28 显示修复：** `0.0.2-dev.2` 已在用户当前 Windows DSH Desktop 0.2.1-rc.3 中真实显示鲸鱼娘，用户目视确认；卸载恢复与重新安装后的冷启动也通过。根因是 GUI 运行时使用 `windowsHide:true` 后内容不显示，改为 `false` 解决。详见 [可见性修复报告](docs/WINDOWS-VISIBILITY-FIX-2026-10-28.md)。完整功能与授权验收仍未完成，不是正式发行版。
 >
-> The host-only probe passed direct Desktop tests. Experimental overlay visibility failed; it was removed. Renderer is opt-in and off by default. No artwork is included or published. See the linked report for exact version and evidence boundaries.
+> The corrected overlay is visibly working in the owner's existing Desktop, confirmed by screenshots and the owner. Uninstall recovery and a subsequent cold start passed. Renderer remains opt-in. No artwork is included or published; full feature qualification is pending.
 
 **黑白 Q 版鲸鱼娘桌宠 / Black-and-white chibi whale desktop pet**
 
-> 🚧 **开发中 / Work in progress** — 当前仓库含已实测的最小宿主骨架与未通过可见性验收的窗口实验代码，尚无可发布的完整桌宠。
+> 🚧 **开发中 / Work in progress** — 当前仓库含已实测的最小宿主骨架与可见性已修复的窗口实验代码，尚无可发布的完整桌宠。
 >
 > 🚧 This project is in early development. A host-only probe has been tested; no release-ready desktop pet is available.
 
