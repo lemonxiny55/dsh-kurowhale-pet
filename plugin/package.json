@@ -5,11 +5,17 @@
   "description": "Backend-only compatibility smoke test for DSH KuroWhale Pet. Not a working pet.",
   "type": "module",
   "main": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
   "files": ["index.js", "cordis.patch.yml"],
   "scripts": {
     "test": "node --test"
   },
   "engines": {
+    "node": ">=22.18.0",
     "dsh": "0.2.1-rc.3"
   },
   "dsh": {
