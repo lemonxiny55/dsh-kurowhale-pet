@@ -24,3 +24,12 @@ work-in-progress/
 artwork-drafts/
 *.psd
 *.aseprite
+
+# Private local acceptance material and unapproved character artwork
+/.acceptance/
+/KuroWhale-Pet/
+/windows-test/
+/research/
+/DSH-KuroWhale-Pet*.zip*
+/package_delivery.py
+*.tgz

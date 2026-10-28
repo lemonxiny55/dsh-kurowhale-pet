@@ -1,6 +1,6 @@
 {
   "name": "dsh-kurowhale-pet",
-  "version": "0.0.2-dev.0",
+  "version": "0.0.2-dev.1",
   "private": true,
   "description": "Host-only Windows KuroWhale overlay development build for DSH Desktop rc3.",
   "type": "module",

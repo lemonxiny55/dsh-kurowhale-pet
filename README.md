@@ -1,10 +1,14 @@
 # DSH KuroWhale Pet 🐳
 
+> **2026-10-28 实测更新：** 最小宿主插件已在用户当前 Windows DSH Desktop 0.2.1-rc.3 中通过加载、冷启动和卸载恢复。窗口实验版未通过桌面可见性验收，已经回滚；当前开发分支默认关闭渲染，不是可用桌宠发行版。详见 [真实测试报告](docs/WINDOWS-TEST-REPORT-2026-10-28.md)。
+>
+> The host-only probe passed direct Desktop tests. Experimental overlay visibility failed; it was removed. Renderer is opt-in and off by default. No artwork is included or published. See the linked report for exact version and evidence boundaries.
+
 **黑白 Q 版鲸鱼娘桌宠 / Black-and-white chibi whale desktop pet**
 
-> 🚧 **开发中 / Work in progress** — 当前仓库是项目初始化阶段，尚无可安装的插件或正式版动画素材。
+> 🚧 **开发中 / Work in progress** — 当前仓库含已实测的最小宿主骨架与未通过可见性验收的窗口实验代码，尚无可发布的完整桌宠。
 >
-> 🚧 This project is in early development. No installable plugin or finalized character pack is available yet.
+> 🚧 This project is in early development. A host-only probe has been tested; no release-ready desktop pet is available.
 
 **DSH KuroWhale Pet** 计划成为一款面向 **DeepSeek Harness (DSH)** 的非官方桌宠：一只黑白配色的 Q 版鲸鱼女仆，在桌面陪伴用户，并根据 Agent 的运行状态做出反馈。
 
@@ -37,9 +41,9 @@ DSH KuroWhale Pet is a planned unofficial desktop companion for DeepSeek Harness
 
 ## 🧩 开发与安装 / Development and installation
 
-尚未提供安装包或可运行代码。请勿将此仓库视为已上线的插件。
+已有开发骨架及本地测试代码，尚未提供可发布的完整桌宠。当前开发版默认关闭渲染，请先阅读实际测试报告。
 
-There is no release or runnable plugin yet. Installation instructions will be added after the first tested build.
+Development probe code exists, but no production release is available. Rendering stays off by default until native visibility qualification passes.
 
 ## 🎨 角色素材与许可 / Artwork and licensing
 

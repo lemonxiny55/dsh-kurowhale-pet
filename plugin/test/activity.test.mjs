@@ -12,6 +12,7 @@ test('rc3 session events distinguish real approval, work and completion',()=>{
   assert.equal(activityState('tool/call'),'running');
   assert.equal(activityState('turn/end',{reason:{kind:'completed'}}),'review');
   assert.equal(activityState('turn/end',{reason:{kind:'error'}}),'failed');
+  assert.equal(activityState('turn/end',{reason:{kind:'blocked'}}),undefined);
   assert.equal(activityState('unrelated'),undefined);
 });
 test('nine atlas rows use exactly 57 original occupied cells',()=>{

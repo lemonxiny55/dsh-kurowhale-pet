@@ -1,5 +1,13 @@
 # Windows Desktop compatibility — 2026-10-28
 
+## New direct test result / 当前环境实测更新
+
+The owner subsequently authorized testing in their existing Windows Desktop **0.2.1-rc.3** profile (no isolated profile). The minimal host-only bundle at `64b3717` loaded, survived cold startup, and uninstalled cleanly. Original plugin lists/configuration were restored. A real model request after rollback returned `KUROWHALE_MODEL_OK` using existing settings.
+
+The experimental overlay at `e1c8293` acknowledged 57 canvas frames but **was not visible on the desktop**, confirmed by screenshots and the owner. It was removed immediately. Full animation visibility, live tool/approval integration and performance remain unqualified. Renderer is now opt-in and off by default; the post-rollback code was not reinstalled.
+
+See [the detailed direct test report](WINDOWS-TEST-REPORT-2026-10-28.md). **Status: still not releasable.** The historical summary below remains context for the original third-party plugin, not the new host-only probe.
+
 ## Scope / 适用范围
 
 Target: **DSH Desktop 0.2.1-rc.3**, Windows. This file summarizes a test outcome **reported by the project owner**. Original test archive, screenshots and failure logs have **not** been uploaded to this GitHub repository or independently reproduced by this scaffold.

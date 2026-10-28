@@ -21,7 +21,7 @@ export async function createOverlay(options) {
     enableServer:true,enableNativeAPI:true,enableExtensions:true,exportAuthInfo:true,
     extensions:[{id:'kurowhaleHost'}],logging:{enabled:false,writeToLogFile:false},
     nativeAllowList:['app.*','events.*','window.*'],
-    modes:{window:{title:'KuroWhale · DSH',width,height,x:options.x,y:options.y,transparent:true,borderless:true,alwaysOnTop:true,skipTaskbar:true,exitProcessOnClose:true,useSavedState:false,resizable:false,enableInspector:false}},
+    modes:{window:{title:'KuroWhale · DSH',width,height,x:options.x,y:options.y,transparent:true,borderless:true,alwaysOnTop:options.topmost!==false,skipTaskbar:true,exitProcessOnClose:true,useSavedState:false,resizable:false,enableInspector:false}},
   }));
   const child = spawn(options.runtimePath,[`--path=${work}`,'--res-mode=directory'],{cwd:work,stdio:['ignore','pipe','pipe'],windowsHide:true});
   child.stdout.resume();child.stderr.resume();
@@ -31,6 +31,7 @@ export async function createOverlay(options) {
   const pending=new Map();
   const destroy=()=>{
     if(closed)return;closed=true;
+    options.signal?.removeEventListener('abort',destroy);
     try{ws?.close();}catch{}
     for(const p of pending.values())p.reject(Error('Native window closed'));
     pending.clear();

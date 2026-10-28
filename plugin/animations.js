@@ -16,6 +16,7 @@ export function activityState(type, data = {}) {
   if (['step/start','assistant/chunk','tool/call','command/run'].includes(type)) return 'running';
   if (type === 'turn/end') {
     const reason = data.reason?.kind ?? data.reason;
+    if (reason === 'blocked' || reason === 'interrupted') return undefined;
     return reason === 'completed' ? 'review' : 'failed';
   }
   return undefined;

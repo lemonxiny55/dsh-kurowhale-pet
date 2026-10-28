@@ -6,7 +6,7 @@ import { createOverlay } from './overlay.js';
 
 export const name = 'dsh-kurowhale-pet';
 export const inject = [];
-const version='0.0.2-dev.0';
+const version='0.0.2-dev.1';
 const read = (path, fallback) => {try{return JSON.parse(readFileSync(path,'utf8'));}catch{return fallback;}};
 
 export function apply(ctx) {
@@ -19,13 +19,16 @@ export function apply(ctx) {
     let closed=false,overlay,frameTimer,statusTimer,pollTimer,cycleTimer,hoverTimer,queue=Promise.resolve(),lastCommand,lastSeen;
     const abort=new AbortController();
     const config=read(join(directory,'local.json'),{});
+    // dev.0 drew canvas frames but failed on-screen visibility qualification.
+    // Keep the renderer opt-in until that separate native issue is fixed.
+    const overlayEnabled=config.rendererEnabled===true;
     const saved=read(join(directory,'position.json'),{});
     let scale=Number.isFinite(saved.scale)?saved.scale:(config.scale??1.25);
     scale=Math.max(.5,Math.min(2,scale));
     let x=saved.x??120,y=saved.y??120,visible=saved.visible!==false,topmost=true;
     let state='idle',source='agent',index=0,diagnostic=false,dragging=false;
     const activities=new Map(),timeouts=new Map(),seen=new Map(),eventCounts={};
-    const status={version,hostPid:process.pid,rendererReady:false,nativePid:null,lastError:null};
+    const status={version,hostPid:process.pid,rendererReady:false,visibilityVerified:false,nativePid:null,lastError:null};
     const atomic=(file,value)=>{
       const target=join(directory,file),tmp=target+'.tmp';
       try{writeFileSync(tmp,JSON.stringify(value,null,2));renameSync(tmp,target);}catch{}
@@ -51,10 +54,11 @@ export function apply(ctx) {
       visible=value;persist();if(overlay){if(value)await overlay.show();else await overlay.hide();}tick();snapshot();audit(value?'shown':'hidden');
     };
     const reopen=async()=>{
+      if(!overlayEnabled)throw Error('Experimental renderer is disabled');
       clearTimeout(frameTimer);overlay?.destroy();overlay=undefined;status.rendererReady=false;
       const manifest=read(join(config.assetDirectory??'','pet.json'),null);
       if(!manifest||basename(manifest.spritesheetPath??'')!==manifest.spritesheetPath||!manifest.spritesheetPath?.endsWith('.webp'))throw Error('A local pet.json with a safe WebP filename is required');
-      overlay=await createOverlay({sheet:resolve(config.assetDirectory,manifest.spritesheetPath),runtimePath:config.runtimePath,scale,x,y,signal:abort.signal,onEvent:(event,data)=>{
+      overlay=await createOverlay({sheet:resolve(config.assetDirectory,manifest.spritesheetPath),runtimePath:config.runtimePath,scale,x,y,topmost,signal:abort.signal,onEvent:(event,data)=>{
         if(closed)return;
         if(event==='drawn'&&Number.isInteger(data.row)&&Number.isInteger(data.index)){
           const key=animations[data.row]?.[0];if(key){if(!seen.has(key))seen.set(key,new Set());seen.get(key).add(data.index);}
@@ -115,14 +119,16 @@ export function apply(ctx) {
       const key=agent?.session?.id??agent?.sessionId??agent?.id;
       if(key&&activities.has(key)&&activities.get(key)!=='waiting')updateActivity(key,'idle');
     },{global:true});
-    audit('started',{mode:config.assetDirectory?'overlay':'unconfigured'});
+    audit('started',{mode:overlayEnabled?'experimental-overlay':'host-only'});
     console.info('[dsh-kurowhale-pet] host started; no DSH frontend modules');
+    // Never replay the last diagnostic/control command after a restart.
+    lastSeen=read(join(directory,'control.json'),null)?.id;
     pollTimer=setInterval(()=>{
       const c=read(join(directory,'control.json'),null);if(!c?.id||c.id===lastCommand?.id||c.id===lastSeen)return;
       lastSeen=c.id;enqueue(c);
     },200);
     statusTimer=setInterval(snapshot,1000);
-    const startup=config.assetDirectory&&config.runtimePath?reopen().catch(()=>{status.lastError='Renderer startup failed; DSH remains available';audit('renderer-error');snapshot();}):Promise.resolve();
+    const startup=overlayEnabled&&config.assetDirectory&&config.runtimePath?reopen().catch(()=>{status.lastError='Renderer startup failed; DSH remains available';audit('renderer-error');snapshot();}):Promise.resolve();
     snapshot();
     return async()=>{
       closed=true;abort.abort();clearInterval(pollTimer);clearInterval(statusTimer);clearTimeout(frameTimer);clearTimeout(cycleTimer);clearTimeout(hoverTimer);
