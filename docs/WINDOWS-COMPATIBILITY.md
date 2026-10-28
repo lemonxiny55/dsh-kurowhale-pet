@@ -1,0 +1,38 @@
+# Windows Desktop compatibility — 2026-10-28
+
+## Scope / 适用范围
+
+Target: **DSH Desktop 0.2.1-rc.3**, Windows. This file summarizes a test outcome **reported by the project owner**. Original test archive, screenshots and failure logs have **not** been uploaded to this GitHub repository or independently reproduced by this scaffold.
+
+## Current evidence (user-provided test summary)
+
+- ✅ An older CLI instance displayed a real transparent overlay and supported dragging, scaling, always-on-top, hide and restore.
+- ❌ Original `dsh-desktop-pet 0.2.0` triggered an incompatible legacy frontend dependency, preventing Desktop 0.2.1-rc.3 from starting.
+- ✅ The incompatible original plugin was selectively removed and normal Desktop operation restored. Existing model credentials and configurations were reportedly unchanged.
+- ⏳ Desktop 9-state playback, tool/approval/multi-session state mapping, persistence after restart and CPU/memory measurements remain unverified.
+- ⏳ Artwork redistribution license and publishing permissions remain pending.
+
+This report does **not** establish that all DSH Desktop failures are caused by this third-party plugin. Check actual test logs and upstream reports before attributing root cause. Do not copy or publish logs containing tokens or personal paths.
+
+## Engineering response
+
+1. Target exact DSH rc3 version in a tiny **backend-only** Cordis bundle (`plugin/`).
+2. Avoid legacy `webRuntime`, `webServer` and older injected frontend entrypoints.
+3. Test in a disposable profile, never the recovered production profile.
+4. Add a desktop overlay and agent integration only after verifying their current APIs.
+5. Implement cleanup and crash recovery: removing the plugin must restore the test profile to an unchanged bootable state.
+6. Never package unapproved character art or claim successful end-to-end testing before Windows proof.
+
+## Release gates
+
+- [ ] Cold start of unmodified rc3 in test profile
+- [ ] Cold start with backend-only bundle (positive activation log)
+- [ ] Remove bundle and cold start without damage
+- [ ] Display imported KuroWhale sprite sheet in true transparent desktop window
+- [ ] Validate all nine animations & live tool/approval/multi-session events
+- [ ] Verify minimize/restore, drag, scaling, restart persistence and cleanup
+- [ ] Sample CPU/memory and confirm no leaked processes
+- [ ] Review third-party code, user data access and character art redistribution permission
+- [ ] Clean-room installation and rollback documented
+
+**Status:** Not releasable. Structural Node tests are not Windows / DSH integration tests.
