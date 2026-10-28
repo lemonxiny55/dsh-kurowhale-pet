@@ -1,0 +1,21 @@
+<!doctype html><html><meta charset="utf-8"><title>KuroWhale · DSH</title>
+<style>html,body{margin:0;background:transparent;overflow:hidden}canvas{display:block}#menu{display:none;position:fixed;inset:2px;max-height:95vh;overflow:auto;background:#f6f5faee;border:1px solid #999;border-radius:10px;padding:8px;font:12px 'Segoe UI',sans-serif}button,select{display:block;box-sizing:border-box;width:100%;margin:4px 0;padding:5px;border:1px solid #bbb;border-radius:5px;background:#fff;color:#222}small{color:#555}</style>
+<canvas id="pet"></canvas><div id="menu"><strong>KuroWhale</strong><select id="state" aria-label="Animation diagnostic"><option>idle</option><option>running-right</option><option>running-left</option><option>waving</option><option>jumping</option><option>failed</option><option>waiting</option><option>running</option><option>review</option></select><button id="resume">Resume agent state</button><button id="larger">Larger +</button><button id="smaller">Smaller −</button><button id="hide">Hide pet</button><button id="dismiss">Close menu</button><small>Animation selection is diagnostic.</small></div>
+<script src="neutralino.js"></script><script>
+const canvas=document.getElementById('pet'),ctx=canvas.getContext('2d'),menu=document.getElementById('menu'),atlas=new Image();
+let initialized=false,loaded=false,layout,position={x:80,y:80},drag=null,directive={row:0,index:0,state:'idle'},seen=new Set();
+const send=(name,data={})=>Neutralino.events.broadcast('kw.'+name,data).catch(()=>{});
+function draw(){if(!loaded||!layout)return;ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(atlas,directive.index*192,directive.row*208,192,208,0,0,Math.round(192*layout.scale),Math.round(208*layout.scale));let key=directive.row+':'+directive.index;if(!seen.has(key)){seen.add(key);send('drawn',{row:directive.row,index:directive.index});}}
+atlas.onload=()=>{if(atlas.naturalWidth!==1536||atlas.naturalHeight!==1872){send('error');return;}loaded=true;draw();send('ready',{width:atlas.naturalWidth,height:atlas.naturalHeight,dpr:devicePixelRatio});};atlas.onerror=()=>send('error');
+Neutralino.events.on('kw.initialize',e=>{if(initialized){if(loaded)send('ready');return;}initialized=true;layout=e.detail;position={x:layout.x,y:layout.y};canvas.width=layout.width;canvas.height=layout.height;canvas.style.width=layout.width/devicePixelRatio+'px';canvas.style.height=layout.height/devicePixelRatio+'px';ctx.imageSmoothingEnabled=true;atlas.src='atlas.webp';});
+Neutralino.events.on('kw.frame',e=>{directive=e.detail;draw();});
+canvas.onpointerenter=()=>{if(!drag)send('hover');};canvas.onpointerleave=()=>{if(!drag)send('unhover');};
+canvas.onpointerdown=e=>{if(e.button!==0)return;menu.style.display='none';drag={sx:e.screenX,sy:e.screenY,x:position.x,y:position.y,moved:false};canvas.setPointerCapture(e.pointerId);};
+canvas.onpointermove=e=>{if(!drag)return;const dx=(e.screenX-drag.sx)*devicePixelRatio,dy=(e.screenY-drag.sy)*devicePixelRatio;if(Math.abs(dx)+Math.abs(dy)<3)return;drag.moved=true;position={x:Math.max(0,Math.min(screen.width*devicePixelRatio-192*layout.scale,drag.x+dx)),y:Math.max(0,Math.min(screen.height*devicePixelRatio-208*layout.scale,drag.y+dy))};Neutralino.window.move(position.x,position.y).catch(()=>{});send('dragMove',{direction:dx<0?'left':'right'});};
+canvas.onpointerup=()=>{if(!drag)return;const moved=drag.moved;drag=null;send('dragEnd',moved?position:{});};canvas.onpointercancel=()=>{drag=null;send('dragEnd',position);};
+canvas.oncontextmenu=e=>{e.preventDefault();menu.style.display='block';};
+document.getElementById('dismiss').onclick=()=>menu.style.display='none';
+document.getElementById('state').onchange=e=>{send('control',{action:'state',value:e.target.value});menu.style.display='none';};
+for(const [id,action,value] of [['resume','resume'],['larger','scale',.25],['smaller','scale',-.25],['hide','hide']])document.getElementById(id).onclick=()=>{send('control',{action,value,relative:action==='scale'});menu.style.display='none';};
+Neutralino.init().catch(()=>{});
+</script></html>

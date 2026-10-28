@@ -1,8 +1,8 @@
 {
   "name": "dsh-kurowhale-pet",
-  "version": "0.0.1-dev.0",
+  "version": "0.0.2-dev.0",
   "private": true,
-  "description": "Backend-only compatibility smoke test for DSH KuroWhale Pet. Not a working pet.",
+  "description": "Host-only Windows KuroWhale overlay development build for DSH Desktop rc3.",
   "type": "module",
   "main": "./index.js",
   "exports": {
@@ -10,7 +10,7 @@
     "./cordis.patch.yml": "./cordis.patch.yml",
     "./package.json": "./package.json"
   },
-  "files": ["index.js", "cordis.patch.yml"],
+  "files": ["index.js", "animations.js", "overlay.js", "native/", "cordis.patch.yml"],
   "scripts": {
     "test": "node --test"
   },
