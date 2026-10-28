@@ -1,20 +1,20 @@
 # DSH KuroWhale Pet 🐳
 
-> **2026-10-28 显示修复：** `0.0.2-dev.2` 已在用户当前 Windows DSH Desktop 0.2.1-rc.3 中真实显示鲸鱼娘，用户目视确认；卸载恢复与重新安装后的冷启动也通过。根因是 GUI 运行时使用 `windowsHide:true` 后内容不显示，改为 `false` 解决。详见 [可见性修复报告](docs/WINDOWS-VISIBILITY-FIX-2026-10-28.md)。完整功能与授权验收仍未完成，不是正式发行版。
+> **2026-10-28 MVP 验收：** 开发分支提供 Windows `0.1.0-rc.1` 功能候选。九动画、交互、真实工具/审批与并发优先级已在当前 DSH Desktop 0.2.1-rc.3 验证；详情见 [MVP 实测报告](docs/WINDOWS-MVP-ACCEPTANCE-2026-10-28.md) 和 [本地使用说明](plugin/README.md)。美术授权及长期稳定性验收仍待完成，未公开发布角色包。
 >
-> The corrected overlay is visibly working in the owner's existing Desktop, confirmed by screenshots and the owner. Uninstall recovery and a subsequent cold start passed. Renderer remains opt-in. No artwork is included or published; full feature qualification is pending.
+> Windows functional candidate for Desktop rc3. See the direct test report and local instructions; this is not a published release. Artwork remains private and separately licensed.
 
 **黑白 Q 版鲸鱼娘桌宠 / Black-and-white chibi whale desktop pet**
 
-> 🚧 **开发中 / Work in progress** — 当前仓库含已实测的最小宿主骨架与可见性已修复的窗口实验代码，尚无可发布的完整桌宠。
+> 🚧 **开发中 / Work in progress** — 当前仓库含可本地安装的功能候选；正式发行仍受美术授权与后续验证限制。
 >
-> 🚧 This project is in early development. A host-only probe has been tested; no release-ready desktop pet is available.
+> 🚧 The Windows MVP candidate passed local functional tests; public distribution and broader qualification remain pending.
 
-**DSH KuroWhale Pet** 计划成为一款面向 **DeepSeek Harness (DSH)** 的非官方桌宠：一只黑白配色的 Q 版鲸鱼女仆，在桌面陪伴用户，并根据 Agent 的运行状态做出反馈。
+**DSH KuroWhale Pet** 是一个面向 **DeepSeek Harness (DSH)** 的非官方桌宠：一只黑白配色的 Q 版鲸鱼女仆，在桌面陪伴用户，并根据 Agent 的运行状态做出反馈。
 
-DSH KuroWhale Pet is a planned unofficial desktop companion for DeepSeek Harness: a black-and-white chibi whale maid that reacts to agent activity.
+DSH KuroWhale Pet is an experimental unofficial desktop companion for DeepSeek Harness: a black-and-white chibi whale maid that reacts to agent activity.
 
-## ✨ 计划功能 / Planned features
+## ✨ 功能范围 / Scope
 
 - 🐳 **Q 版原创角色 / Chibi character** — 黑白鲸鱼女仆形象，独立的卡通鲸鱼徽章。
 - 🖥️ **桌面悬浮 / Desktop overlay** — 透明窗口、拖动、缩放、隐藏及位置记忆（首发优先 Windows）。
@@ -22,28 +22,28 @@ DSH KuroWhale Pet is a planned unofficial desktop companion for DeepSeek Harness
 - 🔔 **DSH 状态联动 / Agent status integration** — 根据可靠的宿主事件切换动画与提醒。
 - 📦 **独立角色包 / Separate character pack** — 尽量让美术资源与插件引擎解耦。
 
-> 以上均为**计划功能**，不是已完成或已验证的能力。实际支持范围以发行说明和测试结果为准。
+> Windows rc3 上已验证的功能与未覆盖项目，以最新 MVP 实测报告为准。角色资源仍只在本机保存。
 >
-> These are **planned features**, not claims of implemented or tested functionality.
+> Qualification is limited to the exact Windows rc3 environment described in the MVP report. Character assets remain local.
 
 ## 🗺️ 路线图 / Roadmap
 
 | 阶段 / Phase | 目标 / Goal | 状态 / Status |
 | --- | --- | --- |
-| 0 | 仓库初始化、项目文档 / Repository and documentation | 🚧 In progress |
-| 1 | 角色定稿、透明素材、动态角色包 / Character assets and animated pet pack | ⏳ Planned |
-| 2 | 确认 DSH 插件 API、选定 MIT 兼容底座 / Verify plugin APIs and select a suitable open-source base | ⏳ Planned |
-| 3 | Windows 桌面悬浮和 Agent 状态联动 / Windows overlay and agent integration | ⏳ Planned |
-| 4 | 安装、卸载、性能与兼容性测试 / Install, uninstall, performance, compatibility tests | ⏳ Planned |
+| 0 | 仓库初始化、项目文档 / Repository and documentation | ✅ Local candidate |
+| 1 | 角色定稿、透明素材、动态角色包 / Character assets and animated pet pack | ✅ Local; license pending |
+| 2 | 确认 DSH 插件 API、选定 MIT 兼容底座 / Verify plugin APIs and select a suitable open-source base | ✅ rc3 / Neutralino |
+| 3 | Windows 桌面悬浮和 Agent 状态联动 / Windows overlay and agent integration | ✅ Local functional tests |
+| 4 | 安装、卸载、性能与兼容性测试 / Install, uninstall, performance, compatibility tests | ✅ Local scope; broader tests pending |
 | 5 | v0.1.0 公开预览 / Public preview release | ⏳ Planned |
 
 详见 [开发路线图 / Detailed roadmap](docs/ROADMAP.md)。
 
 ## 🧩 开发与安装 / Development and installation
 
-已有开发骨架及本地测试代码，尚未提供可发布的完整桌宠。当前开发版默认关闭渲染，请先阅读实际测试报告。
+本地功能候选与安装/恢复步骤见 [插件说明](plugin/README.md)。渲染需要自己的配置显式启用，角色资源和官方运行时单独准备。
 
-Development probe code exists, but no production release is available. Rendering stays off by default until native visibility qualification passes.
+See the plugin instructions for local packaging and recovery. Rendering requires explicit local opt-in; provide character assets and the official runtime separately.
 
 ## 🎨 角色素材与许可 / Artwork and licensing
 

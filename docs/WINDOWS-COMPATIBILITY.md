@@ -1,6 +1,10 @@
 # Windows Desktop compatibility — 2026-10-28
 
-## Latest: native visibility fixed
+## Latest: MVP functional acceptance
+
+The existing Windows Desktop rc3 profile was used for nine-animation, interaction and real Agent tests. See [the MVP report](WINDOWS-MVP-ACCEPTANCE-2026-10-28.md) for the current candidate and performance. The following sections are historical.
+
+## Previous: native visibility fixed
 
 `0.0.2-dev.2` was tested in the existing Desktop profile. Switching the GUI runtime spawn option from `windowsHide:true` to `false` made WebView content and the character visible. A reverse test reproduced the blank window. Transparency, borderless, topmost and skip-taskbar conditions passed separate visual checks. The owner explicitly confirmed the DSH-started character was visible. Uninstall restored seven original configuration hashes; reinstall and cold startup passed. See [the visibility fix report](WINDOWS-VISIBILITY-FIX-2026-10-28.md). Full release gates remain pending; the following sections record earlier tests and must not be read as the current visibility result.
 

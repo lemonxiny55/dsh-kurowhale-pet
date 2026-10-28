@@ -6,7 +6,7 @@ import { randomUUID } from 'node:crypto';
 const directory=join(process.env.DSH_HOME||join(homedir(),'.dsh'),'kurowhale-pet');
 const [action='status',value]=process.argv.slice(2);
 if(action==='status'){console.log(await readFile(join(directory,'status.json'),'utf8'));process.exit(0);}
-if(!['state','all','resume','show','hide','scale','topmost'].includes(action))throw Error('Usage: status | state <name> | all | resume | show | hide | scale <0.5..2> | topmost <true|false>');
+if(!['state','all','resume','show','hide','scale','topmost','center','close'].includes(action))throw Error('Usage: status | state <name> | all | resume | show | hide | scale <0.5..2> | topmost <true|false> | center | close');
 const id=randomUUID();const c={id,action,value:action==='scale'?Number(value):action==='topmost'?value!=='false':value};
 await mkdir(directory,{recursive:true});const path=join(directory,'control.json');await writeFile(path+'.new',JSON.stringify(c));await rename(path+'.new',path);
 const deadline=Date.now()+20000;

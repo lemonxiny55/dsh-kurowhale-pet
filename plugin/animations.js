@@ -13,16 +13,18 @@ export const animations = [
 export function activityState(type, data = {}) {
   if (type === 'approval/asked') return 'waiting';
   if (type === 'approval/decided') return 'running';
-  if (['step/start','assistant/chunk','tool/call','command/run'].includes(type)) return 'running';
+  if (['turn/start','step/start','assistant/chunk','tool/call','tool/result','command/run'].includes(type)) return 'running';
   if (type === 'turn/end') {
     const reason = data.reason?.kind ?? data.reason;
-    if (reason === 'blocked' || reason === 'interrupted') return undefined;
+    if (reason === 'blocked') return 'waiting';
+    if (reason === 'interrupted' || reason === 'cancelled') return 'failed';
     return reason === 'completed' ? 'review' : 'failed';
   }
   return undefined;
 }
 
 export function resolveActivities(states) {
+  const values=[...states]; // Map.values() is a one-shot iterator.
   const priority = ['waiting','failed','running','review','idle'];
-  return priority.find(state => [...states].includes(state)) ?? 'idle';
+  return priority.find(state => values.includes(state)) ?? 'idle';
 }

@@ -1,75 +1,88 @@
-# KuroWhale host-only development bundle
+# KuroWhale Windows 功能候选 / Windows functional candidate
 
-Target: Windows, **DSH Desktop 0.2.1-rc.3**. No `dsh.client` declaration or legacy DSH frontend imports.
+Target: **Windows / DSH Desktop 0.2.1-rc.3 / Neutralino 6.9.0**. Version: **0.1.0-rc.1**. This is a local development candidate, not a published release. No legacy DSH frontend imports or `dsh.client` entrypoint.
 
-## Actual qualification
+## 已验收 / Qualified scope
 
-- `64b3717` / `0.0.1-dev.0`: loaded in the owner's existing Desktop profile, cold-started successfully, uninstalled and restored successfully.
-- `e1c8293` / `0.0.2-dev.0`: host loaded and a real Neutralino/WebView2 canvas acknowledged all 57 sprite frames, but **the character was not visible on the desktop**. Screenshot checks and the owner both confirmed failure. It was uninstalled; no further build was installed after this failure.
-- `0.0.2-dev.1`: offline safety changes after rollback; it was not reinstalled.
-- Current `0.0.2-dev.2`: GUI `windowsHide:false` fixes the reproduced blank WebView. The owner confirmed the character was visible in their current Desktop. Uninstall restored all seven configuration hashes; reinstall and cold startup showed the character again. Renderer still requires explicit opt-in. The `rendererReady` field means protocol/atlas readiness, never a visual pass; `visibilityVerified` remains false because visibility is manually qualified in the report.
+在用户当前 `desktop` profile 中实测：九种动画、鼠标拖动、菜单缩放、置顶切换、隐藏/恢复、托盘恢复、重启持久化、屏幕外坐标恢复，以及真实工具、审批和两会话状态联动。正常关闭和强制结束原生窗口后，原进程树清零；可以重新显示。详见 [真实验收报告](../docs/WINDOWS-MVP-ACCEPTANCE-2026-10-28.md)。
 
-See [the visibility fix report](../docs/WINDOWS-VISIBILITY-FIX-2026-10-28.md) and [the earlier failed test](../docs/WINDOWS-TEST-REPORT-2026-10-28.md). This is not a release or a finished desktop pet.
+Direct tests covered nine visible animations, dragging, menu scaling, topmost, hide/show, tray recovery, restart persistence, off-screen recovery, real tools, approval and concurrent-session priority in the owner's existing Desktop. See the report for exact evidence, limits, performance and candidate startup results.
 
-## Structure
+`rendererReady` means transport/atlas readiness. Runtime `visibilityVerified` stays false because software does not automatically certify human visibility; visual qualification is recorded separately in the report.
 
-- `index.js`: Cordis lifecycle, contained renderer startup, local control queue and session-event adapter.
-- `overlay.js`: Windows Neutralino extension transport and owned-process cleanup.
-- `animations.js`: fixed nine-row atlas and activity mapping.
-- `native/index.html`: local native canvas UI, drag logic and diagnostic menu.
-- `native/neutralino.js`: official `@neutralinojs/lib@6.9.0`, with its original MIT notice in `LICENSE-neutralinojs.txt`.
+## 本地使用 / Local use
 
-There are no character assets, runtime executables, model configurations or credentials in this package. Character art stays in the owner's existing local pack. The renderer's own short-lived native IPC capabilities are private to its newly created process and are never logged; DSH/model credentials are not read by this code.
+Use the owner's existing local character pack and an official Neutralino 6.9.0 Windows runtime. Artwork and runtime executables are not included in this repository.
 
-## Development and local configuration
-
-```powershell
-node --test plugin/test/*.test.mjs
-```
-
-Tests cover structural metadata, activity mapping, opt-in behavior, stale-command protection and cleanup. They do **not** substitute for Desktop tests. On this Work host the restricted command environment blocks atomic rename in its temporary directory; tests passed in a normal Windows process.
-
-Configuration belongs only to `~/.dsh/kurowhale-pet/local.json`. The experimental renderer accepts:
+Only configure `~/.dsh/kurowhale-pet/local.json`:
 
 ```json
 {
-  "rendererEnabled": false,
+  "rendererEnabled": true,
   "assetDirectory": "D:/path/to/existing/KuroWhale-Pet",
   "runtimePath": "D:/path/to/official/neutralino-win_x64.exe",
   "scale": 1.25
 }
 ```
 
-Default is off; set `rendererEnabled` true explicitly to use the local renderer. Visibility is qualified on the tested machine at 150% DPI; broader feature/DPI tests are pending. Existing local configuration is not overwritten by the package.
+Renderer activation is explicitly opt-in. Install only when DSH tasks have ended; back up profile files first. The Desktop-bundled CLI must match rc3; a different PATH CLI is not equivalent.
 
-`scripts/pet-control.mjs` sends commands through the plugin's own local file queue, without accessing the Desktop authentication transport:
+```powershell
+npm pack ./plugin --ignore-scripts
+& '<DSH install>/resources/runtime/cli/bin/dsh.cmd' plugin --profile desktop add '<absolute-path-to-local-tgz>' --ignore-scripts
+```
+
+Restart DSH after replacing an existing package; a package-manager success does not mean the live host has refreshed its module cache. Check the visible pet, Desktop UI, and `~/.dsh/kurowhale-pet/status.json` version.
+
+右键角色打开菜单，支持放大/缩小、置顶、回到屏幕中央、隐藏与关闭。隐藏后在 Windows 通知区域右键黑底白色 **K** 图标，选择显示。关闭桌宠会退出原生窗口及托盘；可用下面的本地命令重新打开。位置、大小、可见性和置顶设置保存在自己的 `position.json`。
+
+Right-click the pet for controls. Hidden pets can be restored through the notification-area K icon. Closing the pet exits its native window and tray; the local `show` command recreates it. Visibility, position, scale and topmost preferences persist independently of DSH model settings.
 
 ```powershell
 node scripts/pet-control.mjs status
-node scripts/pet-control.mjs all
-node scripts/pet-control.mjs state waiting
-node scripts/pet-control.mjs resume
-node scripts/pet-control.mjs scale 1.25
-node scripts/pet-control.mjs hide
 node scripts/pet-control.mjs show
+node scripts/pet-control.mjs hide
+node scripts/pet-control.mjs center
+node scripts/pet-control.mjs scale 1.25
+node scripts/pet-control.mjs topmost true
+node scripts/pet-control.mjs close
 ```
 
-These are development controls, not proof of live Agent behavior. `all` and `state` are explicitly diagnostic. Real tool/approval mapping remains untested; this follow-up only fixed native visibility.
+## 动画与状态 / Animation and state mapping
 
-## Reproduce native visibility
+Rows: idle, running-right, running-left, waving, jumping, failed, waiting, running (working), review. Occupied frames: **6,8,8,4,5,8,6,6,6**. The two run rows are simplified front-facing gaits with only five distinct pictures per row; neither is a full side-facing run. No artwork was regenerated.
 
-`node scripts/probe-native-window.mjs '<official-runtime.exe>' opaque 60` creates a centered 400×400 bright test window without installing anything. Compare `hidden` (same config with `windowsHide:true`), then `transparent`, `borderless`, `topmost`, `skip-taskbar`, one run at a time. Inspect the actual desktop; `isVisible()` alone is not acceptance. See the linked report for commands, screenshot boundaries and tested DPI sizes.
-
-## Recovery
-
-Only after tasks have ended, use the **Desktop-bundled** command (not a different PATH CLI):
+Real DSH `session/event` signals drive work/tool, approval, completion and interruption feedback. Pending approval IDs remain authoritative even if the same session produces another work event. Priority: waiting, failed, running, review, idle. Completion/failure feedback lasts about two seconds before idle or other active work resumes. Hover only changes an idle pet, preserving approval alerts.
 
 ```powershell
+node scripts/pet-control.mjs state waiting
+node scripts/pet-control.mjs all
+node scripts/pet-control.mjs resume
+```
+
+`state` and `all` are diagnostic, not Agent evidence. Always `resume` before testing real tasks. `diagnostics:true` in the pet's own local config enables per-frame trace during manual animation tests; leave it off for ordinary use.
+
+## 验证与恢复 / Verification and recovery
+
+```powershell
+node --test plugin/test/*.test.mjs
+node scripts/probe-native-window.mjs '<official-runtime.exe>' opaque 60
+powershell -File scripts/sample-pet-performance.ps1 -OutputDirectory '<private-output-folder>' -Seconds 120
+```
+
+Tests include the one-shot iterator and broadcast self-feedback regressions. Unit tests do not substitute for Desktop acceptance. Performance uses real CPU-time deltas and process creation timestamps to avoid PID-reuse mistakes. Aggregate working sets may count shared pages repeatedly.
+
+To uninstall only KuroWhale, after tasks have ended:
+
+```powershell
+$env:npm_config_ignore_scripts='true'
 & '<DSH install>/resources/runtime/cli/bin/dsh.cmd' plugin --profile desktop remove dsh-kurowhale-pet
 ```
 
-Restart and verify the original plugin list, configuration hashes and model operation. Do not disable all third-party plugins, reset the profile or change model settings. Private configuration backups and raw local test evidence are excluded from Git.
+Restart and verify the original plugin list. If startup fails, restore the private backed-up package/lock/patch files after closing DSH; do not reset the entire profile or restore model settings over newer user changes. Keep backups and raw evidence private.
 
-## Licensing
+## 授权与限制 / Licensing and limits
 
-The repository's own code license has not been selected. The MIT notice included here applies specifically to the official Neutralino client library; it does not grant a license for character artwork or automatically relicense this whole repository.
+Artwork redistribution permission remains unconfirmed. No character assets, model configurations or credentials are included. The tiny tray K icon is a new utility icon, not character art. The repository's own code license has not been selected. The included MIT notice applies specifically to official `@neutralinojs/lib@6.9.0`, not the whole repository or artwork.
+
+Qualified on the tested Windows machine at 150% DPI. Other DSH versions, cross-monitor mixed DPI, long-duration soak testing, and other operating systems remain unqualified. No voice, progression system or games are added.
