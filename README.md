@@ -28,7 +28,7 @@
 npm install dsh-kurowhale-pet@0.1.0
 ```
 
-npm 安装不会自动启用桌宠。需要在 DSH 中安装插件，并在 `~/.dsh/kurowhale-pet/local.json` 中启用渲染、指定包内 `character` 目录和官方 Neutralino 路径；详见 [npm 包说明](https://www.npmjs.com/package/dsh-kurowhale-pet)。希望使用完整安装工具的用户请优先选择 Windows ZIP。
+npm 安装不会自动启用桌宠。需要在 DSH 中安装插件，并在 `~/.dsh/kurowhale-pet/local.json` 中启用渲染、指定包内 `character` 目录和官方 Neutralino 路径；详见 [npm 与 DSH Desktop 安装步骤](docs/NPM-INSTALL.md)。希望使用完整安装工具的用户请优先选择 Windows ZIP。
 
 ## 功能
 

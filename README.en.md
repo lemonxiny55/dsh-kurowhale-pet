@@ -28,7 +28,7 @@ The [npm package](https://www.npmjs.com/package/dsh-kurowhale-pet) `dsh-kurowhal
 npm install dsh-kurowhale-pet@0.1.0
 ```
 
-Installing from npm does not automatically enable the pet. Install the plugin in DSH and configure `~/.dsh/kurowhale-pet/local.json` to enable rendering and point to the package's `character` directory and the official Neutralino runtime; see the [npm package instructions](https://www.npmjs.com/package/dsh-kurowhale-pet). Choose the Windows ZIP for the complete installation tools.
+Installing from npm does not automatically enable the pet. Install the plugin in DSH and configure `~/.dsh/kurowhale-pet/local.json` to enable rendering and point to the package's `character` directory and the official Neutralino runtime; see the [npm and DSH Desktop installation guide](docs/NPM-INSTALL.md). Choose the Windows ZIP for the complete installation tools.
 
 ## Features
 

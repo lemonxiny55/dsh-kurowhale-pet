@@ -1,4 +1,4 @@
-> 2026-10-28：本机 Windows MVP 功能候选已完成实测，当前结果见 [验收报告](WINDOWS-MVP-ACCEPTANCE-2026-10-28.md)。以下路线图为规划背景，公开发行仍受授权和后续验证限制。
+> 以下为历史规划；Windows v0.1.0 和 npm 已发布。当前范围与限制见 [README](../README.md) 和 [技术验收](TECHNICAL-ACCEPTANCE-0.1.0.md)。
 
 # KuroWhale 开发路线图 / Development roadmap
 

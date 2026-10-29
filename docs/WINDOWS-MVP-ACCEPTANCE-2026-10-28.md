@@ -1,3 +1,5 @@
+> 历史记录：本报告描述测试当时的版本和发布状态；v0.1.0 后续已发布。当前状态见 [README](../README.md)。
+
 # Windows MVP 实机验收报告
 
 日期：2026-10-28，Asia/Shanghai。目标：用户当前使用的 **Windows / DSH Desktop 0.2.1-rc.3**，现有 `desktop` profile；没有创建隔离 profile。运行时为 Neutralino 6.9.0，系统 DPI 为 150%。

@@ -52,10 +52,10 @@ def build(output):
     files = {name: (ROOT / name).read_bytes() for name in BUNDLE_FILES}
     files[tgz_name] = compressed.getvalue()
     files["README.txt"] = (
-        "DSH KuroWhale Pet: code-only Windows installation candidate.\n"
+        "DSH KuroWhale Pet: code-only Windows installation bundle.\n"
         "Read docs/WINDOWS-INSTALL.md first. Run Check before Install.\n"
         "Character artwork and executables are NOT included.\n"
-        "Artwork redistribution permission remains unresolved.\n"
+        "For the full release and artwork provenance see the project README.\n"
     ).encode("utf-8")
     manifest = {"schemaVersion": 1, "name": package["name"],
                 "version": package["version"], "dshVersion": "0.2.1-rc.3",
