@@ -6,7 +6,7 @@ import { createOverlay } from './overlay.js';
 
 export const name = 'dsh-kurowhale-pet';
 export const inject = [];
-const version='0.1.0-rc.2';
+const version='0.1.0';
 const read = (path, fallback) => {try{return JSON.parse(readFileSync(path,'utf8'));}catch{return fallback;}};
 
 export function apply(ctx) {

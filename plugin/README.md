@@ -1,6 +1,6 @@
 # KuroWhale Windows 功能候选 / Windows functional candidate
 
-Target: **Windows / DSH Desktop 0.2.1-rc.3 / Neutralino 6.9.0**. Version: **0.1.0-rc.2** (release-engineering revision of the tested rc.1). This is a local candidate, not a published release. No legacy DSH frontend imports or `dsh.client` entrypoint.
+Target: **Windows / DSH Desktop 0.2.1-rc.3 / Neutralino 6.9.0**. Version: **0.1.0** (local release candidate based on the tested rc.2). This is a local candidate, not a published release. No legacy DSH frontend imports or `dsh.client` entrypoint.
 
 ## 已验收 / Qualified scope
 
