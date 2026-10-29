@@ -80,40 +80,68 @@ if($kwInstalledBefore -and (Test-Path -LiteralPath $kwOldPackage)){
   if(Test-Path -LiteralPath $kwSource){Copy-Item -LiteralPath $kwSource -Destination (Join-Path $kwOldCopy $kwName) -Recurse}
  }
 }
+# Verify actual package bytes; a successful CLI exit does not guarantee replacement.
+function Test-KwFiles($root,$entries){
+ foreach($entry in $entries.PSObject.Properties){
+  $file=[IO.Path]::GetFullPath((Join-Path $root $entry.Name))
+  if(-not $file.StartsWith([IO.Path]::GetFullPath($root).TrimEnd('\','/')+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)){throw 'Package file path escapes package root.'}
+  if(-not (Test-Path -LiteralPath $file -PathType Leaf) -or (Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash -ne $entry.Value){return $false}
+ }
+ return $true
+}
+$kwOldHashes=[ordered]@{}
+if($kwInstalledBefore){
+ if(-not (Test-Path -LiteralPath (Join-Path $kwOldCopy 'package.json'))){throw 'Previous plugin cannot be backed up; no changes made.'}
+ Get-ChildItem -LiteralPath $kwOldCopy -Recurse -File | ForEach-Object { $kwRelative=$_.FullName.Substring($kwOldCopy.Length+1).Replace('\','/'); $kwOldHashes[$kwRelative]=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash }
+}
+$kwInstalledRoot=Join-Path $kwProfile 'node_modules/dsh-kurowhale-pet'
+$kwOldVersion=if(Test-Path -LiteralPath (Join-Path $kwInstalledRoot 'package.json')){(Get-Content -LiteralPath (Join-Path $kwInstalledRoot 'package.json') -Raw | ConvertFrom-Json).version}else{$null}
+if($Action -eq 'Install' -and -not $kwManifest.pluginFiles){throw 'Missing installed-package integrity manifest.'}
+$kwAlreadyCurrent=($Action -eq 'Install' -and $kwInstalledBefore -and (Test-KwFiles $kwInstalledRoot $kwManifest.pluginFiles))
 $kwPriorIgnore=$env:npm_config_ignore_scripts
+$kwMutationStarted=$false
 try{
  $env:npm_config_ignore_scripts='true'
  if($Action -eq 'Install'){
-  & $kwCli plugin --profile desktop add (Join-Path $kwBundle $kwManifest.package) --ignore-scripts *> (Join-Path $kwBackup operation.log)
- }else{
-  & $kwCli plugin --profile desktop remove dsh-kurowhale-pet *> (Join-Path $kwBackup operation.log)
- }
- if($LASTEXITCODE -ne 0){throw 'DSH plugin operation failed; see private backup operation.log.'}
- if($Action -eq 'Install'){
-  if(-not $kwManifest.pluginFiles){throw 'Missing installed-package integrity manifest.'}
-  foreach($kwEntry in $kwManifest.pluginFiles.PSObject.Properties){
-   $kwInstalled=[IO.Path]::GetFullPath((Join-Path (Join-Path $kwProfile node_modules/dsh-kurowhale-pet) $kwEntry.Name))
-   $kwInstalledRoot=[IO.Path]::GetFullPath((Join-Path $kwProfile node_modules/dsh-kurowhale-pet))
-   if(-not $kwInstalled.StartsWith($kwInstalledRoot+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)){throw 'Installed file path escapes package.'}
-   if((Get-FileHash -LiteralPath $kwInstalled -Algorithm SHA256).Hash -ne $kwEntry.Value){throw 'Installed package differs from bundle, possibly package-manager cache reuse.'}
+  if(-not $kwAlreadyCurrent){
+   # The official add operation can report success while retaining a previous local package.
+   # Remove only this plugin before adding the target, with the old package saved above.
+   if($kwInstalledBefore){
+    $kwMutationStarted=$true
+    & $kwCli plugin --profile desktop remove dsh-kurowhale-pet *> (Join-Path $kwBackup remove-before-install.log)
+    if($LASTEXITCODE -ne 0){throw 'Removing previous plugin failed.'}
+   }
+   $kwMutationStarted=$true
+   & $kwCli plugin --profile desktop add (Join-Path $kwBundle $kwManifest.package) --ignore-scripts *> (Join-Path $kwBackup operation.log)
+   if($LASTEXITCODE -ne 0){throw 'DSH plugin add failed.'}
   }
+  if(-not (Test-KwFiles $kwInstalledRoot $kwManifest.pluginFiles)){throw 'Installed package differs from target bundle.'}
   $kwOwnConfig | Add-Member rendererEnabled $true -Force
   $kwOwnConfig | Add-Member assetDirectory $AssetDirectory -Force
   $kwOwnConfig | Add-Member runtimePath $RuntimePath -Force
   $kwOwnConfig | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath ($kwOwnConfigPath+'.new')
   Move-Item -LiteralPath ($kwOwnConfigPath+'.new') -Destination $kwOwnConfigPath -Force
+ }else{
+  $kwMutationStarted=$true
+  & $kwCli plugin --profile desktop remove dsh-kurowhale-pet *> (Join-Path $kwBackup operation.log)
+  if($LASTEXITCODE -ne 0){throw 'DSH plugin remove failed.'}
+  $kwAfter=Get-Content -LiteralPath (Join-Path $kwProfile package.json) -Raw | ConvertFrom-Json
+  if($null -ne $kwAfter.dependencies.'dsh-kurowhale-pet'){throw 'Plugin remains in dependencies after remove.'}
  }
- [pscustomobject]@{result='plugin-operation-finished';action=$Action;version=$kwManifest.version;backup=$kwBackup;next='Start DSH Desktop and verify actual UI/pet. This output is not desktop acceptance.'} | ConvertTo-Json
+ [pscustomobject]@{result=if($kwAlreadyCurrent){'already-current-verified'}else{'plugin-operation-finished'};action=$Action;previousVersion=$kwOldVersion;version=$kwManifest.version;backup=$kwBackup;next='Start DSH Desktop and verify actual UI/pet. This output is not desktop acceptance.'} | ConvertTo-Json
 }catch{
- # Roll back plugin package through the same official CLI. Never reset a profile.
- $kwRecovered=$false
- if($kwInstalledBefore -and (Test-Path -LiteralPath (Join-Path $kwOldCopy package.json))){
-  & $kwCli plugin --profile desktop add $kwOldCopy --ignore-scripts *> (Join-Path $kwBackup rollback.log)
-  $kwRecovered=($LASTEXITCODE -eq 0)
- }elseif(-not $kwInstalledBefore){
-  & $kwCli plugin --profile desktop remove dsh-kurowhale-pet *> (Join-Path $kwBackup rollback.log)
-  $kwRecovered=($LASTEXITCODE -eq 0)
+ $kwCause=$_.Exception.Message
+ $kwRecovered=(-not $kwMutationStarted)
+ if($kwMutationStarted){
+  & $kwCli plugin --profile desktop remove dsh-kurowhale-pet *> (Join-Path $kwBackup rollback-remove.log)
+  if($kwInstalledBefore){
+   & $kwCli plugin --profile desktop add $kwOldCopy --ignore-scripts *> (Join-Path $kwBackup rollback.log)
+   $kwRecovered=($LASTEXITCODE -eq 0 -and (Test-KwFiles $kwInstalledRoot ([pscustomobject]$kwOldHashes)))
+  }else{
+   $kwCurrent=Get-Content -LiteralPath (Join-Path $kwProfile package.json) -Raw | ConvertFrom-Json
+   $kwRecovered=($null -eq $kwCurrent.dependencies.'dsh-kurowhale-pet')
+  }
  }
  if(Test-Path -LiteralPath (Join-Path $kwBackup pet-local.json)){Copy-Item -LiteralPath (Join-Path $kwBackup pet-local.json) -Destination $kwOwnConfigPath -Force}
- throw ('Plugin operation failed. Official-CLI rollback success='+$kwRecovered+'. Backup: '+$kwBackup+'. No model settings were parsed or reset. Keep DSH closed if rollback failed; follow docs/WINDOWS-INSTALL.md.')
+ throw ('Plugin operation failed: '+$kwCause+'. Rollback verified='+$kwRecovered+'. Backup: '+$kwBackup+'. Keep DSH closed if rollback failed; follow docs/WINDOWS-INSTALL.md.')
 }finally{$env:npm_config_ignore_scripts=$kwPriorIgnore}
