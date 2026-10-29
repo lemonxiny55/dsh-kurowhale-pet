@@ -11,6 +11,7 @@ for($kwI=0;$kwI -lt $Seconds;$kwI++){
  $kwStart=Get-Date
  try {
   $kwStatus=Get-Content -LiteralPath $kwStatusPath -Raw | ConvertFrom-Json
+  if(((Get-Date)-(Get-Item -LiteralPath $kwStatusPath).LastWriteTime).TotalSeconds -gt 5){throw 'Stale pet status; not a live measurement'}
   $kwProcesses=@(Get-CimInstance Win32_Process | Select-Object ProcessId,ParentProcessId,Name,CreationDate)
   $kwById=@{};foreach($kwProcess in $kwProcesses){$kwById[[int]$kwProcess.ProcessId]=$kwProcess}
   $kwNative=[Collections.Generic.HashSet[int]]::new()
@@ -39,4 +40,4 @@ for($kwI=0;$kwI -lt $Seconds;$kwI++){
  $kwRemaining=1000-((Get-Date)-$kwStart).TotalMilliseconds
  if($kwRemaining -gt 0){Start-Sleep -Milliseconds ([int]$kwRemaining)}
 }
-Write-Output 'Sampling finished. CPU is measured from process CPU-time deltas; aggregate working sets can count shared pages more than once.'
+Write-Output 'Sampling finished. CPU uses process CPU-time deltas. Working sets may count shared pages repeatedly; privateMiB is private committed memory, not private resident memory.'

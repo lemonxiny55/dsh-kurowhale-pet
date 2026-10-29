@@ -1,6 +1,6 @@
 # KuroWhale Windows 功能候选 / Windows functional candidate
 
-Target: **Windows / DSH Desktop 0.2.1-rc.3 / Neutralino 6.9.0**. Version: **0.1.0-rc.1**. This is a local development candidate, not a published release. No legacy DSH frontend imports or `dsh.client` entrypoint.
+Target: **Windows / DSH Desktop 0.2.1-rc.3 / Neutralino 6.9.0**. Version: **0.1.0-rc.2** (release-engineering revision of the tested rc.1). This is a local candidate, not a published release. No legacy DSH frontend imports or `dsh.client` entrypoint.
 
 ## 已验收 / Qualified scope
 
@@ -83,6 +83,8 @@ Restart and verify the original plugin list. If startup fails, restore the priva
 
 ## 授权与限制 / Licensing and limits
 
-Artwork redistribution permission remains unconfirmed. No character assets, model configurations or credentials are included. The tiny tray K icon is a new utility icon, not character art. The repository's own code license has not been selected. The included MIT notice applies specifically to official `@neutralinojs/lib@6.9.0`, not the whole repository or artwork.
+Original code and the generic K icon are MIT by the owner's explicit 2026-10-29 decision; see LICENSE and THIRD_PARTY_NOTICES.md. Artwork redistribution remains unconfirmed, including the upstream online reference used for the ChatGPT-generated illustration. No character assets, model configurations or credentials are bundled. Official `@neutralinojs/lib@6.9.0` retains its own original MIT notice. External Neutralino/WebView2/DSH executables follow their separate terms.
+
+For the reproducible code-only Windows bundle, preflight, install, uninstall and rollback, use [Windows installation](../docs/WINDOWS-INSTALL.md). [Pre-release report](../docs/PRE-RELEASE-2026-10-29.md) records actual soak duration, memory definitions, real service-error testing and untested environments. A clean unpacking test does not qualify a fresh Windows user or clean OS.
 
 Qualified on the tested Windows machine at 150% DPI. Other DSH versions, cross-monitor mixed DPI, long-duration soak testing, and other operating systems remain unqualified. No voice, progression system or games are added.

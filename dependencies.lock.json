@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "shippedComponents": [
+    {
+      "name": "@neutralinojs/lib",
+      "version": "6.9.0",
+      "license": "MIT",
+      "source": "https://registry.npmjs.org/@neutralinojs/lib/-/lib-6.9.0.tgz",
+      "sha256": {
+        "plugin/native/neutralino.js": "7e9d355ee2e0a0284e4f726b09ed5d7e602b657eacd488b011a6eb390f2a7923",
+        "plugin/native/LICENSE-neutralinojs.txt": "2f83c47ebea99764afe0e8177b28e0eae15b10e99f49daddd2f9cafeec42055c"
+      }
+    }
+  ],
+  "npmRuntimeDependencies": [],
+  "externalPrerequisites": [
+    {
+      "name": "DSH Desktop",
+      "version": "0.2.1-rc.3",
+      "bundled": false
+    },
+    {
+      "name": "Neutralino Windows x64",
+      "version": "6.9.0",
+      "bundled": false,
+      "download": "https://github.com/neutralinojs/neutralinojs/releases/download/v6.9.0/neutralinojs-v6.9.0.zip",
+      "archiveSha256": "ff33dd68979cffc36e4e7e73d1bab4cbcdf2c036aad72ca32876fde51a32df14",
+      "exeSha256": "0eecd0c7f6c955b441e586def6e89c27c295f144d6d9061dd358c3f3907ff3b3"
+    },
+    {
+      "name": "Microsoft Edge WebView2 Runtime",
+      "version": "machine-installed Evergreen",
+      "bundled": false,
+      "license": "Microsoft applicable terms; not MIT"
+    },
+    {
+      "name": "Node.js",
+      "version": ">=22.18.0; 24 recommended",
+      "bundled": false
+    },
+    {
+      "name": "PowerShell",
+      "version": "7.x",
+      "bundled": false
+    },
+    {
+      "name": "Python",
+      "version": ">=3.10; build only",
+      "bundled": false
+    }
+  ],
+  "artworkProcessingToolsNotBundled": [
+    {
+      "name": "Pillow",
+      "observedLocalVersion": "12.3.0",
+      "license": "MIT-CMU"
+    },
+    {
+      "name": "NumPy",
+      "observedLocalVersion": "2.3.5",
+      "license": "BSD-3-Clause; bundled dependency notices also apply if redistributed"
+    },
+    {
+      "name": "SciPy",
+      "observedLocalVersion": "1.16.3",
+      "license": "BSD-3-Clause; bundled dependency notices also apply if redistributed"
+    }
+  ]
+}

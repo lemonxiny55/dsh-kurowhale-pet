@@ -33,3 +33,8 @@ artwork-drafts/
 /DSH-KuroWhale-Pet*.zip*
 /package_delivery.py
 *.tgz
+
+# Local DSH indexing and Python bytecode
+.dsh-code-index/
+__pycache__/
+*.pyc

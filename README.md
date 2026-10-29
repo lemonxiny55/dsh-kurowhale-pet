@@ -1,6 +1,6 @@
 # DSH KuroWhale Pet 🐳
 
-> **2026-10-28 MVP 验收：** 开发分支提供 Windows `0.1.0-rc.1` 功能候选。九动画、交互、真实工具/审批与并发优先级已在当前 DSH Desktop 0.2.1-rc.3 验证；详情见 [MVP 实测报告](docs/WINDOWS-MVP-ACCEPTANCE-2026-10-28.md) 和 [本地使用说明](plugin/README.md)。美术授权及长期稳定性验收仍待完成，未公开发布角色包。
+> **发布前收尾 / Pre-release:** Windows `0.1.0-rc.2`，目标 DSH Desktop 0.2.1-rc.3。代码现为 MIT；美术来源与再分发权仍阻断完整公开发行。见 [发布前报告](docs/PRE-RELEASE-2026-10-29.md)、[Windows 安装与恢复](docs/WINDOWS-INSTALL.md)、[授权审查](docs/ASSETS_AND_LICENSE.md)。没有发布 Release 或 npm。
 >
 > Windows functional candidate for Desktop rc3. See the direct test report and local instructions; this is not a published release. Artwork remains private and separately licensed.
 
@@ -16,7 +16,7 @@ DSH KuroWhale Pet is an experimental unofficial desktop companion for DeepSeek H
 
 ## ✨ 功能范围 / Scope
 
-- 🐳 **Q 版原创角色 / Chibi character** — 黑白鲸鱼女仆形象，独立的卡通鲸鱼徽章。
+- 🐳 **Q 版角色 / Chibi character** — 黑白鲸鱼女仆；上游参考图权利尚未核清，暂不公开分发。
 - 🖥️ **桌面悬浮 / Desktop overlay** — 透明窗口、拖动、缩放、隐藏及位置记忆（首发优先 Windows）。
 - 🎞️ **状态动画 / State animations** — 待机、工作、等待审批、完成和失败。
 - 🔔 **DSH 状态联动 / Agent status integration** — 根据可靠的宿主事件切换动画与提醒。
@@ -41,7 +41,7 @@ DSH KuroWhale Pet is an experimental unofficial desktop companion for DeepSeek H
 
 ## 🧩 开发与安装 / Development and installation
 
-本地功能候选与安装/恢复步骤见 [插件说明](plugin/README.md)。渲染需要自己的配置显式启用，角色资源和官方运行时单独准备。
+推荐从代码安装包按 [Windows 安装教程](docs/WINDOWS-INSTALL.md) 操作；先 Check、结束任务并退出 Desktop，再 Install。包内无角色美术和运行时 exe。构建脚本固定文件清单与时间，可重复生成相同字节。新用户仍须自行提供有权使用的角色包和官方运行时。
 
 See the plugin instructions for local packaging and recovery. Rendering requires explicit local opt-in; provide character assets and the official runtime separately.
 
@@ -53,7 +53,7 @@ The code and character artwork may have different licenses. Do **not** assume an
 
 在定稿与权利核对完成前，不上传未授权的第三方角色素材。详见 [素材与授权规范 / Asset policy](docs/ASSETS_AND_LICENSE.md)。
 
-The final license for this repository's code has **not been selected yet**. This README is not a license grant.
+Original code, tests, scripts, documentation and the generic K tray icon are [MIT](LICENSE), as explicitly selected by the owner on 2026-10-29. Artwork remains reserved pending upstream clearance and a separate license decision. See [third-party notices](THIRD_PARTY_NOTICES.md) and [dependency inventory](dependencies.lock.json). No artwork grant is implied.
 
 ## ⚠️ 非官方声明 / Unofficial project
 
