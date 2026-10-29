@@ -23,3 +23,7 @@ KuroWhale 是免费、非官方的社区二创桌宠。我们感谢鲸鱼娘社�
 本项目未获 DeepSeek 官方或相关作者背书。如原作者发现来源、署名或授权问题，欢迎通过 [GitHub Issue](https://github.com/lemonxiny55/dsh-kurowhale-pet/issues) 联系我们，我们愿意核实并更正。
 
 English: The owner found the blue-and-white reference through Google Images and used ChatGPT to help create KuroWhale. The image closely resembles dsh-pet's character, but its direct source and author are unknown. Shangshan Wuxing and ZipZipPipe are acknowledged as upstream community creators, not as directly used source illustrations. Attribution does not itself grant redistribution rights.
+
+## 许可 / License
+
+项目所有者依据 dsh-pet 公开的非商业二创说明推进发行；没有声称获得任何第三方单独授权。本项目有权授权的新增美术贡献采用 [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode)，须署名、注明修改、非商业使用并以相同或兼容许可分享；不重新授权第三方独立作品。具体参考图作者和授权范围仍未完全确认。参考原图不在发行包内。

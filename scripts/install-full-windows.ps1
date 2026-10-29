@@ -9,7 +9,7 @@ param(
 $ErrorActionPreference='Stop'
 $root=[IO.Path]::GetFullPath($PSScriptRoot)
 $manifest=Get-Content -LiteralPath (Join-Path $root 'full-bundle-manifest.json') -Raw | ConvertFrom-Json
-if($manifest.name -ne 'dsh-kurowhale-pet-full-private' -or $manifest.artworkIncluded -ne $true -or $manifest.version -ne '0.1.0'){throw 'Invalid full pack manifest.'}
+if($manifest.name -ne 'dsh-kurowhale-pet-full' -or $manifest.artworkIncluded -ne $true -or $manifest.version -ne '0.1.0'){throw 'Invalid full pack manifest.'}
 foreach($entry in $manifest.files.PSObject.Properties){
  $file=[IO.Path]::GetFullPath((Join-Path $root $entry.Name))
  if(-not $file.StartsWith($root.TrimEnd('\','/')+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)){throw 'Invalid path in full pack manifest.'}

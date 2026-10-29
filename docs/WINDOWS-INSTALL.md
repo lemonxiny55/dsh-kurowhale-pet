@@ -1,7 +1,7 @@
 # Windows 安装与恢复 / Windows installation and recovery
 
 目标：Windows x64、DSH Desktop **0.2.1-rc.3**、PowerShell 7、Node >=22.18.0（推荐 24）。
-代码候选包**不含美术或运行时 exe**。现有美术未清权；公众还不能取得完整可用的 KuroWhale 美术发行包。
+代码子包**不含美术或运行时 exe**；完整 Windows 包另含角色图集，运行时须单独取得。参考图来源及授权不确定性见 [素材与授权说明](ASSETS_AND_LICENSE.md)。
 
 仅支持当前用户的默认 `~/.dsh/profiles/desktop`。自定义 DSH_HOME 会明确拒绝，避免误改错误目录；不自动迁移 profile。
 
