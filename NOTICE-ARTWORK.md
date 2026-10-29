@@ -4,7 +4,7 @@ KuroWhale 是免费、非官方的社区二创桌宠。我们感谢鲸鱼娘社�
 
 ## 参考与社区来源
 
-项目所有者最初通过 **Google 图片搜索**偶然找到一张蓝白 Q 版鲸鱼娘图片，随后使用 ChatGPT 参考该图片，AI 辅助生成黑白 Q 版 KuroWhale，再制作图集、动画和 DSH 桌宠。直接图片作者及原始发布页面尚未确定。
+项目所有者最初通过 **Google 图片搜索**偶然找到一张蓝白 Q 版鲸鱼娘图片，随后参考该图片，使用 AI 辅助生成黑白 Q 版 KuroWhale，再制作图集、动画和 DSH 桌宠。直接图片作者及原始发布页面尚未确定。
 
 后续比较发现，该参考图与 [PC2005-cloud/dsh-pet](https://github.com/PC2005-cloud/dsh-pet) 的角色高度相似，尤其是[待机呼吸](https://github.com/PC2005-cloud/dsh-pet/blob/e821ddccdef5dd24c2663c163e0b62d15b0646a5/dsh-pet/assets/webm/%E5%BE%85%E6%9C%BA%E5%91%BC%E5%90%B8%E4%BC%91%E9%97%B2.webm)与[漂浮踏步](https://github.com/PC2005-cloud/dsh-pet/blob/e821ddccdef5dd24c2663c163e0b62d15b0646a5/dsh-pet/assets/webm/%E5%8E%9F%E5%9C%B0%E6%BC%82%E6%B5%AE%E8%B8%8F%E6%AD%A5.webm)的开头画面。KuroWhale 的设计可能受到该项目及相关社区 Q 版素材影响；这不是参考图直接出自该项目或与某一帧完全相同的证明。感谢 PC2005-cloud/dsh-pet 及其贡献者。
 
@@ -22,7 +22,7 @@ KuroWhale 是免费、非官方的社区二创桌宠。我们感谢鲸鱼娘社�
 
 本项目未获 DeepSeek 官方或相关作者背书。如原作者发现来源、署名或授权问题，欢迎通过 [GitHub Issue](https://github.com/lemonxiny55/dsh-kurowhale-pet/issues) 联系我们，我们愿意核实并更正。
 
-English: The owner found the blue-and-white reference through Google Images and used ChatGPT to help create KuroWhale. The image closely resembles dsh-pet's character, but its direct source and author are unknown. Shangshan Wuxing and ZipZipPipe are acknowledged as upstream community creators, not as directly used source illustrations. Attribution does not itself grant redistribution rights.
+English: The owner found the blue-and-white reference through Google Images and used AI tools to help create KuroWhale. The image closely resembles dsh-pet's character, but its direct source and author are unknown. Shangshan Wuxing and ZipZipPipe are acknowledged as upstream community creators, not as directly used source illustrations. Attribution does not itself grant redistribution rights.
 
 ## 许可 / License
 
