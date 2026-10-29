@@ -1,47 +1,37 @@
 # DSH KuroWhale Pet 🐳
 
-<p align="center"><img src="docs/images/kurowhale-preview.webp" alt="KuroWhale 桌宠角色预览 / KuroWhale character preview" width="300"></p>
+<p align="center"><img src="docs/images/kurowhale-preview.png" alt="KuroWhale 鲸鱼娘桌宠" width="220"></p>
 
-参考 **DeepSeek Harness 图标视觉元素**设计的鲸鱼娘桌宠，让 DSH Agent 的运行状态在 Windows 桌面上变得可见。支持九种动画状态、透明悬浮窗口、拖拽缩放、菜单与托盘操作。
+**参考 DeepSeek Harness 官方图标设计的鲸鱼娘桌宠**，让 DSH Agent 的运行状态在 Windows 桌面上生动呈现。
 
-An unofficial Windows desktop companion inspired by the visual style of the **DeepSeek Harness icon**, with animated reactions to DSH Agent activity.
+[下载 Windows v0.1.0 完整版](https://github.com/lemonxiny55/dsh-kurowhale-pet/releases/download/v0.1.0/DSH-KuroWhale-0.1.0-Windows.zip) · [npm 包](https://www.npmjs.com/package/dsh-kurowhale-pet) · [安装指南](docs/WINDOWS-FULL-INSTALL.md)
 
-**[⬇ 下载 Windows v0.1.0 正式版](https://github.com/lemonxiny55/dsh-kurowhale-pet/releases/tag/v0.1.0)** · [安装指南](docs/WINDOWS-FULL-INSTALL.md) · [技术验收](docs/TECHNICAL-ACCEPTANCE-0.1.0.md)
+> 免费、非官方社区项目，与 DeepSeek 官方及相关创作者无关联，也未获得其背书。
 
-> 免费、非官方社区项目，非 DeepSeek 官方产品。已验证 Windows x64 和 DSH Desktop 0.2.1-rc.3；使用条件和其他验证限制详见安装指南。
+## 功能
 
-## ✨ 功能范围 / Scope
+- 九种动画状态，响应 Agent 工作、审批、完成和失败等事件。
+- 透明桌面悬浮窗口，支持拖动、缩放、隐藏、置顶和位置记忆。
+- 右键菜单与系统托盘，方便管理和恢复桌宠。
 
-- 🐳 **桌宠形象 / Character** — 参考 DeepSeek Harness 图标的视觉元素，并结合鲸鱼娘社区的创作灵感；来源与许可见下文。
-- 🖥️ **桌面悬浮 / Desktop overlay** — 透明窗口、拖动、缩放、隐藏及位置记忆（首发优先 Windows）。
-- 🎞️ **状态动画 / State animations** — 待机、工作、等待审批、完成和失败。
-- 🔔 **DSH 状态联动 / Agent status integration** — 根据可靠的宿主事件切换动画与提醒。
-- 📦 **独立角色包 / Separate character pack** — 尽量让美术资源与插件引擎解耦。
+## 下载与安装
 
-> 已验证环境为 Windows x64、DSH Desktop 0.2.1-rc.3；混合 DPI、其他宿主版本和长期运行尚未充分验证。
+**Windows 完整版**包含角色素材、插件与安装工具。[下载 ZIP](https://github.com/lemonxiny55/dsh-kurowhale-pet/releases/download/v0.1.0/DSH-KuroWhale-0.1.0-Windows.zip)，解压后按[完整安装指南](docs/WINDOWS-FULL-INSTALL.md)操作；也可在 [Release 页面](https://github.com/lemonxiny55/dsh-kurowhale-pet/releases/tag/v0.1.0)获取 SHA-256 校验文件。
 
-## 🧩 开发与安装 / Development and installation
+需要 Windows x64、DSH Desktop 0.2.1-rc.3、PowerShell 7、Node.js 22.18.0 或以上、WebView2，以及单独取得的官方 Neutralino 6.9.0 x64。先执行安装检查，结束任务并退出 DSH 后再安装。其他 DSH 版本、混合 DPI 和长期运行尚未充分验证，详见[技术验收](docs/TECHNICAL-ACCEPTANCE-0.1.0.md)。
 
-完整 Windows ZIP 包含角色图集、插件和安装工具；请阅读 [完整包安装说明](docs/WINDOWS-FULL-INSTALL.md)。需要预装 DSH Desktop、PowerShell 7、Node.js、WebView2 和单独取得的官方 Neutralino 运行时。先 Check，结束任务并退出 Desktop 后再 Install。
+**npm 包** `dsh-kurowhale-pet@0.1.0` 包含插件与角色素材：
 
-## 🎨 角色来源与许可 / Artwork and licensing
+```powershell
+npm install dsh-kurowhale-pet@0.1.0
+```
 
-KuroWhale 的桌宠视觉设计参考了 DeepSeek Harness 图标的视觉元素；创作期间也通过 Google 图片搜索找到蓝白 Q 版鲸鱼娘参考图，随后使用 AI 辅助设计角色并制作动画与桌宠。它并非完全从零原创。参考图与 [PC2005-cloud/dsh-pet](https://github.com/PC2005-cloud/dsh-pet) 的待机呼吸和漂浮踏步动画形象高度相似，KuroWhale 的设计可能受到该项目及相关社区素材影响，但尚不能确认图片直接出自该项目。感谢该项目和社区创作者的贡献；直接图片作者及原始发布页仍待核实。完整来源与改动见 [美术署名](NOTICE-ARTWORK.md)。
+npm 安装不会自动启用桌宠。需要在 DSH 中安装插件，并在 `~/.dsh/kurowhale-pet/local.json` 中启用渲染、指定包内 `character` 目录和官方 Neutralino 路径；参见 [npm 包说明](https://www.npmjs.com/package/dsh-kurowhale-pet)。希望使用完整安装工具的用户请优先选择 Windows ZIP。
 
-感谢原型「溟月」的 [上善无形](https://space.bilibili.com/4456176)、dsh-pet 所述女仆鲸鱼娘二次设计者 [ZipZipPipe](https://space.bilibili.com/4168597) 和其他社区创作者。KuroWhale 自身的黑白配色、细节调整、图集与动画是 AI 辅助和后续加工的改编贡献；参考原图不包含在发行包中。
+## 角色来源与许可
 
-代码采用 [MIT](LICENSE)；项目有权授权的新增角色美术贡献采用 [CC BY-NC-SA 4.0](LICENSE-ARTWORK)，要求署名、注明修改、非商业使用及相同方式共享。此许可不重新授权第三方独立作品；参考图的原作者及授权范围尚未完全确认。详见 [素材与授权规范](docs/ASSETS_AND_LICENSE.md) 和 [第三方通知](THIRD_PARTY_NOTICES.md)。
+角色通过 **AI 辅助创作**并加工为动画。创作参考包括通过 Google 图片搜索找到的鲸鱼娘图片；该图片与 [PC2005-cloud/dsh-pet](https://github.com/PC2005-cloud/dsh-pet) 的角色高度相似，但其具体作者、原始发布页和授权范围尚未完全确认。参考原图不包含在发行包内。
 
-如果原作者发现来源、署名或授权有误，欢迎通过 [GitHub Issue](https://github.com/lemonxiny55/dsh-kurowhale-pet/issues) 联系我们，我们愿意核实并更正。
+感谢 [PC2005-cloud/dsh-pet](https://github.com/PC2005-cloud/dsh-pet) 及社区创作者，包括原型「溟月」的[上善无形](https://space.bilibili.com/4456176)、dsh-pet 所述女仆鲸鱼娘二次设计者 [ZipZipPipe](https://space.bilibili.com/4168597)。详细来源与改动见[美术署名](NOTICE-ARTWORK.md)。
 
-The visual design draws on the DeepSeek Harness icon, with additional reference material discovered through Google Images; the character and animation assets were created with AI assistance. It closely resembles the dsh-pet character, but its direct source and author remain unconfirmed. Code is MIT; the project licenses its own authorized artwork contributions under CC BY-NC-SA 4.0 without granting rights in third-party works. The reference image and its authorization remain unconfirmed.
-
-## ⚠️ 非官方声明 / Unofficial project
-
-本项目为社区独立开发的非官方作品，未获得 DeepSeek 官方或相关作者的关联、赞助或背书。DeepSeek 和 DeepSeek Harness 名称仅用于说明目标兼容环境。请勿使用官方 Logo 作为本项目品牌标识。
-
-This is an independent community project and is **not affiliated with, sponsored by, or endorsed by DeepSeek or the related creators**. The names DeepSeek and DeepSeek Harness are mentioned only to describe the intended compatibility target.
-
----
-
-**Repository:** [lemonxiny55/dsh-kurowhale-pet](https://github.com/lemonxiny55/dsh-kurowhale-pet)
+代码采用 [MIT](LICENSE)；项目有权授权的新增美术贡献采用 [CC BY-NC-SA 4.0](LICENSE-ARTWORK)，要求署名、注明修改、非商业使用及相同方式共享，不重新授权第三方独立作品。来源或授权问题欢迎通过 [Issue](https://github.com/lemonxiny55/dsh-kurowhale-pet/issues) 联系。
