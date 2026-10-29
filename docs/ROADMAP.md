@@ -1,3 +1,5 @@
+> 2026-10-28：本机 Windows MVP 功能候选已完成实测，当前结果见 [验收报告](WINDOWS-MVP-ACCEPTANCE-2026-10-28.md)。以下路线图为规划背景，公开发行仍受授权和后续验证限制。
+
 # KuroWhale 开发路线图 / Development roadmap
 
 ## 目标 / Goal

@@ -1,0 +1,10 @@
+# Reproducible source exports across Windows and Unix checkouts.
+* text=auto eol=lf
+*.png -text
+*.webp -text
+*.gif -text
+*.zip -text
+*.tgz -text
+# Preserve the official vendored bytes and its original notice exactly.
+plugin/native/neutralino.js -text
+plugin/native/LICENSE-neutralinojs.txt -text

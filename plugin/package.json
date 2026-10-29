@@ -1,15 +1,22 @@
 {
   "name": "dsh-kurowhale-pet",
-  "version": "0.0.1-dev.0",
+  "version": "0.1.0",
   "private": true,
-  "description": "Backend-only compatibility smoke test for DSH KuroWhale Pet. Not a working pet.",
+  "license": "MIT",
+  "description": "Host-only Windows KuroWhale overlay development build for DSH Desktop rc3.",
   "type": "module",
   "main": "./index.js",
-  "files": ["index.js", "cordis.patch.yml"],
+  "exports": {
+    ".": "./index.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": ["index.js", "animations.js", "overlay.js", "native/", "cordis.patch.yml", "LICENSE", "THIRD_PARTY_NOTICES.md"],
   "scripts": {
     "test": "node --test"
   },
   "engines": {
+    "node": ">=22.18.0",
     "dsh": "0.2.1-rc.3"
   },
   "dsh": {

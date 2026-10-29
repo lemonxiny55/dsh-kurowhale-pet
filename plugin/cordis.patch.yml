@@ -1,5 +1,5 @@
 # Initial *host-only* Cordis bundle. Does not load any client/frontend modules.
-# Do not enable on a production Desktop profile before isolated smoke testing.
+# Local acceptance is authorized against Desktop 0.2.1-rc.3 with a backup.
 - insert:
     - id: kurowhale-host
       name: dsh-kurowhale-pet
