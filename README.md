@@ -1,8 +1,8 @@
 # DSH KuroWhale Pet 🐳
 
-> **发布前收尾 / Pre-release:** Windows `0.1.0-rc.2`，目标 DSH Desktop 0.2.1-rc.3。代码现为 MIT；美术来源与再分发权仍阻断完整公开发行。见 [发布前报告](docs/PRE-RELEASE-2026-10-29.md)、[Windows 安装与恢复](docs/WINDOWS-INSTALL.md)、[授权审查](docs/ASSETS_AND_LICENSE.md)。没有发布 Release 或 npm。
+> **技术定版 / Technical readiness:** Windows `0.1.0` 面向 DSH Desktop 0.2.1-rc.3，在已记录的本机范围内技术正式版准备就绪。现有美术的再分发权利尚未确认，完整包仅保留本地，尚未公开发行。详见 [最终技术验收](docs/TECHNICAL-ACCEPTANCE-0.1.0.md)、[完整包安装说明](docs/WINDOWS-FULL-INSTALL.md) 和 [授权审查](docs/ASSETS_AND_LICENSE.md)。
 >
-> Windows functional candidate for Desktop rc3. See the direct test report and local instructions; this is not a published release. Artwork remains private; its proposed license is not yet in effect.
+> Windows 0.1.0 is technically ready within the documented local scope. Artwork redistribution rights remain unresolved; the complete pack is private and has not been released.
 
 **黑白 Q 版鲸鱼娘桌宠 / Black-and-white chibi whale desktop pet**
 
