@@ -1,77 +1,23 @@
 # 角色素材与授权规范 / Asset and licensing policy
 
-## 当前状态 / Current status
-2026-10-29：所有者明确决定“代码采用 MIT，美术稍后决定”。插件、脚本、测试、文档和通用 K 托盘图标由根目录 LICENSE 覆盖。美术未获公开分发许可，不得上传公开仓库。第三方组件单独见 THIRD_PARTY_NOTICES.md。
+## 当前许可边界 / Current status
 
-Original code is MIT; artwork remains reserved pending clearance. This document grants no artwork license.
+- **原创程序代码：** [MIT](../LICENSE)。插件、脚本、测试、文档和通用 K 托盘图标按其适用范围提供；第三方组件分别遵守 [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md) 中的许可。
+- **角色美术：** 拟对有权授权的 KuroWhale 新增美术贡献采用 CC BY-NC-SA 4.0；[LICENSE-ARTWORK](../LICENSE-ARTWORK) 仅为**待生效草案**，目前不授予公开使用或再分发许可。
+- **上游形象与参考图：** 与代码和本项目新增贡献分开核查。直接 Q 版参考图的作者、原始发布页及完整授权链未确认；[署名记录](../NOTICE-ARTWORK.md)不是许可证明。公开署名不等于获得改编或再分发许可。
 
-## 基本原则 / Principles
-1. 只提交有权发布的素材；记录原图、修改、生成过程与使用工具。
-2. 第三方代码和素材的授权分开核查；保留需要的版权和许可证声明。
-3. 不使用 DeepSeek 官方 Logo 或容易使用户误认为得到官方认可的标识。
-4. 若使用 MIT 代码，保留其原有版权和许可通知；检查各依赖的许可与义务。
-5. 不把工作图、未经定稿素材、凭据或私人数据直接推送到公开仓库。
-6. 正式发布前按目标地区和发布方式检查可能涉及的版权、商标及商业使用风险。
+CC BY-NC-SA 4.0 原则上允许符合条款的非商业分享与改编，要求适当署名、链接许可并说明修改；演绎贡献须按相同或兼容许可分享，且不授予商业使用许可。具体以 [Creative Commons 法律文本](https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode)为准；即使采用该许可，也不会自动获得其他权利人须另行授予的权利。
 
-## 建议的资产记录 / Suggested provenance record
-对每份素材记录：文件名、来源、作者或生成流程、生成/修改日期、许可证或授权证明、可否再分发/商用、是否需要署名、审核状态。
+## 来源及证据边界 / Provenance
 
-## 分发说明 / Distribution
-美术最终确定许可后，再分别声明原图、派生透明图、动画、精灵图和预览的权利范围。用户不能仅根据仓库公开可见或下载免费就推定美术可自由复用。
+所有者通过 Google 图片搜索找到蓝白 Q 版鲸鱼娘，使用 ChatGPT 辅助生成黑白角色，随后加工透明素材和动画。该参考图与 [PC2005-cloud/dsh-pet](https://github.com/PC2005-cloud/dsh-pet) 的待机呼吸、漂浮踏步画面高度相似；不能据此确认直接出处、精确原始帧或图片作者。社区上游创作者及本项目的改编详见 [NOTICE-ARTWORK.md](../NOTICE-ARTWORK.md)。
 
-Code and artwork have distinct terms. Public availability does not establish artwork rights.
+上游项目 README 对其动画、提示词和源视频声明非商业使用，并要求公开的衍生作品附项目地址；其形象来源和许可说明是线索，不能证明未知直接参考图和所有中间贡献均被覆盖。AI 服务的使用条款也不能替代第三方权利人的授权。此前的本地加工和验收记录不等于已清权。
 
-## 来源核查 / Provenance audit — 2026-10-29
+## 分发 / Distribution
 
-|阶段|已知事实|证据缺口|
-|---|---|---|
-|最早参考|所有者说明：浏览器找到蓝白鲸鱼娘，再用 ChatGPT 仿照生成|本地低分辨率 JPEG 已查看并记录哈希；Google 缩略图不是原作者或原作品的许可证明。作者、作品身份、原网页未知|
-|黑白候选原图|用户提供 1010×1557 PNG，上游使用 ChatGPT|具体模型、日期、完整提示词与生成对话未提供；不能说整个创作过程“未使用 AI”|
-|抠图与动画|2026-10-28 的 Pillow/NumPy/SciPy 确定性加工、局部遮罩、动作和几何道具|这个加工阶段没有 AI 补画；不能借此认定上游参考权利已清除|
-|文件溯源|生产时本地来源字节比较与后续 RGB 像素比较分别记录|像素一致不等于 PNG 文件字节一致。保留旧记录的时间范围|
-|动画完整性|原有 81 个图像文件上轮与原交付包逐字节一致|本轮不改美术，不将角色图或角色截图上传 Git|
+可公开的 MIT 代码预览不包含现有角色美术；使用者须自行提供有权使用的兼容素材。现有角色包、参考图及私人角色截图继续保留本机。公开完整角色包前，须核实直接图片和相关上游权利，确认授权范围及最终许可生效，并完成适用的发布验收。不要仅根据免费或公开可见推定素材可再分发。
 
-参考文件哈希、所有者说明及来源 URL 保存在本地私有验收目录；不公开参考图片和私人对话。同目录另两份鲸鱼标识不视作授权素材，也未加入角色包。外观比较不能独自证明权属或侵权；缺少权利证明也不能认定有公开发行权。
+如原作者发现来源、署名或授权有问题，欢迎通过 [GitHub Issue](https://github.com/lemonxiny55/dsh-kurowhale-pet/issues) 联系，我们愿意核实并更正。项目未获 DeepSeek 官方或相关作者背书。
 
-[OpenAI 使用条款](https://openai.com/policies/terms-of-use/)安排用户与 OpenAI 之间的输出权利，并要求用户拥有输入所需权利；它不是第三方角色权利的许可或保证。还须按实际生成时间、地区及服务核对适用条款。
-
-## 授权方案建议，尚未生效 / Proposed art options, NOT grants
-
-|方案|可允许的范围|需接受的条件|
-|---|---|---|
-|代码 MIT（已决定）|使用、修改、再分发及商用|保留版权和许可；不扩展到美术|
-|美术 CC BY 4.0（候选）|署名、注明修改后分享/改编，包含商用|不能追加禁止商用条件|
-|美术 CC BY-NC 4.0（候选）|署名的非商业分享和改编|非商业不等于免费下载；整套素材不能宣传为无条件开源|
-|独立角色使用许可（候选）|明确允许公众免费下载安装/运行，另约定镜像、改编、直播展示与商用|需要有权授权者签署清晰条款；“保留全部权利”本身没有授予下载分发许可|
-
-方案只在上游参考权利已经核清、许可人有权授权的范围内成立。官方说明：[MIT](https://opensource.org/license/mit)、[CC BY](https://creativecommons.org/licenses/by/4.0/)、[CC BY-NC](https://creativecommons.org/licenses/by-nc/4.0/)、[许可选择](https://creativecommons.org/chooser/)。限制代码商用不符合 [OSI 开源定义](https://opensource.org/osd)。**没有替所有者选择任何美术许可。**
-
-最短路径：找到参考作者/作品页并取得改编和公开再分发许可 → 保存权利凭证 → 权利人决定美术许可及署名 → 为最终美术包记录条款、版本和哈希 → 验证下载后的全套安装。若无法清权，另行委托有完整来源记录的原创设计；本轮不自动替换。
-
-现在可准备 MIT 代码包，使用者自行提供合法兼容美术；不能称为已清权的 KuroWhale 完整发行包。
-
-## 本轮找到的来源线索，尚非完整授权链 / New leads, not clearance
-
-进一步检索发现相关社区形象的公开来源链条线索。原角色创作者“上善无形”的
-[2026-08-02 原始动态](https://www.bilibili.com/opus/1231977657712771073)
-明确声明该动态内容采用 CC BY-NC-SA 4.0。这证明该发布内容存在许可声明，
-**尚不能证明用户提供的这张 360×555 Q 版参考图就是该作品或覆盖其后续所有改编**。
-参考 JPEG 没有 EXIF 作者信息。
-
-另有公开衍生项目记录“上善无形 → ZipZipPipe → 后续 Q 版加工”的线索；
-[YunYueSama 的素材说明](https://github.com/YunYueSama/codex-deepseek-pet/blob/main/ASSET_LICENSE.md)
-也明确保留社区参考图的权利缺口，不能把其自定义项目许可扩展到未清权参考图。
-ZipZipPipe 的具体原发布页在本轮访问受限，精确 Q 版来源与中间作者尚未确认。
-
-若最终确认参考受 [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
-约束，公开演绎贡献还须满足署名、非商业与相同方式共享等适用条件，不能任意
-改选上表的 CC BY 或自定义限制；除非另获相关权利人授权。现阶段仍不为本包
-自动应用任何美术许可证，也不因发现相近角色的许可而宣布全套已清权。
-
-English: The owner selected MIT for original code on 2026-10-29. The illustration was generated with ChatGPT using an online blue-and-white character reference. Its author's identity and adaptation/redistribution permission remain unknown. Later cutout/animation work used no generative redraw; that limited statement does not clear the upstream reference. Keep artwork and character screenshots private until clearance and a separate explicit artwork grant. CC BY, CC BY-NC and a custom character-use license are proposals only. No license cures missing upstream rights.
-
-## 2026-10-29 补充：拟议美术方案与来源
-
-[LICENSE-ARTWORK](../LICENSE-ARTWORK) 是 CC BY-NC-SA 4.0 **待生效草案**，不授权任何现有素材的公开使用。[NOTICE-ARTWORK](../NOTICE-ARTWORK.md) 记录疑似参考项目、上游来源和本项目改编，不能将上游来源等同于直接参考。直接图片作者和再分发权利仍未确认。
-
-代码仍为 MIT；第三方组件的独立条款见 [THIRD_PARTY_NOTICES](../THIRD_PARTY_NOTICES.md)。社区鲸鱼娘形象、AI 辅助生成的黑白改编及后续动画与代码分开审查。上游项目的非商业素材声明并不能单独证明本项目参考图的出处或所有权利。完整角色包只在本机准备，不公开上传；需核对原始图片及中间作者的许可、确认最终许可范围，并完成发布门禁后才考虑发行。
+English: Original code is MIT; third-party components retain their own terms. CC BY-NC-SA 4.0 is proposed for authorized new artwork contributions only and is not in effect. The direct reference and full redistribution rights remain unresolved, so attribution alone does not clear the existing artwork for release.

@@ -2,7 +2,7 @@
 
 > **发布前收尾 / Pre-release:** Windows `0.1.0-rc.2`，目标 DSH Desktop 0.2.1-rc.3。代码现为 MIT；美术来源与再分发权仍阻断完整公开发行。见 [发布前报告](docs/PRE-RELEASE-2026-10-29.md)、[Windows 安装与恢复](docs/WINDOWS-INSTALL.md)、[授权审查](docs/ASSETS_AND_LICENSE.md)。没有发布 Release 或 npm。
 >
-> Windows functional candidate for Desktop rc3. See the direct test report and local instructions; this is not a published release. Artwork remains private and separately licensed.
+> Windows functional candidate for Desktop rc3. See the direct test report and local instructions; this is not a published release. Artwork remains private; its proposed license is not yet in effect.
 
 **黑白 Q 版鲸鱼娘桌宠 / Black-and-white chibi whale desktop pet**
 
@@ -10,7 +10,7 @@
 >
 > 🚧 The Windows MVP candidate passed local functional tests; public distribution and broader qualification remain pending.
 
-**DSH KuroWhale Pet** 是一个面向 **DeepSeek Harness (DSH)** 的非官方桌宠：一只黑白配色的 Q 版鲸鱼女仆，在桌面陪伴用户，并根据 Agent 的运行状态做出反馈。
+**DSH KuroWhale Pet** 是一个面向 **DeepSeek Harness (DSH)** 的免费、非官方社区桌宠：一只黑白配色的 Q 版鲸鱼女仆，在桌面陪伴用户，并根据 Agent 的运行状态做出反馈。
 
 DSH KuroWhale Pet is an experimental unofficial desktop companion for DeepSeek Harness: a black-and-white chibi whale maid that reacts to agent activity.
 
@@ -45,21 +45,21 @@ DSH KuroWhale Pet is an experimental unofficial desktop companion for DeepSeek H
 
 See the plugin instructions for local packaging and recovery. Rendering requires explicit local opt-in; provide character assets and the official runtime separately.
 
-## 🎨 角色素材与许可 / Artwork and licensing
+## 🎨 角色来源与许可 / Artwork and licensing
 
-角色插画、动作帧、第三方素材和程序代码应分别核对并声明许可。**请勿假设代码的开源许可自动适用于美术素材。**
+KuroWhale 的蓝白 Q 版参考图最初来自 Google 图片搜索；我们使用 ChatGPT 辅助生成黑白角色，并继续制作动画和桌宠。它并非完全从零原创。参考图与 [PC2005-cloud/dsh-pet](https://github.com/PC2005-cloud/dsh-pet) 的待机呼吸和漂浮踏步动画形象高度相似，KuroWhale 的设计可能受到该项目及相关社区素材影响，但尚不能确认图片直接出自该项目。感谢该项目和社区创作者的贡献；直接图片作者及原始发布页仍待核实。完整来源与改动见 [美术署名](NOTICE-ARTWORK.md)。
 
-The code and character artwork may have different licenses. Do **not** assume an open-source code license covers images, animations, logos, or third-party assets.
+代码采用 [MIT](LICENSE)；角色美术拟采用 [CC BY-NC-SA 4.0 草案](LICENSE-ARTWORK)，要求署名、非商业使用及相同方式共享，但草案尚未生效。公开署名不等于取得许可：参考来源和完整再分发权利仍有不确定性，现有角色美术暂不公开。详见 [素材与授权规范](docs/ASSETS_AND_LICENSE.md) 和 [第三方通知](THIRD_PARTY_NOTICES.md)。
 
-在定稿与权利核对完成前，不上传未授权的第三方角色素材。详见 [素材与授权规范 / Asset policy](docs/ASSETS_AND_LICENSE.md)。
+如果原作者发现来源、署名或授权有误，欢迎通过 [GitHub Issue](https://github.com/lemonxiny55/dsh-kurowhale-pet/issues) 联系我们，我们愿意核实并更正。
 
-Original code, tests, scripts, documentation and the generic K tray icon are [MIT](LICENSE), as explicitly selected by the owner on 2026-10-29. Artwork remains reserved pending upstream clearance and a separate license decision. See [third-party notices](THIRD_PARTY_NOTICES.md) and [dependency inventory](dependencies.lock.json). No artwork grant is implied.
+The reference was found via Google Images and the character was created with ChatGPT assistance. It closely resembles the dsh-pet character, but its direct source and author remain unconfirmed. Code is MIT; the proposed CC BY-NC-SA 4.0 artwork license is not yet effective and does not establish redistribution rights.
 
 ## ⚠️ 非官方声明 / Unofficial project
 
-本项目为社区独立开发的非官方作品，与 DeepSeek 没有关联、赞助或背书关系。DeepSeek 和 DeepSeek Harness 名称仅用于说明目标兼容环境。请勿使用官方 Logo 作为本项目品牌标识。
+本项目为社区独立开发的非官方作品，未获得 DeepSeek 官方或相关作者的关联、赞助或背书。DeepSeek 和 DeepSeek Harness 名称仅用于说明目标兼容环境。请勿使用官方 Logo 作为本项目品牌标识。
 
-This is an independent community project and is **not affiliated with, sponsored by, or endorsed by DeepSeek**. The names DeepSeek and DeepSeek Harness are mentioned only to describe the intended compatibility target.
+This is an independent community project and is **not affiliated with, sponsored by, or endorsed by DeepSeek or the related creators**. The names DeepSeek and DeepSeek Harness are mentioned only to describe the intended compatibility target.
 
 ---
 
