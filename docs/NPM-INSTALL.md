@@ -1,6 +1,6 @@
 # npm 与 DSH Desktop 安装 / npm and DSH Desktop
 
-`dsh-kurowhale-pet@0.1.0` 在 npm 上包含插件和 `character/pet.json`、`character/spritesheet.webp`；它不包含 Neutralino 可执行文件，也不会自动启用渲染。`npm install` 仅安装到指定目录，不会把插件加入 Desktop profile。以下是基于官方 CLI 和已发布包结构的手动操作；npm 下载已验证，使用 npm 在全新 Desktop profile 安装并显示角色尚未实机验收。完整安装器的已验证路径见 [Windows 完整包](WINDOWS-FULL-INSTALL.md)。
+`dsh-kurowhale-pet@0.1.1` 在 npm 上包含插件和 `character/pet.json`、`character/spritesheet.webp`；它不包含 Neutralino 可执行文件，也不会自动启用渲染。`npm install` 仅安装到指定目录，不会把插件加入 Desktop profile。以下是基于官方 CLI 和已发布包结构的手动操作；npm 下载已验证，使用 npm 在全新 Desktop profile 安装并显示角色尚未实机验收。完整安装器的已验证路径见 [Windows 完整包](WINDOWS-FULL-INSTALL.md)。
 
 ## 前提与角色素材 / Prerequisites and assets
 
@@ -9,7 +9,7 @@
 选择一个长期保留的目录，将示例路径替换成自己的路径：
 
 ```powershell
-npm install --prefix 'D:\KuroWhaleAssets' --no-save --ignore-scripts dsh-kurowhale-pet@0.1.0
+npm install --prefix 'D:\KuroWhaleAssets' --no-save --ignore-scripts dsh-kurowhale-pet@0.1.1
 ```
 
 确认 `D:\KuroWhaleAssets\node_modules\dsh-kurowhale-pet\character` 包含 `pet.json` 和 `spritesheet.webp`。保留此目录，以免桌宠失去素材。
@@ -19,7 +19,7 @@ npm install --prefix 'D:\KuroWhaleAssets' --no-save --ignore-scripts dsh-kurowha
 确保 Desktop 已退出；使用 **Desktop 自带** CLI 的实际路径，不要依赖 PATH 中可能不匹配的 DSH：
 
 ```powershell
-& 'E:\DeepSeek Harness\resources\runtime\cli\bin\dsh.cmd' plugin --profile desktop add dsh-kurowhale-pet@0.1.0 --ignore-scripts
+& 'E:\DeepSeek Harness\resources\runtime\cli\bin\dsh.cmd' plugin --profile desktop add dsh-kurowhale-pet@0.1.1 --ignore-scripts
 ```
 
 上面的 `E:\DeepSeek Harness` 仅是示例，替换为实际安装目录。此命令由 CLI 转发给 profile 的包管理器；如有现存版本，先阅读完整安装器的升级与回滚说明。插件安装并不表示渲染已启用。
