@@ -69,3 +69,9 @@ ZipZipPipe 的具体原发布页在本轮访问受限，精确 Q 版来源与中
 自动应用任何美术许可证，也不因发现相近角色的许可而宣布全套已清权。
 
 English: The owner selected MIT for original code on 2026-10-29. The illustration was generated with ChatGPT using an online blue-and-white character reference. Its author's identity and adaptation/redistribution permission remain unknown. Later cutout/animation work used no generative redraw; that limited statement does not clear the upstream reference. Keep artwork and character screenshots private until clearance and a separate explicit artwork grant. CC BY, CC BY-NC and a custom character-use license are proposals only. No license cures missing upstream rights.
+
+## 2026-10-29 补充：拟议美术方案与来源
+
+[LICENSE-ARTWORK](../LICENSE-ARTWORK) 是 CC BY-NC-SA 4.0 **待生效草案**，不授权任何现有素材的公开使用。[NOTICE-ARTWORK](../NOTICE-ARTWORK.md) 记录疑似参考项目、上游来源和本项目改编，不能将上游来源等同于直接参考。直接图片作者和再分发权利仍未确认。
+
+代码仍为 MIT；第三方组件的独立条款见 [THIRD_PARTY_NOTICES](../THIRD_PARTY_NOTICES.md)。社区鲸鱼娘形象、AI 辅助生成的黑白改编及后续动画与代码分开审查。上游项目的非商业素材声明并不能单独证明本项目参考图的出处或所有权利。完整角色包只在本机准备，不公开上传；需核对原始图片及中间作者的许可、确认最终许可范围，并完成发布门禁后才考虑发行。
