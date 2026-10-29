@@ -10,25 +10,25 @@
 
 免费、非官方社区项目，与 DeepSeek 官方及相关创作者无关联，也未获得其背书。
 
-## 快速开始
+## 安装与首次启动
 
-完整 Windows ZIP 包含角色素材、插件与安装工具。需要 **Windows x64、DSH Desktop 0.2.1-rc.3**、PowerShell 7、Node.js 22.18.0 或以上、WebView2，以及单独取得的官方 Neutralino 6.9.0 x64。
+### ① DSH Desktop 官方添加插件（图形界面）
 
-1. [下载并解压完整包](https://github.com/lemonxiny55/dsh-kurowhale-pet/releases/download/v0.1.0/DSH-KuroWhale-0.1.0-Windows.zip)，将文件保留在长期使用的目录。
-2. 按[安装指南](docs/WINDOWS-FULL-INSTALL.md)填写 DSH 和 Neutralino 路径，先运行安装检查。
-3. 结束任务并退出 DSH Desktop，再执行安装并重新启动 Desktop。
+1. 打开 **DSH Desktop → 插件管理 → 添加插件**。
+2. 在包名输入框粘贴 **`dsh-kurowhale-pet@0.1.1`**，选择可用的 npm 安装源。
+3. 点击 **安装**，安装完成后按提示重启 DSH Desktop。
 
-[Release 页面](https://github.com/lemonxiny55/dsh-kurowhale-pet/releases/tag/v0.1.0)提供安装包和 SHA-256 校验文件。
+> 若提示“该插件已安装”，代表检测到了同名插件，**不代表确认装的是 0.1.1**。不要反复安装或直接覆盖；先核对现有版本，需要升级时请先备份，参阅[安装与恢复说明](docs/WINDOWS-INSTALL.md)。
 
-### 从 npm 获取
+**注意：插件安装成功 ≠ 鲸鱼娘立即显示。** 首次使用还需要准备角色素材目录和官方 **Neutralino 6.9.0 x64** 运行时，在 `%USERPROFILE%\.dsh\kurowhale-pet\local.json` 中配置 `rendererEnabled`、`assetDirectory`、`runtimePath`。按照[**首次启用教程（含路径示例）**](docs/NPM-INSTALL.md)操作，重启后确认角色显示。
 
-[npm 包](https://www.npmjs.com/package/dsh-kurowhale-pet) `dsh-kurowhale-pet@0.1.1` 包含插件与角色素材：
+### ② Windows 完整版 ZIP（已有实机验收）
 
-```powershell
-npm install dsh-kurowhale-pet@0.1.1
-```
+如果想使用带检查、备份、升级与恢复工具的安装流程，下载 **[Windows v0.1.0 完整版 ZIP](https://github.com/lemonxiny55/dsh-kurowhale-pet/releases/download/v0.1.0/DSH-KuroWhale-0.1.0-Windows.zip)**，解压到长期保留的目录，按[完整包安装教程](docs/WINDOWS-FULL-INSTALL.md)先检查，再在结束任务并退出 Desktop 后安装。Windows ZIP 与 npm 0.1.1 是不同发行渠道，**不要不经确认就在已有安装上叠加两套方法**。
 
-npm 安装不会自动启用桌宠。需要在 DSH 中安装插件，并在 `~/.dsh/kurowhale-pet/local.json` 中启用渲染、指定包内 `character` 目录和官方 Neutralino 路径；详见 [npm 与 DSH Desktop 安装步骤](docs/NPM-INSTALL.md)。希望使用完整安装工具的用户请优先选择 Windows ZIP。
+**环境要求：** Windows x64、DSH Desktop 0.2.1-rc.3、Node.js 22.18.0+、WebView2；完整包安装器还需 PowerShell 7。官方 Neutralino 运行时单独获取。
+
+[正式 Release 与 SHA-256 校验](https://github.com/lemonxiny55/dsh-kurowhale-pet/releases/tag/v0.1.0) · [npm 包 `dsh-kurowhale-pet@0.1.1`](https://www.npmjs.com/package/dsh-kurowhale-pet)
 
 ## 功能
 

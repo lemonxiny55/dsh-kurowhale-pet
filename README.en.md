@@ -10,25 +10,25 @@
 
 This is a free, unofficial community project. It is not affiliated with or endorsed by DeepSeek or the related creators.
 
-## Quick start
+## Installation and first launch
 
-The full Windows ZIP includes the character assets, plugin, and installation tools. You need **Windows x64, DSH Desktop 0.2.1-rc.3**, PowerShell 7, Node.js 22.18.0 or later, WebView2, and the separately obtained official Neutralino 6.9.0 x64 runtime.
+### ① Add plugin through DSH Desktop (GUI)
 
-1. [Download and extract the full package](https://github.com/lemonxiny55/dsh-kurowhale-pet/releases/download/v0.1.0/DSH-KuroWhale-0.1.0-Windows.zip) to a directory you intend to keep.
-2. Follow the [installation guide](docs/WINDOWS-FULL-INSTALL.md) to supply the paths to DSH and Neutralino, then run the installation check.
-3. Finish active tasks and exit DSH Desktop before installing. Restart Desktop afterward.
+1. Open **DSH Desktop → Plugin management → Add plugin**.
+2. Enter **`dsh-kurowhale-pet@0.1.1`** in the package-name field, using an available npm source.
+3. Click **Install** and restart DSH Desktop as directed.
 
-The [Release page](https://github.com/lemonxiny55/dsh-kurowhale-pet/releases/tag/v0.1.0) also provides a SHA-256 checksum file. The installation guide and acceptance record are currently in Chinese.
+> “This plugin is already installed” means a same-name plugin was detected; it **does not confirm that you have 0.1.1**. Avoid blind reinstalls or overwrites; check the installed version and back up settings before upgrading. See [installation and recovery](docs/WINDOWS-INSTALL.md).
 
-### Get it from npm
+**Plugin installed ≠ pet visible.** On first use, prepare a persistent character-asset directory and the official **Neutralino 6.9.0 x64** runtime, then set `rendererEnabled`, `assetDirectory` and `runtimePath` in `%USERPROFILE%\.dsh\kurowhale-pet\local.json`. Follow the [**first-launch guide with paths and examples**](docs/NPM-INSTALL.md), restart Desktop, and check that KuroWhale actually appears.
 
-The [npm package](https://www.npmjs.com/package/dsh-kurowhale-pet) `dsh-kurowhale-pet@0.1.1` includes the plugin and character assets:
+### ② Full Windows ZIP (previously tested on Windows)
 
-```powershell
-npm install dsh-kurowhale-pet@0.1.1
-```
+For the complete preflight, backup, upgrade and recovery flow, download the **[Windows v0.1.0 ZIP](https://github.com/lemonxiny55/dsh-kurowhale-pet/releases/download/v0.1.0/DSH-KuroWhale-0.1.0-Windows.zip)** and extract it to a permanent directory. Follow the [full-package instructions](docs/WINDOWS-FULL-INSTALL.md): run the check, finish active tasks, exit Desktop, then install. The ZIP and npm 0.1.1 are different release channels; **do not layer both methods over an existing installation without checking its state first**.
 
-Installing from npm does not automatically enable the pet. Install the plugin in DSH and configure `~/.dsh/kurowhale-pet/local.json` to enable rendering and point to the package's `character` directory and the official Neutralino runtime; see the [npm and DSH Desktop installation guide](docs/NPM-INSTALL.md). Choose the Windows ZIP for the complete installation tools.
+**Requirements:** Windows x64, DSH Desktop 0.2.1-rc.3, Node.js 22.18.0+, WebView2; the ZIP installer also requires PowerShell 7. Obtain the official Neutralino runtime separately.
+
+[Release and SHA-256 checksum](https://github.com/lemonxiny55/dsh-kurowhale-pet/releases/tag/v0.1.0) · [npm package `dsh-kurowhale-pet@0.1.1`](https://www.npmjs.com/package/dsh-kurowhale-pet)
 
 ## Features
 

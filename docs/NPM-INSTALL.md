@@ -2,6 +2,16 @@
 
 `dsh-kurowhale-pet@0.1.1` 在 npm 上包含插件和 `character/pet.json`、`character/spritesheet.webp`；它不包含 Neutralino 可执行文件，也不会自动启用渲染。`npm install` 仅安装到指定目录，不会把插件加入 Desktop profile。以下是基于官方 CLI 和已发布包结构的手动操作；npm 下载已验证，使用 npm 在全新 Desktop profile 安装并显示角色尚未实机验收。完整安装器的已验证路径见 [Windows 完整包](WINDOWS-FULL-INSTALL.md)。
 
+## 官方“添加插件”界面 / DSH Desktop GUI
+
+1. 在 DSH Desktop 中选择 **插件管理 → 添加插件**，粘贴 `dsh-kurowhale-pet@0.1.1` 并点击 **安装**。
+2. 如果提示“该插件已安装”，说明当前 profile 中已经有同名插件，**不代表确认版本为 0.1.1**。先核实已安装版本，升级前做好备份，不要盲目覆盖。
+3. 图形界面只负责安装插件：**继续按下文准备角色素材和 Neutralino 运行时，并配置 `local.json`，再重新启动 Desktop。** 否则插件可能已安装，但鲸鱼娘不会出现在桌面上。
+
+已经通过图形界面安装插件的用户，**跳过下文的 DSH CLI 添加插件命令**。下方的 `npm install --prefix` 仅用于把角色素材放在固定目录，并不会第二次向 DSH profile 注册插件。
+
+English: In DSH Desktop, open **Plugin management → Add plugin**, enter `dsh-kurowhale-pet@0.1.1`, and click **Install**. “Already installed” only detects a same-name plugin, not its version. To display the character, complete the persistent asset-directory and Neutralino configuration below. If you used the GUI, skip the separate CLI add step.
+
 ## 前提与角色素材 / Prerequisites and assets
 
 需要 Windows x64、已初始化的 DSH Desktop **0.2.1-rc.3** 默认 desktop profile、Node >=22.18.0、WebView2 和单独取得的官方 [Neutralino 6.9.0 x64](https://github.com/neutralinojs/neutralinojs/releases/tag/v6.9.0)。运行时校验值见 [dependencies.lock.json](../dependencies.lock.json)。先结束 DSH 任务、退出 Desktop，并备份 profile 和已有 `~/.dsh/kurowhale-pet/local.json`。
@@ -14,9 +24,9 @@ npm install --prefix 'D:\KuroWhaleAssets' --no-save --ignore-scripts dsh-kurowha
 
 确认 `D:\KuroWhaleAssets\node_modules\dsh-kurowhale-pet\character` 包含 `pet.json` 和 `spritesheet.webp`。保留此目录，以免桌宠失去素材。
 
-## 安装到 Desktop / Install in Desktop
+## 备选：使用命令行安装到 Desktop / Alternative CLI install
 
-确保 Desktop 已退出；使用 **Desktop 自带** CLI 的实际路径，不要依赖 PATH 中可能不匹配的 DSH：
+仅在**未通过图形界面添加插件**时执行本节。确保 Desktop 已退出，使用 **Desktop 自带** CLI 的实际路径，不要依赖 PATH 中可能不匹配的 DSH：
 
 ```powershell
 & 'E:\DeepSeek Harness\resources\runtime\cli\bin\dsh.cmd' plugin --profile desktop add dsh-kurowhale-pet@0.1.1 --ignore-scripts
