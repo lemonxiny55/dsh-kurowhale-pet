@@ -1,5 +1,7 @@
 # DSH KuroWhale Pet 🐳
 
+中文 | [English](README.en.md)
+
 <p align="center"><img src="docs/images/kurowhale-preview.png" alt="KuroWhale 鲸鱼娘桌宠" width="220"></p>
 
 **参考 DeepSeek Harness 官方图标设计的鲸鱼娘桌宠。** 在 Windows 桌面上陪伴你，并响应 DSH Agent 的工作状态。
