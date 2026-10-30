@@ -1,4 +1,4 @@
-import { appendFileSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
+import { appendFileSync, mkdirSync, readFileSync, renameSync, statSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { basename, join, resolve } from 'node:path';
 import { animations, activityState, resolveActivities } from './animations.js';
@@ -10,11 +10,13 @@ export const inject = [];
 const version='0.1.2';
 const read = (path, fallback) => {try{return JSON.parse(readFileSync(path,'utf8'));}catch{return fallback;}};
 
-export function apply(ctx) {
+export function apply(ctx, dependencies = {}) {
+  const resourceResolver = dependencies.resolveResources ?? resolveResources;
+  const overlayFactory = dependencies.createOverlay ?? createOverlay;
   const directory=join(process.env.DSH_HOME||join(homedir(),'.dsh'),'kurowhale-pet');
   mkdirSync(directory,{recursive:true});
   const audit=(event,details={})=>{
-    try{appendFileSync(join(directory,'lifecycle.jsonl'),JSON.stringify({time:new Date().toISOString(),event,version,pid:process.pid,...details})+'\n');}catch{}
+    try{const log=join(directory,'lifecycle.jsonl');try{if(statSync(log).size>=1024*1024)renameSync(log,log+'.1');}catch{}appendFileSync(log,JSON.stringify({time:new Date().toISOString(),event,version,pid:process.pid,...details})+'\n');}catch{}
   };
   ctx.effect(()=>{
     let closed=false,overlay,frameTimer,statusTimer,pollTimer,cycleTimer,hoverTimer,queue=Promise.resolve(),lastCommand,lastSeen;
@@ -33,13 +35,15 @@ export function apply(ctx) {
     const status={version,hostPid:process.pid,rendererReady:false,visibilityVerified:false,nativePid:null,lastError:null};
     const atomic=(file,value)=>{
       const target=join(directory,file),tmp=target+'.tmp';
-      try{writeFileSync(tmp,JSON.stringify(value,null,2));renameSync(tmp,target);}catch{}
+      try{writeFileSync(tmp,JSON.stringify(value,null,2));renameSync(tmp,target);return true;}catch{return false;}
     };
     const persist=()=>atomic('position.json',{x,y,scale,visible,topmost});
+    let lastSnapshot;
     const snapshot=()=>{
-      atomic('status.json',{...status,state,source,visible,x,y,scale,topmost,lastCommand,
+      const value={...status,state,source,visible,x,y,scale,topmost,lastCommand,
         sessions:[...activities].map(([key,value])=>({alias:alias(key),state:approvals.get(key)?.size?'waiting':value})),
-        framesDrawn:Object.fromEntries([...seen].map(([k,v])=>[k,[...v].sort((a,b)=>a-b)])),eventCounts});
+        framesDrawn:Object.fromEntries([...seen].map(([k,v])=>[k,[...v].sort((a,b)=>a-b)])),eventCounts};
+      const serialized=JSON.stringify(value);if(serialized!==lastSnapshot){if(atomic('status.json',value))lastSnapshot=serialized;}
     };
     const tick=()=>{
       clearTimeout(frameTimer);
@@ -60,11 +64,11 @@ export function apply(ctx) {
     const reopen=async()=>{
       if(!overlayEnabled)throw Error('Experimental renderer is disabled');
       clearTimeout(frameTimer);overlay?.destroy();overlay=undefined;status.rendererReady=false;
-      resources ??= await resolveResources({directory,config,signal:abort.signal});
+      resources ??= await resourceResolver({directory,config,signal:abort.signal,onAttempt: details=>audit('download-error',details)});
       if(closed)return;
       const manifest=read(join(resources.assetDirectory,'pet.json'),null);
       if(!manifest||basename(manifest.spritesheetPath??'')!==manifest.spritesheetPath||!manifest.spritesheetPath?.endsWith('.webp'))throw Error('A local pet.json with a safe WebP filename is required');
-      overlay=await createOverlay({sheet:resolve(resources.assetDirectory,manifest.spritesheetPath),runtimePath:resources.runtimePath,scale,x,y,topmost,signal:abort.signal,onEvent:(event,data)=>{
+      overlay=await overlayFactory({sheet:resolve(resources.assetDirectory,manifest.spritesheetPath),runtimePath:resources.runtimePath,scale,x,y,topmost,signal:abort.signal,onEvent:(event,data)=>{
         if(closed)return;
         if(event==='ready'&&data.canvas)status.canvasLayout=data;
         if(event==='position'&&Number.isFinite(data.x)&&Number.isFinite(data.y)){x=data.x;y=data.y;persist();}
@@ -79,7 +83,7 @@ export function apply(ctx) {
         if(event==='hover'&&!diagnostic&&!dragging&&state==='idle'){setState('jumping','hover');clearTimeout(hoverTimer);hoverTimer=setTimeout(()=>{if(!diagnostic&&!dragging)resume();},850);}
         if(event==='unhover'&&!diagnostic&&!dragging)resume();
         if(event==='control')enqueue({...data,id:crypto.randomUUID()});
-        if(event==='native-exited'){const wasReady=status.rendererReady;status.rendererReady=false;status.nativePid=null;overlay=undefined;if(wasReady){visible=false;persist();}clearTimeout(frameTimer);audit('native-exited');snapshot();}
+        if(event==='native-exited'){status.rendererReady=false;status.nativePid=null;overlay=undefined;status.lastError='Native window exited unexpectedly';clearTimeout(frameTimer);audit('native-exited');snapshot();}
       }});
       if(closed){overlay.destroy();return;}
       status.rendererReady=true;status.nativePid=overlay.pid;status.lastError=null;
@@ -112,8 +116,8 @@ export function apply(ctx) {
       lastCommand={id:c.id,action:c.action,ok:true};snapshot();
     };
     const enqueue=c=>{
-      queue=queue.then(()=>command(c)).catch(()=>{
-        lastCommand={id:c.id,action:c.action,ok:false,error:'Local control action failed'};audit('control-error',{action:c.action});snapshot();
+      queue=queue.then(()=>command(c)).catch(error=>{
+        lastCommand={id:c.id,action:c.action,ok:false,error:'Local control action failed'};audit('control-error',{action:c.action,error:String(error.message||error)});snapshot();
       });
     };
     const updateActivity=(key,next)=>{

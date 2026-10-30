@@ -3,7 +3,7 @@
   "version": "0.1.2",
   "private": true,
   "license": "MIT",
-  "description": "Host-only Windows KuroWhale overlay development build for DSH Desktop rc3.",
+  "description": "Windows KuroWhale desktop pet for DSH Desktop rc.3 and rc.5.",
   "type": "module",
   "main": "./index.js",
   "exports": {
@@ -19,7 +19,6 @@
     "cordis.patch.yml",
     "LICENSE",
     "THIRD_PARTY_NOTICES.md",
-    "resources.js",
     "resources.js"
   ],
   "scripts": {

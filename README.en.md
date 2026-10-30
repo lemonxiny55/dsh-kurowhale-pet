@@ -12,7 +12,7 @@ This is a free, unofficial community project. It is not affiliated with or endor
 
 ## Installation status
 
-Install v0.1.2 from the GitHub URL, the `dsh-kurowhale-pet` name in DSH Desktop, or a marketplace listing, then restart DSH. Missing resources are downloaded from pinned sources and verified. **npm 0.1.2 is published; validation of all three paths is not complete.**
+In DSH Desktop, open Plugin management → Add plugin and enter the GitHub URL or `dsh-kurowhale-pet@0.1.2`; click Enable now and restart DSH. The marketplace is another entry point when its listing is updated. Missing resources are downloaded from pinned sources and verified. **npm 0.1.2 is published; validation of all three paths is not complete.**
 
 The public GitHub URL was installed with Desktop's CLI at commit `0e911a3` and the pet was visually confirmed after restarting the user's rc.5 Desktop with existing paths retained. An earlier asset-free local Git candidate verified automatic resource acquisition and display. The published npm 0.1.2 was installed through the official add-plugin UI, enabled using its **Enable now** button, and visually confirmed after restarting rc.5; existing configuration and position were retained. Desktop requires uninstalling an existing same-name third-party plugin before installing another source, so back up settings first.
 
