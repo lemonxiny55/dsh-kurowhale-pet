@@ -12,11 +12,11 @@ This is a free, unofficial community project. It is not affiliated with or endor
 
 ## Installation status
 
-The v0.1.2 goal is to install from the GitHub URL, the `dsh-kurowhale-pet` name in DSH Desktop, or a marketplace listing, then restart DSH and see the pet without manual paths. **This candidate is not released and none of those three paths has passed an actual DSH installation and visual check.**
+The v0.1.2 goal is to install from the GitHub URL, the `dsh-kurowhale-pet` name in DSH Desktop, or a marketplace listing, then restart DSH and see the pet without manual paths. **The 0.1.2 npm package is not yet published, and validation of all three paths is not complete.**
 
-An asset-free local Git candidate was installed with Desktop's CLI, and the pet was visually confirmed after starting an isolated Desktop. Separately, the candidate was installed by package name using a local test registry, and the pet was visually confirmed in isolated Desktop. The actual user Desktop was also upgraded from the local candidate tarball and visually checked, with existing settings retained. These checks do not verify the public GitHub URL, the Desktop add-plugin UI, or the public npm package name; the candidate is not published.
+The public GitHub URL was installed with Desktop's CLI at commit `67c6712` and the pet was visually confirmed in the user's Desktop with existing paths retained. An earlier asset-free local Git candidate verified automatic resource acquisition and display. Separately, the candidate was installed by package name using a local test registry and visually confirmed in isolated Desktop. The Desktop add-plugin UI and public npm package name have not yet been verified; npm 0.1.2 is not yet published.
 
-The listing was merged in [awesome-dsh-plugin PR #10379](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/10379); marketplace synchronization and installation are not yet verified. The installed dshmarket code delegates installation to DSH's plugin installer, consistent with the [DSH marketplace documentation](https://deepseek-harness.github.io/deepseek-harness/en/guide/plugin-market). The [staging script](scripts/stage-npm.mjs) prepares an npm candidate with verified artwork and its license notices, without publishing it.
+The listing was merged in [awesome-dsh-plugin PR #10379](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/10379). The public index currently lists 0.1.1 with outdated manual instructions; 0.1.2 synchronization, search in the market UI, and installation remain unverified. The [staging script](scripts/stage-npm.mjs) prepares an npm candidate with verified artwork and its license notices, without publishing it.
 
 The published npm version is still 0.1.1 and requires manual configuration; see the [current npm installation guide](docs/NPM-INSTALL.md). The [Windows v0.1.0 ZIP](docs/WINDOWS-FULL-INSTALL.md) remains an alternative with its existing manual setup.
 
