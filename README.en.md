@@ -12,13 +12,13 @@ This is a free, unofficial community project. It is not affiliated with or endor
 
 ## Installation status
 
-The v0.1.2 goal is to install from the GitHub URL, the `dsh-kurowhale-pet` name in DSH Desktop, or a marketplace listing, then restart DSH and see the pet without manual paths. **The 0.1.2 npm package is not yet published, and validation of all three paths is not complete.**
+Install v0.1.2 from the GitHub URL, the `dsh-kurowhale-pet` name in DSH Desktop, or a marketplace listing, then restart DSH. Missing resources are downloaded from pinned sources and verified. **npm 0.1.2 is published; validation of all three paths is not complete.**
 
-The public GitHub URL was installed with Desktop's CLI at commit `0e911a3` and the pet was visually confirmed after restarting the user's rc.5 Desktop with existing paths retained. An earlier asset-free local Git candidate verified automatic resource acquisition and display. Separately, a candidate was installed by package name using a local test registry and visually confirmed in isolated Desktop. The Desktop add-plugin UI and public npm package name have not yet been verified; npm 0.1.2 is not yet published.
+The public GitHub URL was installed with Desktop's CLI at commit `0e911a3` and the pet was visually confirmed after restarting the user's rc.5 Desktop with existing paths retained. An earlier asset-free local Git candidate verified automatic resource acquisition and display. The published npm 0.1.2 was installed through the official add-plugin UI, enabled using its **Enable now** button, and visually confirmed after restarting rc.5; existing configuration and position were retained. Desktop requires uninstalling an existing same-name third-party plugin before installing another source, so back up settings first.
 
-The listing was merged in [awesome-dsh-plugin PR #10379](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/10379). The rc.5 market UI finds the entry, but currently shows catalog version 0.1.1 and outdated manual instructions; 0.1.2 synchronization and market installation remain unverified. The [staging script](scripts/stage-npm.mjs) prepares an npm candidate with verified artwork and its license notices, without publishing it.
+The listing was merged in [awesome-dsh-plugin PR #10379](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/10379). The market index still lists 0.1.1 with outdated manual instructions; rc.5 hides that incompatible old version. A description update is pending in [PR #10554](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/10554), and 0.1.2 synchronization and market installation remain unverified. The [staging script](scripts/stage-npm.mjs) prepares the npm package with verified artwork and license notices.
 
-The published npm version is still 0.1.1 and requires manual configuration; see the [current npm installation guide](docs/NPM-INSTALL.md). The [Windows v0.1.0 ZIP](docs/WINDOWS-FULL-INSTALL.md) remains an alternative with its existing manual setup.
+For historical 0.1.1 setup see the [npm installation guide](docs/NPM-INSTALL.md). The [Windows v0.1.0 ZIP](docs/WINDOWS-FULL-INSTALL.md) remains an alternative with its existing manual setup.
 
 ## Features
 

@@ -1,6 +1,6 @@
 # npm 与 DSH Desktop 安装 / npm and DSH Desktop
 
-> 以下手动路径是 **0.1.1 历史说明**，不适用于计划中的 0.1.2 自动配置。0.1.2 候选在 Windows x64 首次启动时会优先查找包内素材，缺失时校验并获取发行素材和官方 Neutralino；保留已有配置。公开发行与各入口的当前验证结果见[项目首页](../README.md)。
+> 以下手动路径是 **0.1.1 历史说明**，不适用于已发布的 0.1.2 自动配置。0.1.2 在 Windows x64 首次启动时会优先查找包内素材，缺失时校验并获取发行素材和官方 Neutralino；保留已有配置。各入口的当前验证结果见[项目首页](../README.md)。
 >
 > The manual steps below describe **0.1.1**. The 0.1.2 candidate discovers bundled artwork or obtains verified resources automatically on Windows x64, while retaining existing settings. See the [project README](../README.en.md) for release and entry-point verification status.
 
