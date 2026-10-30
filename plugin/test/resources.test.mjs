@@ -17,7 +17,14 @@ test('rejects bad hashes after bounded retries',async()=>{
 });
 test('timeouts retry and cancellation stops immediately',async()=>{
   let calls=0;
-  const hanging=(_url,{signal})=>new Promise((_,reject)=>{calls++;signal.addEventListener('abort',()=>reject(signal.reason),{once:true});});
+  // AbortSignal.timeout() uses an unref'ed timer in Node 22. A pure unresolved
+  // mock fetch may let the test runner exit before the abort event is delivered.
+  // Keep a ref'ed mock watchdog so a missing abort fails instead of cancelling tests.
+  const hanging=(_url,{signal})=>new Promise((_,reject)=>{
+    calls++;
+    const watchdog=setTimeout(()=>reject(Error('Mock fetch did not abort')),1000);
+    signal.addEventListener('abort',()=>{clearTimeout(watchdog);reject(signal.reason);},{once:true});
+  });
   await assert.rejects(download('https://example.test',hash('x'),10,undefined,{fetch:hanging,timeoutMs:5,backoffMs:1}),/3 attempts/);
   assert.equal(calls,3);
   const controller=new AbortController();controller.abort();
