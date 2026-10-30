@@ -30,7 +30,8 @@ test('timeouts retry and cancellation stops immediately',async()=>{
   const controller=new AbortController();controller.abort();
   await assert.rejects(download('https://example.test',hash('x'),10,controller.signal,{fetch:async(_u,{signal})=>{signal.throwIfAborted();}}));
 });
-import {mkdtemp, mkdir, writeFile, rm} from 'node:fs/promises';
+import {mkdtemp, mkdir, writeFile, rm, copyFile} from 'node:fs/promises';
+import {pathToFileURL, fileURLToPath} from 'node:url';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {resolveResources, validAssets} from '../resources.js';
@@ -45,8 +46,11 @@ test('missing or corrupt asset cache triggers bounded download and reports failu
     const cache=join(dir,'assets','0.1.0');await mkdir(cache,{recursive:true});
     assert.equal(await validAssets(cache),false);
     await writeFile(join(cache,'pet.json'),'corrupt');assert.equal(await validAssets(cache),false);
+    const isolated=join(dir,'module');await mkdir(isolated);
+    const source=join(isolated,'resources.mjs');await copyFile(fileURLToPath(new URL('../resources.js',import.meta.url)),source);
+    const {resolveResources: resolveIsolated}=await import(pathToFileURL(source).href);
     let calls=0;const errors=[];
-    await assert.rejects(resolveResources({directory:dir,config:{},platform:'win32',arch:'x64',onAttempt:e=>errors.push(e),downloadOptions:{backoffMs:1,fetch:async()=>{calls++;throw Error('offline');}}}),/3 attempts/);
+    await assert.rejects(resolveIsolated({directory:dir,config:{},platform:'win32',arch:'x64',onAttempt:e=>errors.push(e),downloadOptions:{backoffMs:1,fetch:async()=>{calls++;throw Error('offline');}}}),/3 attempts/);
     assert.equal(calls,3);assert.equal(errors.length,3);assert.equal(errors[0].resource,'artwork');
   } finally {await rm(dir,{recursive:true,force:true});}
 });
