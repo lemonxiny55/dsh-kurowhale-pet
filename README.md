@@ -12,11 +12,11 @@
 
 ## 安装方向与当前状态
 
-目标环境为 Windows x64、DSH Desktop 0.2.1-rc.3 和 WebView2。v0.1.2 的目标是安装后重启 DSH，自动看到鲸鱼娘；首次运行联网获取缺少的素材和官方 Neutralino 6.9.0，并校验 SHA-256。已有自定义路径、关闭设置和位置予以保留。**v0.1.2 的 npm 包尚未发布，三入口验收尚未全部完成。**以下是目标操作和当前真实验证结果；已发布的 npm 0.1.1 尚不支持自动配置。
+目标环境为 Windows x64、DSH Desktop 0.2.1-rc.3 或 0.2.1-rc.5 和 WebView2。v0.1.2 的目标是安装后重启 DSH，自动看到鲸鱼娘；首次运行联网获取缺少的素材和官方 Neutralino 6.9.0，并校验 SHA-256。已有自定义路径、关闭设置和位置予以保留。**v0.1.2 的 npm 包尚未发布，三入口验收尚未全部完成。**以下是目标操作和当前真实验证结果；已发布的 npm 0.1.1 尚不支持自动配置。
 
 | 入口 | 目标操作 | 目前的验证结果 |
 | --- | --- | --- |
-| GitHub | 在 DSH 添加插件时输入 `https://github.com/lemonxiny55/dsh-kurowhale-pet`，安装后重启 | 公开地址经 Desktop 自带 CLI 安装提交 `67c6712` 后，在实际 Desktop 中目视看到角色；该升级沿用了已有路径。此前无素材的本地 Git 快照测试验证了自动获取、校验及显示。添加插件界面尚未单独验证。 |
+| GitHub | 在 DSH 添加插件时输入 `https://github.com/lemonxiny55/dsh-kurowhale-pet`，安装后重启 | 公开地址经 Desktop 自带 CLI 安装提交 `67c6712` 后，在 rc.3 的实际 Desktop 中目视看到角色；该升级沿用了已有路径。此前无素材的本地 Git 快照测试验证了自动获取、校验及显示。rc.5 已从本地候选包安装并目视确认，公开 GitHub 的 rc.5 安装尚未验证。添加插件界面尚未单独验证。 |
 | DSH Desktop | 添加插件，输入 `dsh-kurowhale-pet`，安装后重启 | 已用本机临时 npm 测试源和 Desktop 自带 CLI 按包名安装候选，并在隔离 Desktop 中目视看到角色；实际用户 Desktop 也从本地候选包升级并目视看到角色，原有设置未变。**添加插件界面和公开 npm 包名尚未验证候选**。公开 npm 仍为 0.1.1，需[手动配置](docs/NPM-INSTALL.md)。 |
 | 插件市场 | 搜索 KuroWhale 并安装，重启 DSH | [awesome-dsh-plugin PR #10379](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/10379) 已合并，公开索引目前可找到 0.1.1，但描述仍为旧的手动步骤。0.1.2 的同步、市场搜索界面和入口安装尚未实测。 |
 

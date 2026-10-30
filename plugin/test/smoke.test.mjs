@@ -11,7 +11,7 @@ test('declares an installable DSH bundle with a pinned RC target', async () => {
   const pkg = JSON.parse(await readFile(resolve(root, 'package.json'), 'utf8'));
   assert.equal(pkg.name, 'dsh-kurowhale-pet');
   assert.equal(pkg.private, true);
-  assert.equal(pkg.engines.dsh, '0.2.1-rc.3');
+  assert.equal(pkg.engines.dsh, '0.2.1-rc.3 || 0.2.1-rc.5');
   assert.equal(pkg.dsh.bundle.patch, './cordis.patch.yml');
 });
 
