@@ -7,13 +7,13 @@ import {setTimeout as wait} from 'node:timers/promises';
 import {apply} from '../index.js';
 
 // Structural safety checks only. These are not Desktop runtime qualification.
-test('renderer stays opt-in; stale controls do not replay; cleanup completes',async()=>{
+test('explicit opt-out is retained; stale controls do not replay; cleanup completes',async()=>{
   const temp=await mkdtemp(join(tmpdir(),'kurowhale-unit-'));
   const previous=process.env.DSH_HOME;process.env.DSH_HOME=temp;
   let cleanup;
   try{
     const dir=join(temp,'kurowhale-pet');await mkdir(dir);
-    await writeFile(join(dir,'local.json'),JSON.stringify({assetDirectory:'not-an-asset',runtimePath:'not-a-runtime'}));
+    await writeFile(join(dir,'local.json'),JSON.stringify({rendererEnabled:false,assetDirectory:'not-an-asset',runtimePath:'not-a-runtime'}));
     await writeFile(join(dir,'control.json'),JSON.stringify({id:'already-consumed',action:'all'}));
     apply({effect:fn=>{cleanup=fn();},on:()=>()=>{}});
     await wait(300);

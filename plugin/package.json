@@ -1,6 +1,6 @@
 {
   "name": "dsh-kurowhale-pet",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "license": "MIT",
   "description": "Host-only Windows KuroWhale overlay development build for DSH Desktop rc3.",
@@ -11,7 +11,17 @@
     "./cordis.patch.yml": "./cordis.patch.yml",
     "./package.json": "./package.json"
   },
-  "files": ["index.js", "animations.js", "overlay.js", "native/", "cordis.patch.yml", "LICENSE", "THIRD_PARTY_NOTICES.md"],
+  "files": [
+    "index.js",
+    "animations.js",
+    "overlay.js",
+    "native/",
+    "cordis.patch.yml",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md",
+    "resources.js",
+    "resources.js"
+  ],
   "scripts": {
     "test": "node --test"
   },

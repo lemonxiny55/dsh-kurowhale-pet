@@ -6,29 +6,19 @@
 
 **A whale-girl desktop pet inspired by the official DeepSeek Harness icon.** KuroWhale keeps you company on Windows and reacts to DSH Agent activity.
 
-[Download Windows v0.1.0](https://github.com/lemonxiny55/dsh-kurowhale-pet/releases/download/v0.1.0/DSH-KuroWhale-0.1.0-Windows.zip) · [npm package](https://www.npmjs.com/package/dsh-kurowhale-pet) · [Installation guide](docs/WINDOWS-FULL-INSTALL.md) · [Acceptance record](docs/TECHNICAL-ACCEPTANCE-0.1.0.md)
+[GitHub repository](https://github.com/lemonxiny55/dsh-kurowhale-pet) · [npm package](https://www.npmjs.com/package/dsh-kurowhale-pet) · [Windows ZIP alternative](docs/WINDOWS-FULL-INSTALL.md) · [Acceptance record](docs/TECHNICAL-ACCEPTANCE-0.1.0.md)
 
 This is a free, unofficial community project. It is not affiliated with or endorsed by DeepSeek or the related creators.
 
-## Installation and first launch
+## Installation status
 
-### ① Add plugin through DSH Desktop (GUI)
+The v0.1.2 goal is to install from the GitHub URL, the `dsh-kurowhale-pet` name in DSH Desktop, or a marketplace listing, then restart DSH and see the pet without manual paths. **This candidate is not released and none of those three paths has passed an actual DSH installation and visual check.**
 
-1. Open **DSH Desktop → Plugin management → Add plugin**.
-2. Enter **`dsh-kurowhale-pet@0.1.1`** in the package-name field, using an available npm source.
-3. Click **Install** and restart DSH Desktop as directed.
+An asset-free local Git candidate was installed with Desktop's CLI, and the pet was visually confirmed after starting an isolated Desktop. Separately, the candidate was installed by package name using a local test registry, and the pet was visually confirmed in isolated Desktop. The actual user Desktop was also upgraded from the local candidate tarball and visually checked, with existing settings retained. These checks do not verify the public GitHub URL, the Desktop add-plugin UI, or the public npm package name; the candidate is not published.
 
-> “This plugin is already installed” means a same-name plugin was detected; it **does not confirm that you have 0.1.1**. Avoid blind reinstalls or overwrites; check the installed version and back up settings before upgrading. See [installation and recovery](docs/WINDOWS-INSTALL.md).
+The listing was merged in [awesome-dsh-plugin PR #10379](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/10379); marketplace synchronization and installation are not yet verified. The installed dshmarket code delegates installation to DSH's plugin installer, consistent with the [DSH marketplace documentation](https://deepseek-harness.github.io/deepseek-harness/en/guide/plugin-market). The [staging script](scripts/stage-npm.mjs) prepares an npm candidate with verified artwork and its license notices, without publishing it.
 
-**Plugin installed ≠ pet visible.** On first use, prepare a persistent character-asset directory and the official **Neutralino 6.9.0 x64** runtime, then set `rendererEnabled`, `assetDirectory` and `runtimePath` in `%USERPROFILE%\.dsh\kurowhale-pet\local.json`. Follow the [**first-launch guide with paths and examples**](docs/NPM-INSTALL.md), restart Desktop, and check that KuroWhale actually appears.
-
-### ② Full Windows ZIP (previously tested on Windows)
-
-For the complete preflight, backup, upgrade and recovery flow, download the **[Windows v0.1.0 ZIP](https://github.com/lemonxiny55/dsh-kurowhale-pet/releases/download/v0.1.0/DSH-KuroWhale-0.1.0-Windows.zip)** and extract it to a permanent directory. Follow the [full-package instructions](docs/WINDOWS-FULL-INSTALL.md): run the check, finish active tasks, exit Desktop, then install. The ZIP and npm 0.1.1 are different release channels; **do not layer both methods over an existing installation without checking its state first**.
-
-**Requirements:** Windows x64, DSH Desktop 0.2.1-rc.3, Node.js 22.18.0+, WebView2; the ZIP installer also requires PowerShell 7. Obtain the official Neutralino runtime separately.
-
-[Release and SHA-256 checksum](https://github.com/lemonxiny55/dsh-kurowhale-pet/releases/tag/v0.1.0) · [npm package `dsh-kurowhale-pet@0.1.1`](https://www.npmjs.com/package/dsh-kurowhale-pet)
+The published npm version is still 0.1.1 and requires manual configuration; see the [current npm installation guide](docs/NPM-INSTALL.md). The [Windows v0.1.0 ZIP](docs/WINDOWS-FULL-INSTALL.md) remains an alternative with its existing manual setup.
 
 ## Features
 

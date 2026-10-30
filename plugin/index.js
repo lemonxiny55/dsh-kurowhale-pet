@@ -3,10 +3,11 @@ import { homedir } from 'node:os';
 import { basename, join, resolve } from 'node:path';
 import { animations, activityState, resolveActivities } from './animations.js';
 import { createOverlay } from './overlay.js';
+import { resolveResources } from './resources.js';
 
 export const name = 'dsh-kurowhale-pet';
 export const inject = [];
-const version='0.1.1';
+const version='0.1.2';
 const read = (path, fallback) => {try{return JSON.parse(readFileSync(path,'utf8'));}catch{return fallback;}};
 
 export function apply(ctx) {
@@ -19,8 +20,9 @@ export function apply(ctx) {
     let closed=false,overlay,frameTimer,statusTimer,pollTimer,cycleTimer,hoverTimer,queue=Promise.resolve(),lastCommand,lastSeen;
     const abort=new AbortController();
     const config=read(join(directory,'local.json'),{});
-    // Keep renderer activation explicit. IPC readiness is not visual acceptance.
-    const overlayEnabled=config.rendererEnabled===true;
+    // Honor an explicit opt-out; fresh installs start automatically.
+    const overlayEnabled=config.rendererEnabled!==false;
+    let resources;
     const saved=read(join(directory,'position.json'),{});
     let scale=Number.isFinite(saved.scale)?saved.scale:(config.scale??1.25);
     scale=Math.max(.5,Math.min(2,scale));
@@ -58,9 +60,11 @@ export function apply(ctx) {
     const reopen=async()=>{
       if(!overlayEnabled)throw Error('Experimental renderer is disabled');
       clearTimeout(frameTimer);overlay?.destroy();overlay=undefined;status.rendererReady=false;
-      const manifest=read(join(config.assetDirectory??'','pet.json'),null);
+      resources ??= await resolveResources({directory,config,signal:abort.signal});
+      if(closed)return;
+      const manifest=read(join(resources.assetDirectory,'pet.json'),null);
       if(!manifest||basename(manifest.spritesheetPath??'')!==manifest.spritesheetPath||!manifest.spritesheetPath?.endsWith('.webp'))throw Error('A local pet.json with a safe WebP filename is required');
-      overlay=await createOverlay({sheet:resolve(config.assetDirectory,manifest.spritesheetPath),runtimePath:config.runtimePath,scale,x,y,topmost,signal:abort.signal,onEvent:(event,data)=>{
+      overlay=await createOverlay({sheet:resolve(resources.assetDirectory,manifest.spritesheetPath),runtimePath:resources.runtimePath,scale,x,y,topmost,signal:abort.signal,onEvent:(event,data)=>{
         if(closed)return;
         if(event==='ready'&&data.canvas)status.canvasLayout=data;
         if(event==='position'&&Number.isFinite(data.x)&&Number.isFinite(data.y)){x=data.x;y=data.y;persist();}
@@ -75,7 +79,7 @@ export function apply(ctx) {
         if(event==='hover'&&!diagnostic&&!dragging&&state==='idle'){setState('jumping','hover');clearTimeout(hoverTimer);hoverTimer=setTimeout(()=>{if(!diagnostic&&!dragging)resume();},850);}
         if(event==='unhover'&&!diagnostic&&!dragging)resume();
         if(event==='control')enqueue({...data,id:crypto.randomUUID()});
-        if(event==='native-exited'){status.rendererReady=false;status.nativePid=null;overlay=undefined;visible=false;persist();clearTimeout(frameTimer);audit('native-exited');snapshot();}
+        if(event==='native-exited'){const wasReady=status.rendererReady;status.rendererReady=false;status.nativePid=null;overlay=undefined;if(wasReady){visible=false;persist();}clearTimeout(frameTimer);audit('native-exited');snapshot();}
       }});
       if(closed){overlay.destroy();return;}
       status.rendererReady=true;status.nativePid=overlay.pid;status.lastError=null;
@@ -144,7 +148,7 @@ export function apply(ctx) {
       lastSeen=c.id;enqueue(c);
     },200);
     statusTimer=setInterval(snapshot,1000);
-    const startup=overlayEnabled&&config.assetDirectory&&config.runtimePath?reopen().catch(()=>{status.lastError='Renderer startup failed; DSH remains available';audit('renderer-error');snapshot();}):Promise.resolve();
+    const startup=overlayEnabled?reopen().catch(error=>{if(closed)return;status.lastError=String(error.message||error);audit('renderer-error',{error:status.lastError});snapshot();}):Promise.resolve();
     snapshot();
     return async()=>{
       closed=true;abort.abort();clearInterval(pollTimer);clearInterval(statusTimer);clearTimeout(frameTimer);clearTimeout(cycleTimer);clearTimeout(hoverTimer);

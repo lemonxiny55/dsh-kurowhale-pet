@@ -1,13 +1,27 @@
 {
   "name": "dsh-kurowhale-pet",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "description": "Unofficial DSH desktop pet responding to agent activity.",
   "type": "module",
   "main": "./plugin/index.js",
-  "exports": { ".": "./plugin/index.js", "./package.json": "./package.json" },
-  "files": ["plugin/", "LICENSE", "THIRD_PARTY_NOTICES.md"],
+  "exports": {
+    ".": "./plugin/index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "plugin/",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md"
+  ],
   "license": "MIT",
-  "engines": { "node": ">=22.18.0", "dsh": "0.2.1-rc.3" },
-  "dsh": { "bundle": { "patch": "./plugin/cordis.patch.yml" } }
+  "engines": {
+    "node": ">=22.18.0",
+    "dsh": "0.2.1-rc.3"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./plugin/cordis.patch.yml"
+    }
+  }
 }
