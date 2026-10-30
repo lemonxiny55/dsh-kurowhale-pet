@@ -1,6 +1,6 @@
 {
   "name": "dsh-kurowhale-pet",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "private": true,
   "description": "Unofficial DSH desktop pet responding to agent activity.",
   "type": "module",

@@ -12,7 +12,7 @@
 
 ## 安装与当前状态
 
-需要 Windows x64、DSH Desktop 0.2.1-rc.3 或 0.2.1-rc.5 和 WebView2。在 DSH Desktop 的“插件管理 → 添加插件”中输入 GitHub 地址或 `dsh-kurowhale-pet@0.1.2`，点击“立即启用”，然后重启 DSH；首次运行会联网获取缺少的素材和官方 Neutralino 6.9.0，并校验 SHA-256。已有自定义路径、关闭设置和位置予以保留。**npm 0.1.2 已发布，三入口验收尚未全部完成。**
+需要 Windows x64、DSH Desktop 0.2.1-rc.3 或 0.2.1-rc.5 和 WebView2。在 DSH Desktop 的“插件管理 → 添加插件”中输入 GitHub 地址或 `dsh-kurowhale-pet@0.1.2`，点击“立即启用”，然后重启 DSH；首次运行会联网获取缺少的素材和官方 Neutralino 6.9.0，并校验 SHA-256。已有自定义路径、关闭设置和位置予以保留。**npm 0.1.2 已发布；源码 0.1.3 为待发布候选版，尚未在 npm 上线。** 三入口验收尚未全部完成。
 
 | 入口 | 目标操作 | 目前的验证结果 |
 | --- | --- | --- |
@@ -34,7 +34,7 @@ Windows ZIP 是备用安装方式；现有 [v0.1.0 ZIP](https://github.com/lemon
 
 ## 已验证范围
 
-已在 Windows x64、DSH Desktop 0.2.1-rc.3 环境验证安装及桌宠交互。其他 DSH 版本、混合 DPI 和长期运行尚未充分验证，具体证据与限制见[技术验收](docs/TECHNICAL-ACCEPTANCE-0.1.0.md)。
+已在 Windows x64 的 DSH Desktop 0.2.1-rc.3 验证安装及桌宠交互，并在 rc.5 验证安装和针对性稳定性回归。其他 DSH 版本、混合 DPI 和长期运行尚未充分验证，具体证据与限制见[技术验收](docs/TECHNICAL-ACCEPTANCE-0.1.0.md)。
 
 ## 角色来源与许可
 

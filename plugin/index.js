@@ -7,7 +7,7 @@ import { resolveResources } from './resources.js';
 
 export const name = 'dsh-kurowhale-pet';
 export const inject = [];
-const version='0.1.2';
+const version='0.1.3';
 const read = (path, fallback) => {try{return JSON.parse(readFileSync(path,'utf8'));}catch{return fallback;}};
 
 export function apply(ctx, dependencies = {}) {

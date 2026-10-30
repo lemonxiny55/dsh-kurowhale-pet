@@ -12,7 +12,7 @@ This is a free, unofficial community project. It is not affiliated with or endor
 
 ## Installation status
 
-In DSH Desktop, open Plugin management → Add plugin and enter the GitHub URL or `dsh-kurowhale-pet@0.1.2`; click Enable now and restart DSH. The marketplace is another entry point when its listing is updated. Missing resources are downloaded from pinned sources and verified. **npm 0.1.2 is published; validation of all three paths is not complete.**
+In DSH Desktop, open Plugin management → Add plugin and enter the GitHub URL or `dsh-kurowhale-pet@0.1.2`; click Enable now and restart DSH. The marketplace is another entry point when its listing is updated. Missing resources are downloaded from pinned sources and verified. **npm 0.1.2 is published; source version 0.1.3 is a pending candidate and is not yet published on npm.** Validation of all three paths is not complete.
 
 The public GitHub URL was installed with Desktop's CLI at commit `0e911a3` and the pet was visually confirmed after restarting the user's rc.5 Desktop with existing paths retained. An earlier asset-free local Git candidate verified automatic resource acquisition and display. The published npm 0.1.2 was installed through the official add-plugin UI, enabled using its **Enable now** button, and visually confirmed after restarting rc.5; existing configuration and position were retained. Desktop requires uninstalling an existing same-name third-party plugin before installing another source, so back up settings first.
 
@@ -28,7 +28,7 @@ For historical 0.1.1 setup see the [npm installation guide](docs/NPM-INSTALL.md)
 
 ## Verified scope
 
-Installation and desktop interaction were verified on Windows x64 with DSH Desktop 0.2.1-rc.3. Other DSH versions, mixed-DPI setups, and long-running use have not been fully validated. See the [acceptance record](docs/TECHNICAL-ACCEPTANCE-0.1.0.md) for evidence and limitations.
+Installation and desktop interaction were verified on Windows x64 with DSH Desktop 0.2.1-rc.3; installation and targeted stability regression were also checked on rc.5. Other DSH versions, mixed-DPI setups, and long-running use have not been fully validated. See the [acceptance record](docs/TECHNICAL-ACCEPTANCE-0.1.0.md) for evidence and limitations.
 
 ## Artwork and licensing
 
