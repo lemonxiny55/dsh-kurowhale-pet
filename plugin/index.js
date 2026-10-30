@@ -87,8 +87,7 @@ export function apply(ctx, dependencies = {}) {
       }});
       if(closed){overlay.destroy();return;}
       status.rendererReady=true;status.nativePid=overlay.pid;status.lastError=null;
-      status.nativeWindow=await overlay.inspect();
-      if(!visible)await overlay.hide();tick();snapshot();audit('renderer-ready',{nativePid:overlay.pid});
+      if(!visible)await overlay.hide();status.nativeWindow=await overlay.inspect();tick();snapshot();audit('renderer-ready',{nativePid:overlay.pid});
     };
     const command=async c=>{
       if(closed)return;

@@ -64,3 +64,14 @@ test('rotates lifecycle log and leaves unchanged status alone',async()=>{
     await cleanup();cleanup=null;
   }finally{if(cleanup)await cleanup();if(previous===undefined)delete process.env.DSH_HOME;else process.env.DSH_HOME=previous;await rm(temp,{recursive:true,force:true});}
 });
+
+test('hidden startup reports the native window state after hiding',async()=>{
+  const temp=await mkdtemp(join(tmpdir(),'kurowhale-hidden-'));const previous=process.env.DSH_HOME;process.env.DSH_HOME=temp;let cleanup,nativeVisible=true;
+  try{
+    const dir=join(temp,'kurowhale-pet');await mkdir(dir);await writeFile(join(dir,'position.json'),JSON.stringify({x:42,y:81,scale:1.25,visible:false,topmost:true}));await writeFile(join(dir,'pet.json'),JSON.stringify({spritesheetPath:'spritesheet.webp'}));
+    apply({effect:fn=>{cleanup=fn();},on:()=>()=>{}},{resolveResources:async()=>({assetDirectory:dir,runtimePath:'custom-runtime'}),createOverlay:async()=>({pid:123,destroy(){},frame(){},inspect:async()=>({visible:nativeVisible}),hide:async()=>{nativeVisible=false;}})});
+    await wait(50);const status=JSON.parse(await readFile(join(dir,'status.json'),'utf8'));
+    assert.equal(status.rendererReady,true);assert.equal(status.visible,false);assert.equal(status.nativeWindow.visible,false);
+    await cleanup();cleanup=null;
+  }finally{if(cleanup)await cleanup();if(previous===undefined)delete process.env.DSH_HOME;else process.env.DSH_HOME=previous;await rm(temp,{recursive:true,force:true});}
+});
