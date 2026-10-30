@@ -1,4 +1,4 @@
-# DSH KuroWhale Pet 🐳
+# KuroWhale 黑色系鲸鱼娘桌宠 🐳
 
 [中文](README.md) | English
 
@@ -12,9 +12,9 @@ This is a free, unofficial community project. It is not affiliated with or endor
 
 ## Installation status
 
-In DSH Desktop, open Plugin management → Add plugin and enter the GitHub URL or `dsh-kurowhale-pet@0.1.2`; click Enable now and restart DSH. The marketplace is another entry point when its listing is updated. Missing resources are downloaded from pinned sources and verified. **npm 0.1.2 is published; source version 0.1.3 is a pending candidate and is not yet published on npm.** Validation of all three paths is not complete.
+In DSH Desktop, open Plugin management → Add plugin and enter the GitHub URL or `dsh-kurowhale-pet@0.1.3`; click Enable now and restart DSH. The marketplace is another entry point when its listing is updated. Missing resources are downloaded from pinned sources and verified. **npm 0.1.3 is published.** See the [bilingual release notes](docs/RELEASE-NOTES-0.1.3.md). Marketplace installation remains unverified.
 
-The public GitHub URL was installed with Desktop's CLI at commit `0e911a3` and the pet was visually confirmed after restarting the user's rc.5 Desktop with existing paths retained. An earlier asset-free local Git candidate verified automatic resource acquisition and display. The published npm 0.1.2 was installed through the official add-plugin UI, enabled using its **Enable now** button, and visually confirmed after restarting rc.5; existing configuration and position were retained. Desktop requires uninstalling an existing same-name third-party plugin before installing another source, so back up settings first.
+The public GitHub URL was installed with Desktop's CLI at commit `0e911a3` and the pet was visually confirmed after restarting the user's rc.5 Desktop with existing paths retained. An earlier asset-free local Git candidate verified automatic resource acquisition and display. The historical npm 0.1.2 release was installed through the official add-plugin UI, enabled using its **Enable now** button, and visually confirmed after restarting rc.5; existing configuration and position were retained. The final 0.1.3 tarball was installed, enabled and loaded with the rc.5 bundled CLI in an isolated profile, with its real native window visually checked. The published npm tarball was verified against that accepted artifact. Desktop requires uninstalling an existing same-name third-party plugin before installing another source, so back up settings first.
 
 The listing was merged in [awesome-dsh-plugin PR #10379](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/10379). The market index still lists 0.1.1 with outdated manual instructions; rc.5 hides that incompatible old version. A description update is pending in [PR #10554](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/10554), and 0.1.2 synchronization and market installation remain unverified. The [staging script](scripts/stage-npm.mjs) prepares the npm package with verified artwork and license notices.
 

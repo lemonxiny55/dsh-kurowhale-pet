@@ -1,4 +1,4 @@
-# DSH KuroWhale Pet 🐳
+# KuroWhale 黑色系鲸鱼娘桌宠 🐳
 
 中文 | [English](README.en.md)
 
@@ -12,12 +12,12 @@
 
 ## 安装与当前状态
 
-需要 Windows x64、DSH Desktop 0.2.1-rc.3 或 0.2.1-rc.5 和 WebView2。在 DSH Desktop 的“插件管理 → 添加插件”中输入 GitHub 地址或 `dsh-kurowhale-pet@0.1.2`，点击“立即启用”，然后重启 DSH；首次运行会联网获取缺少的素材和官方 Neutralino 6.9.0，并校验 SHA-256。已有自定义路径、关闭设置和位置予以保留。**npm 0.1.2 已发布；源码 0.1.3 为待发布候选版，尚未在 npm 上线。** 三入口验收尚未全部完成。
+需要 Windows x64、DSH Desktop 0.2.1-rc.3 或 0.2.1-rc.5 和 WebView2。在 DSH Desktop 的“插件管理 → 添加插件”中输入 GitHub 地址或 `dsh-kurowhale-pet@0.1.3`，点击“立即启用”，然后重启 DSH；首次运行会联网获取缺少的素材和官方 Neutralino 6.9.0，并校验 SHA-256。已有自定义路径、关闭设置和位置予以保留。**npm 0.1.3 已发布。** [双语发布说明](docs/RELEASE-NOTES-0.1.3.md)。GitHub 安装、Desktop 添加插件和市场的既有验收范围见下表；市场安装仍未验收。
 
 | 入口 | 目标操作 | 目前的验证结果 |
 | --- | --- | --- |
 | GitHub | 在 DSH 添加插件时输入 `https://github.com/lemonxiny55/dsh-kurowhale-pet`，安装后重启 | 公开地址经 Desktop 自带 CLI 安装提交 `0e911a3`，在实际 rc.5 Desktop 重启后目视看到角色；该升级沿用了已有路径。此前无素材的本地 Git 快照测试验证了自动获取、校验及显示。添加插件界面尚未单独验证。 |
-| DSH Desktop | 添加插件，输入 `dsh-kurowhale-pet@0.1.2`，安装后点击“立即启用”，再重启 | 已在实际 rc.5 Desktop 的官方添加插件界面从 npm 官方源安装，点击“立即启用”并重启后目视看到角色；锁文件的完整性值与 npm 注册表一致。该次验证沿用了已有用户路径，配置和位置未变。 |
+| DSH Desktop | 添加插件，输入 `dsh-kurowhale-pet@0.1.3`，安装后点击“立即启用”，再重启 | 历史版本 npm 0.1.2 已在实际 rc.5 Desktop 的官方添加插件界面从 npm 官方源安装，点击“立即启用”并重启后目视看到角色；锁文件的完整性值与 npm 注册表一致。0.1.3 最终 tarball 已通过 rc.5 自带 CLI 在隔离 profile 安装、启用、加载并目视显示；正式 npm 包已核验与该 tarball 一致。该次验证沿用了已有用户路径，配置和位置未变。 |
 | 插件市场 | 搜索 KuroWhale 并安装，重启 DSH | [awesome-dsh-plugin PR #10379](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/10379) 已合并；市场索引目前仍为 0.1.1 和旧的手动步骤，rc.5 会将该旧版本作为不兼容项隐藏。说明更新见 [PR #10554](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/10554)，0.1.2 的同步和市场入口安装尚未验证。 |
 
 本机空目录实测了资源准备：从固定 npm 包取得素材、从官方发行版取得 Neutralino，均完成 SHA-256 校验。离线、下载失败或校验失败时启动会记录错误；DSH 仍可使用。Desktop 的第三方插件安装窗口提供“立即启用”，安装后需先点击此按钮；已有同名插件时，界面要求先卸载再安装，建议保留配置备份。

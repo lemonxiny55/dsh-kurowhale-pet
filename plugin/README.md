@@ -1,8 +1,8 @@
-# KuroWhale plugin
+# KuroWhale 黑色系鲸鱼娘桌宠
 
 Windows desktop companion for DSH Desktop **0.2.1-rc.3 and 0.2.1-rc.5**. The plugin reacts to Agent events and supports nine animation states, dragging, scaling, visibility, position persistence, a menu and tray controls. See the [technical acceptance record](../docs/TECHNICAL-ACCEPTANCE-0.1.0.md) for the tested scope and limitations.
 
-**Release status:** npm 0.1.2 is published. Source 0.1.3 is a pending candidate and has not been published.
+**Release status:** npm 0.1.3 is published. Add `dsh-kurowhale-pet@0.1.3` in DSH Desktop, enable it and restart.
 
 ## Install and configure
 
