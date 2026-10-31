@@ -2,33 +2,52 @@
 
 [中文](README.md) | English
 
-<p align="center"><img src="docs/images/kurowhale-preview.png" alt="KuroWhale whale-girl desktop pet" width="220"></p>
+<p align="center"><img src="docs/images/kurowhale-preview.png" alt="KuroWhale 黑色系鲸鱼娘桌宠 — whale-girl desktop pet" width="220"></p>
 
 **A whale-girl desktop pet inspired by the official DeepSeek Harness icon.** KuroWhale keeps you company on Windows and reacts to DSH Agent activity.
 
-[GitHub repository](https://github.com/lemonxiny55/dsh-kurowhale-pet) · [npm package](https://www.npmjs.com/package/dsh-kurowhale-pet) · [Windows ZIP alternative](docs/WINDOWS-FULL-INSTALL.md) · [Acceptance record](docs/TECHNICAL-ACCEPTANCE-0.1.0.md)
+[GitHub repository](https://github.com/lemonxiny55/dsh-kurowhale-pet) · **DSH Desktop → Add plugin: `dsh-kurowhale-pet@0.1.3`** · [DSH Market](https://awesome-dsh-plugin.com/p/lemonxiny55/dsh-kurowhale-pet/)
 
 This is a free, unofficial community project. It is not affiliated with or endorsed by DeepSeek or the related creators.
 
-## Installation status
+## Installation
 
-In DSH Desktop, open Plugin management → Add plugin and enter the GitHub URL or `dsh-kurowhale-pet@0.1.3`; click Enable now and restart DSH. The marketplace is another entry point when its listing is updated. Missing resources are downloaded from pinned sources and verified. **npm 0.1.3 is published.** See the [bilingual release notes](docs/RELEASE-NOTES-0.1.3.md). Marketplace installation remains unverified.
+Requires **Windows x64, WebView2, and DSH Desktop 0.2.1-rc.3 or rc.5**.
 
-The public GitHub URL was installed with Desktop's CLI at commit `0e911a3` and the pet was visually confirmed after restarting the user's rc.5 Desktop with existing paths retained. An earlier asset-free local Git candidate verified automatic resource acquisition and display. The historical npm 0.1.2 release was installed through the official add-plugin UI, enabled using its **Enable now** button, and visually confirmed after restarting rc.5; existing configuration and position were retained. The final 0.1.3 tarball was installed, enabled and loaded with the rc.5 bundled CLI in an isolated profile, with its real native window visually checked. The published npm tarball was verified against that accepted artifact. Desktop requires uninstalling an existing same-name third-party plugin before installing another source, so back up settings first.
+1. Open **Plugin management → Add plugin** in DSH Desktop.
+2. Enter `dsh-kurowhale-pet@0.1.3`, select the **official npm registry**, and click **Install**.
+3. Click **Enable now** when installation finishes, then restart DSH.
 
-The listing was merged in [awesome-dsh-plugin PR #10379](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/10379). The market index still lists 0.1.1 with outdated manual instructions; rc.5 hides that incompatible old version. A description update is pending in [PR #10554](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/10554), and 0.1.2 synchronization and market installation remain unverified. The [staging script](scripts/stage-npm.mjs) prepares the npm package with verified artwork and license notices.
+The first launch prefers bundled artwork. Missing artwork and the official Neutralino 6.9.0 runtime are downloaded from pinned sources and verified with SHA-256. Existing custom paths, visibility preferences, and position are retained. Download or verification failures are logged while DSH remains usable. Desktop requires uninstalling a same-name plugin before reinstalling it; back up your configuration first.
 
-For historical 0.1.1 setup see the [npm installation guide](docs/NPM-INSTALL.md). The [Windows v0.1.0 ZIP](docs/WINDOWS-FULL-INSTALL.md) remains an alternative with its existing manual setup.
+**v0.1.3 is published:** [npm](https://www.npmjs.com/package/dsh-kurowhale-pet/v/0.1.3) · [GitHub Release](https://github.com/lemonxiny55/dsh-kurowhale-pet/releases/tag/v0.1.3) · [Bilingual release notes](docs/RELEASE-NOTES-0.1.3.md)
 
-## Features
+| Installation entry | Action | Verification |
+| --- | --- | --- |
+| GitHub repository | Enter `https://github.com/lemonxiny55/dsh-kurowhale-pet` in Add plugin, enable, and restart | Previously verified via CLI and visible after rc.5 restart; GitHub URL installation through the add-plugin UI remains unverified. |
+| DSH Desktop (recommended) | Add `dsh-kurowhale-pet@0.1.3`, enable, and restart | The final 0.1.3 artifact previously passed isolated rc.5 installation and native display. This round passed official-registry UI installation, enabling, and renderer readiness; native display was not visually rechecked. |
+| DSH Market | Open Plugins → Discover and search for KuroWhale | **Installation remains blocked.** PR #10554 is merged, but on 2026-10-31 the live index still offers 0.1.1, the old description, and a generic icon. rc.5 marks it incompatible and disables Install. Use the pinned npm entry above for now. |
 
-- **Nine animations** respond to Agent activity, approval requests, completion, and failure.
-- **Desktop overlay** provides a transparent window with dragging, scaling, hiding, always-on-top, and position persistence.
-- **Menu and tray** let you manage the pet with a right-click and restore it from the system tray.
+See the [post-release acceptance record](docs/POST-RELEASE-0.1.3.md) for index setup, synchronization diagnosis, and the boundaries of this round. The historical [Windows v0.1.0 ZIP](docs/WINDOWS-FULL-INSTALL.md) remains an alternative requiring manual configuration.
+
+## Features and preview
+
+- **Nine animations:** idle, movement in both directions, waving, jumping, failure, awaiting approval, working, and completion review.
+- **Desktop overlay:** a transparent window with dragging, scaling, hiding, always-on-top, and position persistence.
+- **Menu and tray:** manage the pet with a right-click and restore it from the system tray.
+
+<details>
+<summary>View all nine states (static frames from the existing animation atlas)</summary>
+
+<p align="center"><img src="docs/images/kurowhale-nine-states.png" alt="KuroWhale states: idle, running-right, running-left, waving, jumping, failed, waiting, running, review" width="720"></p>
+
+Extracted and arranged from the existing `spritesheet.webp` referenced by `pet.json`. The character and animations are unchanged. See [artwork version maintenance](docs/ARTWORK-VERSIONS.md) for reproduction details.
+
+</details>
 
 ## Verified scope
 
-Installation and desktop interaction were verified on Windows x64 with DSH Desktop 0.2.1-rc.3; installation and targeted stability regression were also checked on rc.5. Other DSH versions, mixed-DPI setups, and long-running use have not been fully validated. See the [acceptance record](docs/TECHNICAL-ACCEPTANCE-0.1.0.md) for evidence and limitations.
+Installation and desktop interaction were verified on Windows x64 with DSH Desktop 0.2.1-rc.3; installation and targeted stability regression were also checked on rc.5. Other DSH versions, mixed-DPI setups, and long-running use have not been fully validated. See the [technical acceptance record](docs/TECHNICAL-ACCEPTANCE-0.1.0.md) and [this round's record](docs/POST-RELEASE-0.1.3.md) for evidence and limitations.
 
 ## Artwork and licensing
 

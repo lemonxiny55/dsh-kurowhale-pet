@@ -1,8 +1,8 @@
 # 已归档：0.1.1 手动安装 / Archived: 0.1.1 manual installation
 
-> 以下手动路径是 **0.1.1 历史说明**，不适用于已发布的 0.1.2 自动配置。0.1.2 在 Windows x64 首次启动时会优先查找包内素材，缺失时校验并获取发行素材和官方 Neutralino；保留已有配置。各入口的当前验证结果见[项目首页](../README.md)。
+> 以下手动路径是 **0.1.1 历史说明**，不适用于已发布的 0.1.3 自动配置。0.1.3 在 Windows x64 首次启动时会优先查找包内素材，缺失时校验并获取发行素材和官方 Neutralino；保留已有配置。各入口的当前验证结果见[项目首页](../README.md)。
 >
-> The manual steps below describe **0.1.1**. The published 0.1.2 release discovers bundled artwork or obtains verified resources automatically on Windows x64, while retaining existing settings. See the [project README](../README.en.md) for release and entry-point verification status.
+> The manual steps below describe **0.1.1**. The published 0.1.3 release discovers bundled artwork or obtains verified resources automatically on Windows x64, while retaining existing settings. See the [project README](../README.en.md) for release and entry-point verification status.
 
 `dsh-kurowhale-pet@0.1.1` 在 npm 上包含插件和 `character/pet.json`、`character/spritesheet.webp`；它不包含 Neutralino 可执行文件，也不会自动启用渲染。`npm install` 仅安装到指定目录，不会把插件加入 Desktop profile。以下是基于官方 CLI 和已发布包结构的手动操作；npm 下载已验证，使用 npm 在全新 Desktop profile 安装并显示角色尚未实机验收。完整安装器的已验证路径见 [Windows 完整包](WINDOWS-FULL-INSTALL.md)。
 

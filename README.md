@@ -2,39 +2,52 @@
 
 中文 | [English](README.en.md)
 
-<p align="center"><img src="docs/images/kurowhale-preview.png" alt="KuroWhale 鲸鱼娘桌宠" width="220"></p>
+<p align="center"><img src="docs/images/kurowhale-preview.png" alt="KuroWhale 黑色系鲸鱼娘桌宠" width="220"></p>
 
 **参考 DeepSeek Harness 官方图标设计的鲸鱼娘桌宠。** 在 Windows 桌面上陪伴你，并响应 DSH Agent 的工作状态。
 
-[GitHub 仓库](https://github.com/lemonxiny55/dsh-kurowhale-pet) · [npm 包](https://www.npmjs.com/package/dsh-kurowhale-pet) · [备用 Windows ZIP](docs/WINDOWS-FULL-INSTALL.md) · [验收记录](docs/TECHNICAL-ACCEPTANCE-0.1.0.md)
+[GitHub 仓库](https://github.com/lemonxiny55/dsh-kurowhale-pet) · **DSH Desktop 添加插件：`dsh-kurowhale-pet@0.1.3`** · [DSH Market](https://awesome-dsh-plugin.com/p/lemonxiny55/dsh-kurowhale-pet/)
 
 免费、非官方社区项目，与 DeepSeek 官方及相关创作者无关联，也未获得其背书。
 
-## 安装与当前状态
+## 安装
 
-需要 Windows x64、DSH Desktop 0.2.1-rc.3 或 0.2.1-rc.5 和 WebView2。在 DSH Desktop 的“插件管理 → 添加插件”中输入 GitHub 地址或 `dsh-kurowhale-pet@0.1.3`，点击“立即启用”，然后重启 DSH；首次运行会联网获取缺少的素材和官方 Neutralino 6.9.0，并校验 SHA-256。已有自定义路径、关闭设置和位置予以保留。**npm 0.1.3 已发布。** [双语发布说明](docs/RELEASE-NOTES-0.1.3.md)。GitHub 安装、Desktop 添加插件和市场的既有验收范围见下表；市场安装仍未验收。
+需要 **Windows x64、WebView2 和 DSH Desktop 0.2.1-rc.3 或 rc.5**。
 
-| 入口 | 目标操作 | 目前的验证结果 |
+1. 打开 DSH Desktop 的 **插件管理 → 添加插件**。
+2. 输入 `dsh-kurowhale-pet@0.1.3`，选择 **npm 官方源**，点击 **安装**。
+3. 安装完成后点击 **立即启用**，再重启 DSH。
+
+首次启动会优先使用包内素材；缺失的素材和官方 Neutralino 6.9.0 运行时会从固定来源联网获取并校验 SHA-256。已有自定义路径、显示偏好和位置予以保留。下载或校验失败会记录错误，DSH 仍可使用。同名插件已安装时，Desktop 要求先卸载再安装，请先备份配置。
+
+**v0.1.3 已发布：**[npm](https://www.npmjs.com/package/dsh-kurowhale-pet/v/0.1.3) · [GitHub Release](https://github.com/lemonxiny55/dsh-kurowhale-pet/releases/tag/v0.1.3) · [双语发布说明](docs/RELEASE-NOTES-0.1.3.md)
+
+| 安装入口 | 操作 | 验证情况 |
 | --- | --- | --- |
-| GitHub | 在 DSH 添加插件时输入 `https://github.com/lemonxiny55/dsh-kurowhale-pet`，安装后重启 | 公开地址经 Desktop 自带 CLI 安装提交 `0e911a3`，在实际 rc.5 Desktop 重启后目视看到角色；该升级沿用了已有路径。此前无素材的本地 Git 快照测试验证了自动获取、校验及显示。添加插件界面尚未单独验证。 |
-| DSH Desktop | 添加插件，输入 `dsh-kurowhale-pet@0.1.3`，安装后点击“立即启用”，再重启 | 历史版本 npm 0.1.2 已在实际 rc.5 Desktop 的官方添加插件界面从 npm 官方源安装，点击“立即启用”并重启后目视看到角色；锁文件的完整性值与 npm 注册表一致。0.1.3 最终 tarball 已通过 rc.5 自带 CLI 在隔离 profile 安装、启用、加载并目视显示；正式 npm 包已核验与该 tarball 一致。该次验证沿用了已有用户路径，配置和位置未变。 |
-| 插件市场 | 搜索 KuroWhale 并安装，重启 DSH | [awesome-dsh-plugin PR #10379](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/10379) 已合并；市场索引目前仍为 0.1.1 和旧的手动步骤，rc.5 会将该旧版本作为不兼容项隐藏。说明更新见 [PR #10554](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/10554)，0.1.2 的同步和市场入口安装尚未验证。 |
+| GitHub 仓库 | 在“添加插件”中输入 `https://github.com/lemonxiny55/dsh-kurowhale-pet`，启用后重启 | 历史 CLI 安装和 rc.5 重启显示已验证；GitHub 地址的添加插件界面未单独验收。 |
+| DSH Desktop（推荐） | 添加 `dsh-kurowhale-pet@0.1.3`，立即启用后重启 | 0.1.3 最终包此前已通过 rc.5 隔离安装及原生显示；本轮官方源界面安装、启用和渲染器就绪通过，未目视复验。 |
+| DSH Market | 插件 → 发现，搜索 KuroWhale | **安装仍受阻。** PR #10554 已合并，但 2026-10-31 在线索引仍为 0.1.1、旧简介和通用图标；rc.5 显示“不兼容”并禁用安装按钮。当前请使用上面的固定 npm 版本入口。 |
 
-本机空目录实测了资源准备：从固定 npm 包取得素材、从官方发行版取得 Neutralino，均完成 SHA-256 校验。离线、下载失败或校验失败时启动会记录错误；DSH 仍可使用。Desktop 的第三方插件安装窗口提供“立即启用”，安装后需先点击此按钮；已有同名插件时，界面要求先卸载再安装，建议保留配置备份。
+市场索引设置、同步问题的定位和本轮验收边界见[发布后验收记录](docs/POST-RELEASE-0.1.3.md)。[Windows v0.1.0 ZIP](docs/WINDOWS-FULL-INSTALL.md) 保留为需要人工配置的历史备用方式。
 
-npm 包通过 [准备脚本](scripts/stage-npm.mjs) 从已校验的发行素材构建，包含图集与美术许可文件；Git 源码不含图集。受限环境中的原生窗口启动曾失败；允许原生桌面进程后，上述 DSH 安装测试完成目视检查。市场入口验证等待索引同步。
+## 功能与展示
 
-Windows ZIP 是备用安装方式；现有 [v0.1.0 ZIP](https://github.com/lemonxiny55/dsh-kurowhale-pet/releases/tag/v0.1.0) 的人工配置和历史验收见[安装指南](docs/WINDOWS-FULL-INSTALL.md)。
-
-## 功能
-
-- **九种动画**：响应 Agent 工作、审批、完成和失败等事件。
+- **九种动画**：待机、左右移动、挥手、跳跃、失败、等待审批、工作中和完成回顾。
 - **桌面悬浮**：透明窗口支持拖动、缩放、隐藏、置顶和位置记忆。
 - **菜单与托盘**：右键管理桌宠，通过系统托盘恢复显示。
 
+<details>
+<summary>查看九种状态（现有动画图集的静态帧）</summary>
+
+<p align="center"><img src="docs/images/kurowhale-nine-states.png" alt="KuroWhale 九状态：待机、向右移动、向左移动、挥手、跳跃、失败、等待审批、工作中、完成回顾" width="720"></p>
+
+使用原有 `pet.json` 指向的 `spritesheet.webp` 提取并排版，未重绘角色或修改动画；制作方式见[素材版本维护](docs/ARTWORK-VERSIONS.md)。
+
+</details>
+
 ## 已验证范围
 
-已在 Windows x64 的 DSH Desktop 0.2.1-rc.3 验证安装及桌宠交互，并在 rc.5 验证安装和针对性稳定性回归。其他 DSH 版本、混合 DPI 和长期运行尚未充分验证，具体证据与限制见[技术验收](docs/TECHNICAL-ACCEPTANCE-0.1.0.md)。
+已在 Windows x64 的 DSH Desktop 0.2.1-rc.3 验证安装及桌宠交互，并在 rc.5 验证安装和针对性稳定性回归。其他 DSH 版本、混合 DPI 和长期运行尚未充分验证，具体证据与限制见[技术验收](docs/TECHNICAL-ACCEPTANCE-0.1.0.md)和[本轮记录](docs/POST-RELEASE-0.1.3.md)。
 
 ## 角色来源与许可
 
