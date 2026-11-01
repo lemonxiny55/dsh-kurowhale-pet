@@ -34,6 +34,8 @@
 
 本地证据及候选均在 `.acceptance/market-investigation-20261101/`：`npm.json`、`site-plugins.json`、`site-index.json`、`cdn-index.json`、`catalog-tarball-verification.json`、`package-comparison.json`、`upstream-verification.json`、`pack-result.json` 和候选 tgz。复验命令：`node .acceptance/market-investigation-20261101/verify-upstream.mjs`。此目录被 Git 忽略。默认 npm 缓存不可写时仅为当前进程指定项目内 npm_config_cache，测试 TEMP/TMP 同理。
 
+修复提交：`802b15a`，本地分支 `codex/fix-market-repository-metadata`。已有 main 提交 e4e2a46 的 [GitHub Actions](https://github.com/lemonxiny55/dsh-kurowhale-pet/actions/runs/41162945046) 成功；新修复提交的云端 CI **尚未运行**。向 `https://github.com/lemonxiny55/dsh-kurowhale-pet.git` 推送该独立分支被自动审批拒绝，理由是缺少向该具体远程目的地发送代码的明确授权。没有绕过拒绝。需要用户批准该分支推送后才能验证新提交的 GitHub Actions；这与 npm 发布批准是两件事。
+
 ## 恢复操作与责任
 
 1. 用户决定是否批准发布 **0.1.4**。必须新发版本：0.1.3 已发布且缺少扫描所需的 manifest 字段，单改 GitHub 源码不会修正 npm 里的历史包。
