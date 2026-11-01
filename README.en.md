@@ -6,7 +6,7 @@
 
 **A whale-girl desktop pet inspired by the official DeepSeek Harness icon.** KuroWhale keeps you company on Windows and reacts to DSH Agent activity.
 
-[GitHub repository](https://github.com/lemonxiny55/dsh-kurowhale-pet) · **DSH Desktop → Add plugin: `dsh-kurowhale-pet@0.1.3`** · [DSH Market](https://awesome-dsh-plugin.com/p/lemonxiny55/dsh-kurowhale-pet/)
+[GitHub repository](https://github.com/lemonxiny55/dsh-kurowhale-pet) · **DSH Desktop → Add plugin: `dsh-kurowhale-pet@0.1.4`** · [DSH Market](https://awesome-dsh-plugin.com/p/lemonxiny55/dsh-kurowhale-pet/)
 
 This is a free, unofficial community project. It is not affiliated with or endorsed by DeepSeek or the related creators.
 
@@ -15,18 +15,18 @@ This is a free, unofficial community project. It is not affiliated with or endor
 Requires **Windows x64, WebView2, and DSH Desktop 0.2.1-rc.3 or rc.5**.
 
 1. Open **Plugin management → Add plugin** in DSH Desktop.
-2. Enter `dsh-kurowhale-pet@0.1.3`, select the **official npm registry**, and click **Install**.
+2. Enter `dsh-kurowhale-pet@0.1.4`, select the **official npm registry**, and click **Install**.
 3. Click **Enable now** when installation finishes, then restart DSH.
 
 The first launch prefers bundled artwork. Missing artwork and the official Neutralino 6.9.0 runtime are downloaded from pinned sources and verified with SHA-256. Existing custom paths, visibility preferences, and position are retained. Download or verification failures are logged while DSH remains usable. Desktop requires uninstalling a same-name plugin before reinstalling it; back up your configuration first.
 
-**v0.1.3 is published:** [npm](https://www.npmjs.com/package/dsh-kurowhale-pet/v/0.1.3) · [GitHub Release](https://github.com/lemonxiny55/dsh-kurowhale-pet/releases/tag/v0.1.3) · [Bilingual release notes](docs/RELEASE-NOTES-0.1.3.md)
+**v0.1.4 npm is published:** [npm](https://www.npmjs.com/package/dsh-kurowhale-pet/v/0.1.4) · [GitHub Release](https://github.com/lemonxiny55/dsh-kurowhale-pet/releases) · [Bilingual release notes](docs/RELEASE-NOTES-0.1.4.md)
 
 | Installation entry | Action | Verification |
 | --- | --- | --- |
 | GitHub repository | Enter `https://github.com/lemonxiny55/dsh-kurowhale-pet` in Add plugin, enable, and restart | Previously verified via CLI and visible after rc.5 restart; GitHub URL installation through the add-plugin UI remains unverified. |
-| DSH Desktop (recommended) | Add `dsh-kurowhale-pet@0.1.3`, enable, and restart | The final 0.1.3 artifact previously passed isolated rc.5 installation and native display. This round passed official-registry UI installation, enabling, and renderer readiness; native display was not visually rechecked. |
-| DSH Market | Open Plugins → Discover and search for KuroWhale | **Installation remains blocked.** PR #10554 is merged, but on 2026-10-31 the live index still offers 0.1.1, the old description, and a generic icon. rc.5 marks it incompatible and disables Install. Use the pinned npm entry above for now. |
+| DSH Desktop (recommended) | Add `dsh-kurowhale-pet@0.1.4`, enable, and restart | The published 0.1.4 package matches the accepted artifact; metadata checks and automated tests passed. Runtime and artwork match 0.1.3, whose native-display acceptance is retained; no new visual acceptance was performed. |
+| DSH Market | Open Plugins → Discover and search for KuroWhale | **Awaiting upstream catalog synchronization and verification.** Version 0.1.4 fixes the npm repository metadata that prevented association. npm publication does not establish market recovery. Use the pinned npm entry above for now; see the [0.1.4 release notes](docs/RELEASE-NOTES-0.1.4.md). |
 
 See the [post-release acceptance record](docs/POST-RELEASE-0.1.3.md) for index setup, synchronization diagnosis, and the boundaries of this round. The historical [Windows v0.1.0 ZIP](docs/WINDOWS-FULL-INSTALL.md) remains an alternative requiring manual configuration.
 

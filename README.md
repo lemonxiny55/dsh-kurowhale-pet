@@ -6,7 +6,7 @@
 
 **参考 DeepSeek Harness 官方图标设计的鲸鱼娘桌宠。** 在 Windows 桌面上陪伴你，并响应 DSH Agent 的工作状态。
 
-[GitHub 仓库](https://github.com/lemonxiny55/dsh-kurowhale-pet) · **DSH Desktop 添加插件：`dsh-kurowhale-pet@0.1.3`** · [DSH Market](https://awesome-dsh-plugin.com/p/lemonxiny55/dsh-kurowhale-pet/)
+[GitHub 仓库](https://github.com/lemonxiny55/dsh-kurowhale-pet) · **DSH Desktop 添加插件：`dsh-kurowhale-pet@0.1.4`** · [DSH Market](https://awesome-dsh-plugin.com/p/lemonxiny55/dsh-kurowhale-pet/)
 
 免费、非官方社区项目，与 DeepSeek 官方及相关创作者无关联，也未获得其背书。
 
@@ -15,18 +15,18 @@
 需要 **Windows x64、WebView2 和 DSH Desktop 0.2.1-rc.3 或 rc.5**。
 
 1. 打开 DSH Desktop 的 **插件管理 → 添加插件**。
-2. 输入 `dsh-kurowhale-pet@0.1.3`，选择 **npm 官方源**，点击 **安装**。
+2. 输入 `dsh-kurowhale-pet@0.1.4`，选择 **npm 官方源**，点击 **安装**。
 3. 安装完成后点击 **立即启用**，再重启 DSH。
 
 首次启动会优先使用包内素材；缺失的素材和官方 Neutralino 6.9.0 运行时会从固定来源联网获取并校验 SHA-256。已有自定义路径、显示偏好和位置予以保留。下载或校验失败会记录错误，DSH 仍可使用。同名插件已安装时，Desktop 要求先卸载再安装，请先备份配置。
 
-**v0.1.3 已发布：**[npm](https://www.npmjs.com/package/dsh-kurowhale-pet/v/0.1.3) · [GitHub Release](https://github.com/lemonxiny55/dsh-kurowhale-pet/releases/tag/v0.1.3) · [双语发布说明](docs/RELEASE-NOTES-0.1.3.md)
+**v0.1.4 npm 已发布：**[npm](https://www.npmjs.com/package/dsh-kurowhale-pet/v/0.1.4) · [GitHub Release](https://github.com/lemonxiny55/dsh-kurowhale-pet/releases) · [双语发布说明](docs/RELEASE-NOTES-0.1.4.md)
 
 | 安装入口 | 操作 | 验证情况 |
 | --- | --- | --- |
 | GitHub 仓库 | 在“添加插件”中输入 `https://github.com/lemonxiny55/dsh-kurowhale-pet`，启用后重启 | 历史 CLI 安装和 rc.5 重启显示已验证；GitHub 地址的添加插件界面未单独验收。 |
-| DSH Desktop（推荐） | 添加 `dsh-kurowhale-pet@0.1.3`，立即启用后重启 | 0.1.3 最终包此前已通过 rc.5 隔离安装及原生显示；本轮官方源界面安装、启用和渲染器就绪通过，未目视复验。 |
-| DSH Market | 插件 → 发现，搜索 KuroWhale | **安装仍受阻。** PR #10554 已合并，但 2026-10-31 在线索引仍为 0.1.1、旧简介和通用图标；rc.5 显示“不兼容”并禁用安装按钮。当前请使用上面的固定 npm 版本入口。 |
+| DSH Desktop（推荐） | 添加 `dsh-kurowhale-pet@0.1.4`，立即启用后重启 | 0.1.4 正式 npm 包与验收产物一致，元数据和自动测试通过。运行时及素材与 0.1.3 一致，沿用其原生显示验收；本轮未重复目视验收。 |
+| DSH Market | 插件 → 发现，搜索 KuroWhale | **等待上游目录同步确认。** 0.1.4 已修复导致扫描关联失败的 npm 仓库元数据；npm 发布不代表市场已恢复。当前请使用上面的固定 npm 版本入口，详见[0.1.4 发布说明](docs/RELEASE-NOTES-0.1.4.md)。 |
 
 市场索引设置、同步问题的定位和本轮验收边界见[发布后验收记录](docs/POST-RELEASE-0.1.3.md)。[Windows v0.1.0 ZIP](docs/WINDOWS-FULL-INSTALL.md) 保留为需要人工配置的历史备用方式。
 
