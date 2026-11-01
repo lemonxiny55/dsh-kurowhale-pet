@@ -14,6 +14,17 @@ for (const name of ['plugin','LICENSE','LICENSE-ARTWORK','NOTICE-ARTWORK.md','TH
   await cp(join(root,name),join(destination,name),{recursive:true,errorOnExist:true,force:false});
 }
 const pkg=JSON.parse(await readFile(join(root,'package.json'),'utf8'));
+const pluginPkg=JSON.parse(await readFile(join(root,'plugin/package.json'),'utf8'));
+// The upstream market probe verifies the published manifest's repository.
+// Fail staging rather than silently producing an unindexable release again.
+if (pkg.repository?.type !== 'git' || pkg.repository?.url !== 'git+https://github.com/lemonxiny55/dsh-kurowhale-pet.git') {
+  throw Error('The npm candidate must link back to the KuroWhale GitHub repository');
+}
+for (const field of ['name','version','repository','homepage','bugs','engines']) {
+  if (JSON.stringify(pkg[field]) !== JSON.stringify(pluginPkg[field])) {
+    throw Error(`Root and plugin manifests disagree on ${field}`);
+  }
+}
 // The source checkout is private; only the explicitly staged release is publishable.
 delete pkg.private;
 pkg.files=['plugin/','character/','LICENSE','LICENSE-ARTWORK','NOTICE-ARTWORK.md','THIRD_PARTY_NOTICES.md'];
