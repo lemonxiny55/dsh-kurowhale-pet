@@ -7,11 +7,11 @@ import { name, apply } from '../index.js';
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 
-test('declares an installable DSH bundle with a pinned RC target', async () => {
+test('declares an installable DSH bundle covering 0.2.x releases', async () => {
   const pkg = JSON.parse(await readFile(resolve(root, 'package.json'), 'utf8'));
   assert.equal(pkg.name, 'dsh-kurowhale-pet');
   assert.equal(pkg.private, true);
-  assert.equal(pkg.engines.dsh, '0.2.1-rc.3 || 0.2.1-rc.5');
+  assert.equal(pkg.engines.dsh, '>=0.2.1-rc.3 <0.3.0 || >=0.2.2-rc.0 <0.3.0');
   assert.equal(pkg.dsh.bundle.patch, './cordis.patch.yml');
 });
 

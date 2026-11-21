@@ -1,6 +1,6 @@
 # 素材版本维护 / Artwork version maintenance
 
-自动素材的唯一版本固定项位于 `plugin/resources.js`：`artworkVersion`、npm 归档 URL 和 SHA-256，以及 `pet.json`、`spritesheet.webp` 的 SHA-256。当前素材版本为 0.1.0，与插件版本独立；该归档是固定的素材来源，并非要求安装旧插件。GitHub 安装会下载并校验归档及两个文件；npm 构建脚本从同一来源校验后打包，运行时也校验包内文件。用户显式设置的路径继续由用户管理，不会被替换或按固定哈希拒绝。
+自动素材的唯一版本固定项位于 `plugin/resources.js`：`artworkVersion`、npm 归档 URL，以及 `pet.json`、`spritesheet.webp` 的 SHA-256。当前素材版本为 `0.2.0`（升级 `running-right` 与 `running-left` 为 3/4 侧身转身与刚体等比纯侧身 6 步迈步，其余 7 组状态与 1536 × 1872 九行 57 帧布局保持不变）。GitHub 安装会下载归档并逐文件校验两个文件的 SHA-256；npm 构建脚本从本地已校验素材或固定源核验后打包，运行时也校验包内文件。用户显式设置的路径继续由用户管理，不会被替换或按固定哈希拒绝。
 
 升级时先确认素材许可和来源，生成新的不可变发行归档，独立计算归档及两个文件的 SHA-256，同时更新上述全部固定项和素材版本。保留旧缓存目录，运行自动测试，使用 `scripts/stage-npm.mjs` 构建候选包并比较包内文件哈希，再进行 Windows Desktop 验收。不要覆盖已有 npm 版本。
 
@@ -18,7 +18,7 @@ For an upgrade, verify provenance and licensing, publish an immutable artwork ar
 python scripts/build-state-preview.py --assets KuroWhale-Pet
 ```
 
-也可将 `--assets` 指向已发布 npm 包的 `character` 目录。脚本核验图集 SHA-256 为 `7ae1e467778139d7da381fd860af6ebff3a3bd0385b69f9f0c278fbeb4d89298`，再按 `plugin/animations.js` 和原生渲染器的行列布局提取以下帧（从 0 计数）。素材本身的历史名称与文件内容均保留不变。
+也可将 `--assets` 指向已发布 npm 包的 `character` 目录。脚本核验图集 SHA-256 为 `7ba604af016af7974af7cb093ce927c31c993b71566eb6500d523c52ce2969a9`，再按 `plugin/animations.js` 和原生渲染器的行列布局提取以下帧（从 0 计数）。`pet.json` SHA-256 为 `2f3613cc882be81b8a6106947a64972def78eac90cc234e3095e02f7518ee45d`。
 
 | 状态 / State | 行 / Row | 帧 / Frame |
 | --- | --- | --- |

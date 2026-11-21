@@ -25,7 +25,7 @@ STATES = [
     ("running", "工作中", 7, 2),
     ("review", "完成回顾", 8, 3),
 ]
-ATLAS_SHA256 = "7ae1e467778139d7da381fd860af6ebff3a3bd0385b69f9f0c278fbeb4d89298"
+ATLAS_SHA256 = "7ba604af016af7974af7cb093ce927c31c993b71566eb6500d523c52ce2969a9"
 
 
 def main():

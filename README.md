@@ -6,42 +6,44 @@
 
 **参考 DeepSeek Harness 官方图标设计的鲸鱼娘桌宠。** 在 Windows 桌面上陪伴你，并响应 DSH Agent 的工作状态。
 
-[GitHub 仓库](https://github.com/lemonxiny55/dsh-kurowhale-pet) · **DSH Desktop 添加插件：`dsh-kurowhale-pet@0.1.4`** · [DSH Market](https://awesome-dsh-plugin.com/p/lemonxiny55/dsh-kurowhale-pet/)
+[GitHub 仓库](https://github.com/lemonxiny55/dsh-kurowhale-pet) · **DSH Desktop 添加插件：`dsh-kurowhale-pet@0.2.0`** · [DSH Market](https://awesome-dsh-plugin.com/p/lemonxiny55/dsh-kurowhale-pet/)
 
 免费、非官方社区项目，与 DeepSeek 官方及相关创作者无关联，也未获得其背书。
 
 ## 安装
 
-需要 **Windows x64、WebView2 和 DSH Desktop 0.2.1-rc.3 或 rc.5**。
+需要 **Windows x64、WebView2 和 DSH Desktop（`>=0.2.1-rc.3 <0.3.0 || >=0.2.2-rc.0 <0.3.0`）**。
 
 1. 打开 DSH Desktop 的 **插件管理 → 添加插件**。
-2. 输入 `dsh-kurowhale-pet@0.1.4`，选择 **npm 官方源**，点击 **安装**。
+2. 输入 `dsh-kurowhale-pet@0.2.0`（或历史稳定版 `0.1.4`），选择 **npm 官方源**，点击 **安装**。
 3. 安装完成后点击 **立即启用**，再重启 DSH。
 
-首次启动会优先使用包内素材；缺失的素材和官方 Neutralino 6.9.0 运行时会从固定来源联网获取并校验 SHA-256。已有自定义路径、显示偏好和位置予以保留。下载或校验失败会记录错误，DSH 仍可使用。同名插件已安装时，Desktop 要求先卸载再安装，请先备份配置。
+首次启动会优先使用包内素材；缺失的素材和官方 Neutralino 6.9.0 运行时会从固定来源及镜像回退联网获取并逐文件校验 SHA-256。已有自定义路径、显示偏好和位置予以保留。下载或校验失败会记录错误，DSH 仍可使用。同名插件已安装时，Desktop 要求先卸载再安装，请先备份配置。
 
-**v0.1.4 npm 已发布：**[npm](https://www.npmjs.com/package/dsh-kurowhale-pet/v/0.1.4) · [GitHub Release](https://github.com/lemonxiny55/dsh-kurowhale-pet/releases) · [双语发布说明](docs/RELEASE-NOTES-0.1.4.md)
+**v0.2.0 发布资料：**[GitHub Release](https://github.com/lemonxiny55/dsh-kurowhale-pet/releases) · [双语发布说明](docs/RELEASE-NOTES-0.2.0.md) · [npm](https://www.npmjs.com/package/dsh-kurowhale-pet)
 
 | 安装入口 | 操作 | 验证情况 |
 | --- | --- | --- |
+| DSH Desktop（npm） | 添加 `dsh-kurowhale-pet@0.2.0`，立即启用后重启 | 0.2.0 通过 31 项自动化/打包/回滚测试、独立 Neutralino 6.9.0 桌面实机交互目视验收与上游市场索引校验；需完成 npm 发布后即可经官方源直接安装。 |
 | GitHub 仓库 | 在“添加插件”中输入 `https://github.com/lemonxiny55/dsh-kurowhale-pet`，启用后重启 | 历史 CLI 安装和 rc.5 重启显示已验证；GitHub 地址的添加插件界面未单独验收。 |
-| DSH Desktop（推荐） | 添加 `dsh-kurowhale-pet@0.1.4`，立即启用后重启 | 0.1.4 正式 npm 包与验收产物一致，元数据和自动测试通过。运行时及素材与 0.1.3 一致，沿用其原生显示验收；本轮未重复目视验收。 |
-| DSH Market | 插件 → 发现，搜索 KuroWhale | **等待上游目录同步确认。** 0.1.4 已修复导致扫描关联失败的 npm 仓库元数据；npm 发布不代表市场已恢复。当前请使用上面的固定 npm 版本入口，详见[0.1.4 发布说明](docs/RELEASE-NOTES-0.1.4.md)。 |
+| DSH Market | 插件 → 发现，搜索 KuroWhale | 0.2.0 元数据已通过上游 `buildMarketIndex` 校验（兼容 0.2.1 与 0.2.2 系列）；线上市场目录随 npm 发布后上游扫描同步更新。 |
 
-市场索引设置、同步问题的定位和本轮验收边界见[发布后验收记录](docs/POST-RELEASE-0.1.3.md)。[Windows v0.1.0 ZIP](docs/WINDOWS-FULL-INSTALL.md) 保留为需要人工配置的历史备用方式。
+市场索引设置与历史验证见[发布后验收记录](docs/POST-RELEASE-0.1.3.md)。[Windows 纯代码包](docs/WINDOWS-INSTALL.md) 保留为人工配置备用方式。
 
 ## 功能与展示
 
-- **九种动画**：待机、左右移动、挥手、跳跃、失败、等待审批、工作中和完成回顾。
-- **桌面悬浮**：透明窗口支持拖动、缩放、隐藏、置顶和位置记忆。
-- **菜单与托盘**：右键管理桌宠，通过系统托盘恢复显示。
+- **九种动画与真正侧身转身行走**：待机、左右侧身移动（v0.2.0 新增 3/4 侧身转身 + 头部刚体等比纯侧身 6 步迈步）、挥手、跳跃、失败、等待审批、工作中（细分思考/编辑代码/执行命令/检索/协作）和完成回顾。
+- **极简霜白轻胶囊气泡与审批提醒**：角色上方以极简冷白微透胶囊 + 6px 呼吸状态光点实时播报状态与本轮耗时，零额外 LLM 调用；等待审批时常驻提醒、支持可选轻提示音，点击气泡或双击桌宠可一键置前唤起 DSH 窗口。
+- **丝滑交互与专注模式**：无重启平滑缩放、单击互动、空闲自主转身散步、空闲自动隐藏（有任务或审批时立刻现身），以及意外退出有限次自动恢复。
+- **菜单、托盘与斜杠命令**：深色紧凑右键菜单（开发者诊断已折叠）、系统托盘快捷开关，并可选注册 `/kurowhale` 斜杠命令控制桌宠。
+- **镜像加速与严格校验**：Neutralino 与素材自动下载支持多源镜像回退，所有源均严格执行 SHA-256 校验。
 
 <details>
-<summary>查看九种状态（现有动画图集的静态帧）</summary>
+<summary>查看九种状态（v0.2.0 动画图集的静态帧）</summary>
 
 <p align="center"><img src="docs/images/kurowhale-nine-states.png" alt="KuroWhale 九状态：待机、向右移动、向左移动、挥手、跳跃、失败、等待审批、工作中、完成回顾" width="720"></p>
 
-使用原有 `pet.json` 指向的 `spritesheet.webp` 提取并排版，未重绘角色或修改动画；制作方式见[素材版本维护](docs/ARTWORK-VERSIONS.md)。
+使用 `v0.2.0` 图集 `spritesheet.webp` 提取并排版；制作与校验方式见[素材版本维护](docs/ARTWORK-VERSIONS.md)。
 
 </details>
 

@@ -6,42 +6,44 @@
 
 **A whale-girl desktop pet inspired by the official DeepSeek Harness icon.** KuroWhale keeps you company on Windows and reacts to DSH Agent activity.
 
-[GitHub repository](https://github.com/lemonxiny55/dsh-kurowhale-pet) · **DSH Desktop → Add plugin: `dsh-kurowhale-pet@0.1.4`** · [DSH Market](https://awesome-dsh-plugin.com/p/lemonxiny55/dsh-kurowhale-pet/)
+[GitHub repository](https://github.com/lemonxiny55/dsh-kurowhale-pet) · **DSH Desktop → Add plugin: `dsh-kurowhale-pet@0.2.0`** · [DSH Market](https://awesome-dsh-plugin.com/p/lemonxiny55/dsh-kurowhale-pet/)
 
 This is a free, unofficial community project. It is not affiliated with or endorsed by DeepSeek or the related creators.
 
 ## Installation
 
-Requires **Windows x64, WebView2, and DSH Desktop 0.2.1-rc.3 or rc.5**.
+Requires **Windows x64, WebView2, and DSH Desktop (`>=0.2.1-rc.3 <0.3.0 || >=0.2.2-rc.0 <0.3.0`)**.
 
 1. Open **Plugin management → Add plugin** in DSH Desktop.
-2. Enter `dsh-kurowhale-pet@0.1.4`, select the **official npm registry**, and click **Install**.
+2. Enter `dsh-kurowhale-pet@0.2.0` (or previous `0.1.4`), select the **official npm registry**, and click **Install**.
 3. Click **Enable now** when installation finishes, then restart DSH.
 
-The first launch prefers bundled artwork. Missing artwork and the official Neutralino 6.9.0 runtime are downloaded from pinned sources and verified with SHA-256. Existing custom paths, visibility preferences, and position are retained. Download or verification failures are logged while DSH remains usable. Desktop requires uninstalling a same-name plugin before reinstalling it; back up your configuration first.
+The first launch prefers bundled artwork. Missing artwork and the official Neutralino 6.9.0 runtime are downloaded from pinned sources with mirror fallback and verified with SHA-256. Existing custom paths, visibility preferences, and position are retained. Download or verification failures are logged while DSH remains usable. Desktop requires uninstalling a same-name plugin before reinstalling it; back up your configuration first.
 
-**v0.1.4 npm is published:** [npm](https://www.npmjs.com/package/dsh-kurowhale-pet/v/0.1.4) · [GitHub Release](https://github.com/lemonxiny55/dsh-kurowhale-pet/releases) · [Bilingual release notes](docs/RELEASE-NOTES-0.1.4.md)
+**v0.2.0 release info:** [GitHub Release](https://github.com/lemonxiny55/dsh-kurowhale-pet/releases) · [Bilingual release notes](docs/RELEASE-NOTES-0.2.0.md) · [npm](https://www.npmjs.com/package/dsh-kurowhale-pet)
 
 | Installation entry | Action | Verification |
 | --- | --- | --- |
+| DSH Desktop (npm) | Add `dsh-kurowhale-pet@0.2.0`, enable, and restart | 0.2.0 passed all 31 automated/packaging/rollback tests, standalone Neutralino 6.9.0 desktop visual verification, and upstream catalog checks; available via npm once published. |
 | GitHub repository | Enter `https://github.com/lemonxiny55/dsh-kurowhale-pet` in Add plugin, enable, and restart | Previously verified via CLI and visible after rc.5 restart; GitHub URL installation through the add-plugin UI remains unverified. |
-| DSH Desktop (recommended) | Add `dsh-kurowhale-pet@0.1.4`, enable, and restart | The published 0.1.4 package matches the accepted artifact; metadata checks and automated tests passed. Runtime and artwork match 0.1.3, whose native-display acceptance is retained; no new visual acceptance was performed. |
-| DSH Market | Open Plugins → Discover and search for KuroWhale | **Awaiting upstream catalog synchronization and verification.** Version 0.1.4 fixes the npm repository metadata that prevented association. npm publication does not establish market recovery. Use the pinned npm entry above for now; see the [0.1.4 release notes](docs/RELEASE-NOTES-0.1.4.md). |
+| DSH Market | Open Plugins → Discover and search for KuroWhale | 0.2.0 metadata passed upstream `buildMarketIndex` validation (matching 0.2.1 and 0.2.2); catalog sync follows npm publication. |
 
-See the [post-release acceptance record](docs/POST-RELEASE-0.1.3.md) for index setup, synchronization diagnosis, and the boundaries of this round. The historical [Windows v0.1.0 ZIP](docs/WINDOWS-FULL-INSTALL.md) remains an alternative requiring manual configuration.
+See the [post-release acceptance record](docs/POST-RELEASE-0.1.3.md) for historical index notes. The [Windows code bundle](docs/WINDOWS-INSTALL.md) remains an alternative requiring manual configuration.
 
 ## Features and preview
 
-- **Nine animations:** idle, movement in both directions, waving, jumping, failure, awaiting approval, working, and completion review.
-- **Desktop overlay:** a transparent window with dragging, scaling, hiding, always-on-top, and position persistence.
-- **Menu and tray:** manage the pet with a right-click and restore it from the system tray.
+- **Nine animations & true side-profile turn/walk:** idle, side-profile left/right movement (v0.2.0 adds 3/4 turn transitions and rigid-head proportion-locked 6-step side walking), waving, jumping, failure, awaiting approval, working (distinguishing thinking, coding, shell commands, searching, and collaboration), and completion review.
+- **Minimal frosted capsule bubbles & approval focus:** understated frosted-white capsule with a 6px breathing status dot reports live activity and turn duration with zero extra LLM calls; waiting approvals stay visible with an optional soft chime, and clicking the bubble or double-clicking focuses the DSH window.
+- **Smooth companion controls & focus mode:** flicker-free in-place scaling, click interactions, autonomous side-profile idle patrol, `hideWhenIdle` focus mode (auto-wakes on activity or approval), and bounded auto-restart on unexpected window exit.
+- **Menu, tray, and slash command:** compact dark right-click menu (diagnostics folded), system tray toggles, and optional `/kurowhale` slash command integration.
+- **Mirror fallback with strict verification:** automatic runtime/asset downloads support mirror fallback while enforcing SHA-256 verification.
 
 <details>
-<summary>View all nine states (static frames from the existing animation atlas)</summary>
+<summary>View all nine states (static frames from the v0.2.0 animation atlas)</summary>
 
 <p align="center"><img src="docs/images/kurowhale-nine-states.png" alt="KuroWhale states: idle, running-right, running-left, waving, jumping, failed, waiting, running, review" width="720"></p>
 
-Extracted and arranged from the existing `spritesheet.webp` referenced by `pet.json`. The character and animations are unchanged. See [artwork version maintenance](docs/ARTWORK-VERSIONS.md) for reproduction details.
+Extracted and arranged from the `v0.2.0` `spritesheet.webp`. See [artwork version maintenance](docs/ARTWORK-VERSIONS.md) for reproduction details.
 
 </details>
 

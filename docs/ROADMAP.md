@@ -1,48 +1,31 @@
-> 以下为历史规划；Windows v0.1.0 和 npm 已发布。当前范围与限制见 [README](../README.md) 和 [技术验收](TECHNICAL-ACCEPTANCE-0.1.0.md)。
-
 # KuroWhale 开发路线图 / Development roadmap
 
-## 目标 / Goal
-优先发布可安装、能稳定显示透明 Q 版角色、并能响应 DSH Agent 状态的 Windows MVP。先验证真实宿主 API 和运行兼容性，不以未运行的样例代码充当成果。
+## 已完成里程碑
 
-Ship a small, verified Windows-first desktop companion before exploring Live2D, voice, or progression systems.
+### v0.1.x — Windows MVP 与市场规范化（已发布至 npm 0.1.4）
+- [x] Windows x64 + Neutralino 6.9.0 透明悬浮窗、拖动、缩放、置顶、位置记忆、系统托盘
+- [x] 黑银鲸鱼娘 9 状态 57 帧 WebP 图集与独立 SHA-256 固定校验机制
+- [x] DSH Agent 状态联动（工作、审批、完成、失败、多会话优先级）
+- [x] 双 manifest 一致性校验、市场仓库关联修复与可复现打包测试
 
-## P0 — 技术调研与兼容性验证
-- [ ] 固定目标 DSH 版本与 Windows 测试环境
-- [ ] 查阅 DSH 插件 SDK、实际事件名、安装及打包规则
-- [ ] 比较现有开源桌宠底座的代码许可证和素材许可证
-- [ ] 用最小测试窗口确认透明、置顶、拖动、关闭与卸载行为
-- **验收 / Done when:** 测试环境、版本、验证记录、已知问题均明确
+### v0.2.0 — 兼容升级与核心陪伴体验（候选源码已完成，待实机验收发布）
+- [x] 兼容范围扩展至 `>=0.2.1-rc.3 <0.3.0 || >=0.2.2-rc.0 <0.3.0`；版本号单一事实源
+- [x] 无重启平滑缩放、黑银紧凑右键菜单（诊断折叠）、崩溃有限次自动恢复
+- [x] Neutralino 与素材多镜像源 fallback（强 SHA-256 校验不变）
+- [x] 可选 `/kurowhale` 斜杠命令（探测 `ctx.commands`，缺失时静默降级）
+- [x] 本地双语气泡台词（细分思考/编码/命令行/检索/子 Agent 并行与本轮耗时，零 LLM 成本）
+- [x] 审批常驻气泡 + 可选 Web Audio 轻提示音 + 点击/双击一键切回 DSH 窗口
+- [x] 单击微互动、空闲自主巡逻（盘活既有左右跑与挥手动画）、`hideWhenIdle` 专注模式
 
-## P1 — 角色资产 / Character pack
-- [ ] 定稿黑白 Q 版鲸鱼娘及独立原创鲸鱼徽章
-- [ ] 透明角色 PNG；备份来源与编辑记录
-- [ ] 动态精灵图及配置，按选定引擎的**真实**规范生成
-- [ ] 至少三组可识别的动画：待机、工作、等待审批
-- [ ] 逐帧检查一致性、透明边缘与小尺寸显示
-- **验收 / Done when:** 通过文件校验，且在选定运行器中可实际播放
+---
 
-## P2 — DSH 插件 / Plugin MVP
-- [ ] Agent 工作/空闲状态映射
-- [ ] 用户审批提醒（仅使用宿主允许的可靠事件）
-- [ ] 透明窗口拖动、缩放、位置保存、隐藏、恢复
-- [ ] 多会话优先级与状态去抖
-- [ ] 退出与卸载后无残留窗口、进程
-- **验收 / Done when:** Windows + 目标 DSH 版本的端到端手工测试通过
+## 下一阶段规划
 
-## P3 — 发布 / Release
-- [ ] 版权声明和依赖清单逐项检查
-- [ ] 中英安装、卸载、故障排查说明
-- [ ] 可复现构建、包结构校验、基础安全审查
-- [ ] 演示 GIF、截图（仅使用有权利发布的素材）
-- [ ] GitHub Release 与实际受支持的插件渠道
-- **验收 / Done when:** 新用户可依文档安装并复现基本功能
+### v0.3.0 — 跨平台与多形态扩展
+- [ ] 抽象 `WindowBackend` 与多平台 Neutralino 资源校验（macOS WKWebView / Linux WebKitGTK）
+- [ ] 可选 `shell.overlay` 内嵌模式，支持 `dsh web` 与无原生运行时环境
+- [ ] 兼容社区 Petdex 格式皮肤目录（`~/.dsh/kurowhale-pet/pets/<id>/`），支持换装与自定义角色
+- [ ] GitHub Actions 自动化发布流（npm OIDC Trusted Publishing + 自动打包校验）
 
-## 非 MVP / Deferred
-Live2D、语音聊天、养成系统、额外皮肤、macOS/Linux 支持。
-
-## 风险 / Risks
-- DSH API 或桌面窗口桥接可能随版本变动
-- 精灵图规范须以最终选定运行器文档为准
-- 代码 MIT 不等于所有角色素材自动允许商用
-- 切忌宣称未经实测的兼容性
+### 美术资产专项（独立于代码版本）
+- [ ] 推进完全原创重绘的高清资产包（`artwork v0.2.0`），补全真实侧面跑动、打盹（`sleeping`）与托腮思考（`thinking`）独立动作，进一步理清长期许可边界

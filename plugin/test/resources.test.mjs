@@ -10,6 +10,25 @@ test('retries transient failures with bounded attempts and succeeds', async()=>{
   const bytes=await download('https://example.test',hash('ok'),10,undefined,{backoffMs:1,onAttempt:e=>errors.push(e),fetch:async()=>{if(++calls<3)throw Error('offline');return response('ok');}});
   assert.equal(bytes.toString(),'ok');assert.equal(calls,3);assert.deepEqual(errors.map(e=>e.attempt),[1,2]);
 });
+test('falls back across configured mirrors while preserving SHA-256 verification', async () => {
+  const seenUrls = [];
+  const bytes = await download(
+    ['https://primary.test/file', 'https://mirror.test/file'],
+    hash('verified-payload'),
+    100,
+    undefined,
+    {
+      backoffMs: 1,
+      fetch: async url => {
+        seenUrls.push(url);
+        if (url.includes('primary')) throw Error('blocked');
+        return response('verified-payload');
+      },
+    },
+  );
+  assert.equal(bytes.toString(), 'verified-payload');
+  assert.deepEqual(seenUrls, ['https://primary.test/file', 'https://mirror.test/file']);
+});
 test('rejects bad hashes after bounded retries',async()=>{
   let calls=0;
   await assert.rejects(download('https://example.test',hash('expected'),100,undefined,{backoffMs:1,fetch:async()=>{calls++;return response('bad');}}),/3 attempts.*SHA-256/);
@@ -34,7 +53,7 @@ import {mkdtemp, mkdir, writeFile, rm, copyFile} from 'node:fs/promises';
 import {pathToFileURL, fileURLToPath} from 'node:url';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
-import {resolveResources, validAssets} from '../resources.js';
+import {artworkVersion, resolveResources, validAssets} from '../resources.js';
 
 test('configured asset and runtime paths remain untouched and need no network',async()=>{
   const config={assetDirectory:'existing-assets',runtimePath:'existing-runtime'};
@@ -43,7 +62,7 @@ test('configured asset and runtime paths remain untouched and need no network',a
 test('missing or corrupt asset cache triggers bounded download and reports failure',async()=>{
   const dir=await mkdtemp(join(tmpdir(),'kurowhale-resources-'));
   try {
-    const cache=join(dir,'assets','0.1.0');await mkdir(cache,{recursive:true});
+    const cache=join(dir,'assets',artworkVersion);await mkdir(cache,{recursive:true});
     assert.equal(await validAssets(cache),false);
     await writeFile(join(cache,'pet.json'),'corrupt');assert.equal(await validAssets(cache),false);
     const isolated=join(dir,'module');await mkdir(isolated);
