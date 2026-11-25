@@ -1,6 +1,6 @@
 {
   "name": "dsh-kurowhale-pet",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/lemonxiny55/dsh-kurowhale-pet.git"
@@ -25,7 +25,7 @@
   "license": "MIT",
   "engines": {
     "node": ">=22.18.0",
-    "dsh": ">=0.2.1-rc.3 <0.3.0 || >=0.2.2-rc.0 <0.3.0"
+    "dsh": ">=0.2.1-rc.3"
   },
   "dsh": {
     "bundle": {

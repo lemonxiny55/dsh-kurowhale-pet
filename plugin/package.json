@@ -1,6 +1,6 @@
 {
   "name": "dsh-kurowhale-pet",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/lemonxiny55/dsh-kurowhale-pet.git"
@@ -11,7 +11,7 @@
   },
   "private": true,
   "license": "MIT",
-  "description": "Windows KuroWhale desktop pet for DSH Desktop (0.2.1+ and 0.2.2).",
+  "description": "Windows KuroWhale desktop pet for DSH Desktop (>=0.2.1-rc.3).",
   "type": "module",
   "main": "./index.js",
   "exports": {
@@ -24,6 +24,7 @@
     "animations.js",
     "commands.js",
     "overlay.js",
+    "stats.js",
     "native/",
     "cordis.patch.yml",
     "LICENSE",
@@ -35,7 +36,7 @@
   },
   "engines": {
     "node": ">=22.18.0",
-    "dsh": ">=0.2.1-rc.3 <0.3.0 || >=0.2.2-rc.0 <0.3.0"
+    "dsh": ">=0.2.1-rc.3"
   },
   "dsh": {
     "bundle": {

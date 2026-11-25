@@ -8,10 +8,10 @@ import { fileURLToPath } from 'node:url';
 
 const exec = promisify(execFile);
 // Artwork release pin: update version, archive URL and both file hashes together.
-export const artworkVersion = '0.2.0';
+export const artworkVersion = '0.3.0';
 const npmUrls = [
-  'https://registry.npmjs.org/dsh-kurowhale-pet/-/dsh-kurowhale-pet-0.2.0.tgz',
-  'https://registry.npmmirror.com/dsh-kurowhale-pet/-/dsh-kurowhale-pet-0.2.0.tgz',
+  'https://registry.npmjs.org/dsh-kurowhale-pet/-/dsh-kurowhale-pet-0.3.0.tgz',
+  'https://registry.npmmirror.com/dsh-kurowhale-pet/-/dsh-kurowhale-pet-0.3.0.tgz',
 ];
 const npmHash = null; // Per-file SHA-256 is strictly enforced in extractAssets() to avoid self-referential tarball pin.
 const archiveUrls = [
@@ -22,9 +22,15 @@ const archiveUrls = [
 const archiveHash = 'ff33dd68979cffc36e4e7e73d1bab4cbcdf2c036aad72ca32876fde51a32df14';
 const exeHash = '0eecd0c7f6c955b441e586def6e89c27c295f144d6d9061dd358c3f3907ff3b3';
 const assetHashes = {
-  'pet.json': '2f3613cc882be81b8a6106947a64972def78eac90cc234e3095e02f7518ee45d',
-  'spritesheet.webp': '7ba604af016af7974af7cb093ce927c31c993b71566eb6500d523c52ce2969a9',
+  'pet.json': 'bfda441760349621dead38e95977c7612ecdcfce6473c366d72e3496343b0ae3',
+  'spritesheet.webp': '5657fcfba7240b215dfd847b3601ae2f7b84475072767d752ed32ab7243a2bd3',
 };
+// Legacy v0.1.x & v0.2.0 stock spritesheet SHA-256s; if a previous installer pinned one
+// in local.json, prefer verified bundled/cached v0.3.0 extended artwork locally without network.
+const legacyStockSheetHashes = [
+  '7ae1e467778139d7da381fd860af6ebff3a3bd0385b69f9f0c278fbeb4d89298',
+  '7ba604af016af7974af7cb093ce927c31c993b71566eb6500d523c52ce2969a9',
+];
 const digest = data => createHash('sha256').update(data).digest('hex');
 const valid = async (path, hash) => { try { return digest(await readFile(path)) === hash; } catch { return false; } };
 
@@ -114,18 +120,28 @@ export async function resolveResources({
   platform = process.platform,
   arch = process.arch,
   downloadOptions = {},
+  legacySheetHashes = legacyStockSheetHashes,
+  checkValidAssets = validAssets,
 }) {
   if (platform !== 'win32' || arch !== 'x64') throw Error('Automatic setup requires Windows x64');
-  let assetDirectory = config.assetDirectory;
-  if (!assetDirectory) {
-    const candidates = [
-      fileURLToPath(new URL('../character/', import.meta.url)),
-      fileURLToPath(new URL('./character/', import.meta.url)),
-      join(directory, 'assets', artworkVersion),
-    ];
-    for (const candidate of candidates) {
-      if (await validAssets(candidate)) { assetDirectory = candidate; break; }
+  const localCandidates = [
+    fileURLToPath(new URL('../character/', import.meta.url)),
+    fileURLToPath(new URL('./character/', import.meta.url)),
+    join(directory, 'assets', artworkVersion),
+  ];
+  const pickLocalCandidate = async () => {
+    for (const candidate of localCandidates) {
+      if (await checkValidAssets(candidate)) return candidate;
     }
+    return undefined;
+  };
+  let assetDirectory = config.assetDirectory;
+  if (assetDirectory) {
+    const sheetPath = join(assetDirectory, 'spritesheet.webp');
+    const isLegacyStock = (await Promise.all(legacySheetHashes.map(h => valid(sheetPath, h)))).some(Boolean);
+    if (isLegacyStock) assetDirectory = (await pickLocalCandidate()) ?? assetDirectory;
+  } else {
+    assetDirectory = await pickLocalCandidate();
     if (!assetDirectory) {
       onStage?.('downloading-artwork');
       const files = await downloadAssets(signal, {

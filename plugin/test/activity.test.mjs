@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   animations, activityState, activityDetail, classifyTool,
-  resolveActivities, formatDuration, bubbleForState, pickClickLine,
+  resolveActivities, formatDuration, bubbleForState, pickClickLine, pickInteractionLine,
 } from '../animations.js';
 
 test('waiting approval wins over other session activity', () => {
@@ -48,8 +48,12 @@ test('tool classification and speech bubbles map semantic details cleanly', () =
   assert.match(reviewBubble.text, /4\.5s/);
   assert.ok(pickClickLine('zh', 0).length > 0);
   assert.ok(pickClickLine('en', 2).length > 0);
+  assert.ok(pickInteractionLine('head-pat', 'zh', 0).length > 0);
+  assert.ok(pickInteractionLine('body-poke', 'en', 1).length > 0);
+  assert.ok(pickInteractionLine('feed', 'zh', 0).length > 0);
+  assert.ok(pickInteractionLine('dizzy', 'en', 0).length > 0);
 });
 
-test('nine atlas rows use exactly 57 original occupied cells', () => {
-  assert.deepEqual(animations.map(([, t]) => t.length), [6, 8, 8, 4, 5, 8, 6, 6, 6]);
+test('twelve atlas rows use exactly 75 original occupied cells', () => {
+  assert.deepEqual(animations.map(([, t]) => t.length), [6, 8, 8, 4, 5, 8, 6, 6, 6, 6, 6, 6]);
 });

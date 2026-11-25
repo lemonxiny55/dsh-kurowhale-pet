@@ -1,4 +1,5 @@
 import { animations } from './animations.js';
+import { formatCompanionTime, formatTokens } from './stats.js';
 
 const VALID_ANIMATIONS = new Set(animations.map(([name]) => name));
 
@@ -13,6 +14,11 @@ function parseBool(token) {
 const HELP_TEXT = [
   'KuroWhale commands (/kurowhale <action>):',
   '  status              Show pet state, scale and preferences',
+  '  stats               Show today companion metrics and token summary',
+  '  panel               Toggle the multi-session approval & stats card',
+  '  approve [id]        Allow a pending approval once',
+  '  reject [id]         Reject a pending approval',
+  '  stop [alias]        Cancel a running session turn',
   '  show | hide | close Show, hide to tray, or close the pet',
   '  center | focus      Recenter the pet or focus the DSH window',
   '  scale <0.5..2|+|- > Resize smoothly without restarting',
@@ -21,7 +27,9 @@ const HELP_TEXT = [
   '  patrol [on|off]     Toggle idle desktop patrol',
   '  quiet [on|off]      Toggle hide-when-idle focus mode',
   '  sound [on|off]      Toggle gentle approval chime',
-  '  demo <state> | all  Preview an animation or cycle all 9 states',
+  '  care [on|off]       Toggle gentle focus-break & late-night reminders',
+  '  pet | feed | doze | cheer  Trigger playful interactive reactions',
+  '  demo <state> | all  Preview an animation or cycle all 12 states',
   '  resume              Return to automatic agent tracking',
 ].join('\n');
 
@@ -36,6 +44,21 @@ export function parseSlashInput(rawInput = '') {
       return { kind: 'help' };
     case 'status':
       return { kind: 'status' };
+    case 'stats':
+    case 'today':
+      return { kind: 'stats' };
+    case 'panel':
+    case 'card':
+      return { kind: 'command', command: { action: 'panel' } };
+    case 'approve':
+    case 'allow':
+      return { kind: 'command', command: { action: 'approval-decide', approvalId: arg, outcome: 'allowed-once' } };
+    case 'reject':
+    case 'deny':
+      return { kind: 'command', command: { action: 'approval-decide', approvalId: arg, outcome: 'rejected' } };
+    case 'stop':
+    case 'cancel':
+      return { kind: 'command', command: { action: 'cancel-session', alias: arg } };
     case 'show':
     case 'hide':
     case 'center':
@@ -44,6 +67,19 @@ export function parseSlashInput(rawInput = '') {
     case 'all':
     case 'focus':
       return { kind: 'command', command: { action: head } };
+    case 'pet':
+    case 'pat':
+      return { kind: 'command', command: { action: 'interact', kind: 'pet' } };
+    case 'feed':
+    case 'snack':
+    case 'fish':
+      return { kind: 'command', command: { action: 'interact', kind: 'feed' } };
+    case 'doze':
+    case 'nap':
+    case 'sleep':
+      return { kind: 'command', command: { action: 'interact', kind: 'doze' } };
+    case 'cheer':
+      return { kind: 'command', command: { action: 'interact', kind: 'cheer' } };
     case 'scale': {
       if (!arg) return { kind: 'error', text: 'Usage: /kurowhale scale <0.5..2 | + | ->' };
       if (arg === '+' || arg === 'up' || arg === 'larger') {
@@ -86,6 +122,12 @@ export function parseSlashInput(rawInput = '') {
       if (arg && value === undefined) return { kind: 'error', text: 'Usage: /kurowhale sound [on|off]' };
       return { kind: 'command', command: { action: 'pref', key: 'sound', value, toggle: value === undefined } };
     }
+    case 'care':
+    case 'remind': {
+      const value = parseBool(arg);
+      if (arg && value === undefined) return { kind: 'error', text: 'Usage: /kurowhale care [on|off]' };
+      return { kind: 'command', command: { action: 'pref', key: 'careReminders', value, toggle: value === undefined } };
+    }
     case 'demo':
     case 'state': {
       if (!arg) return { kind: 'error', text: `Usage: /kurowhale demo <${[...VALID_ANIMATIONS].join('|')}>` };
@@ -100,46 +142,103 @@ export function parseSlashInput(rawInput = '') {
 }
 
 export function registerKuroWhaleCommand(ctx, controller) {
-  if (!ctx?.commands || typeof ctx.commands.register !== 'function') return () => {};
   let disposed = false;
   let unregister;
-  try {
-    unregister = ctx.commands.register({
-      name: 'kurowhale',
-      description: 'Control the KuroWhale desktop pet (show, hide, scale, bubbles, patrol, quiet, status).',
-      input: { type: 'string' },
-      handler: async invocation => {
-        if (disposed) return { kind: 'error', text: 'KuroWhale plugin is stopped.' };
-        const parsed = parseSlashInput(invocation?.rawInput ?? '');
-        if (parsed.kind === 'help') return { kind: 'success', text: HELP_TEXT };
-        if (parsed.kind === 'error') return { kind: 'error', text: parsed.text };
-        if (parsed.kind === 'status') {
-          const s = controller.getSummary();
-          const prefs = s.preferences ?? {};
-          return {
-            kind: 'success',
-            text: `KuroWhale v${s.version}: state=${s.state} (${s.source}), visible=${s.visible}, scale=${s.scale}x, topmost=${s.topmost}, bubbles=${prefs.bubbles !== false}, patrol=${prefs.patrol !== false}, quiet=${Boolean(prefs.hideWhenIdle)}, sound=${Boolean(prefs.sound)}, sessions=${s.sessions.length}`,
-          };
+  let fork;
+
+  const detach = () => {
+    const fn = unregister;
+    unregister = undefined;
+    if (typeof fn === 'function') {
+      try { fn(); } catch {}
+    }
+  };
+
+  const attach = commands => {
+    if (disposed || !commands || typeof commands.register !== 'function') return;
+    detach();
+    try {
+      unregister = commands.register({
+        name: 'kurowhale',
+        description: 'Control KuroWhale desktop pet (status, stats, panel, approve, stop, scale, preferences).',
+        input: { type: 'string' },
+        handler: async invocation => {
+          if (disposed) return { kind: 'error', text: 'KuroWhale plugin is stopped.' };
+          const parsed = parseSlashInput(invocation?.rawInput ?? '');
+          if (parsed.kind === 'help') return { kind: 'success', text: HELP_TEXT };
+          if (parsed.kind === 'error') return { kind: 'error', text: parsed.text };
+          if (parsed.kind === 'status') {
+            const s = controller.getSummary();
+            const prefs = s.preferences ?? {};
+            return {
+              kind: 'success',
+              text: `KuroWhale v${s.version}: state=${s.state} (${s.source}), visible=${s.visible}, scale=${s.scale}x, topmost=${s.topmost}, bubbles=${prefs.bubbles !== false}, patrol=${prefs.patrol !== false}, quiet=${Boolean(prefs.hideWhenIdle)}, sound=${Boolean(prefs.sound)}, care=${prefs.careReminders !== false}, sessions=${s.sessions.length}, approvals=${(s.pendingApprovals ?? []).length}`,
+            };
+          }
+          if (parsed.kind === 'stats') {
+            const s = controller.getSummary();
+            const t = s.stats?.today;
+            if (!t) return { kind: 'success', text: 'KuroWhale: no stats recorded yet.' };
+            const parts = [
+              `KuroWhale 今日统计 (${t.date}):`,
+              `陪伴 ${formatCompanionTime(t.companionSec)}`,
+              `完成 ${t.turnsCompleted} 轮`,
+              `工具 ${t.toolCalls} 次`,
+              `审批 ${t.approvalsHandled} 次`,
+            ];
+            if (t.tokens?.total > 0) {
+              const cached = t.tokens.cached > 0 ? ` (缓存 ${formatTokens(t.tokens.cached)})` : '';
+              parts.push(`Token ${formatTokens(t.tokens.total)}${cached}`);
+            }
+            return { kind: 'success', text: parts.join(' · ') };
+          }
+          try {
+            const note = await controller.runCommand(parsed.command);
+            const s = controller.getSummary();
+            return {
+              kind: 'success',
+              text: typeof note === 'string' && note
+                ? note
+                : `KuroWhale: "${parsed.command.action}" applied (state=${s.state}, visible=${s.visible}, scale=${s.scale}x).`,
+            };
+          } catch (error) {
+            return { kind: 'error', text: `KuroWhale command failed: ${String(error?.message || error)}` };
+          }
+        },
+      });
+    } catch {}
+  };
+
+  const readCommands = target => {
+    if (!target) return undefined;
+    if (typeof target.get === 'function') {
+      try { return target.get('commands'); } catch { return undefined; }
+    }
+    try { return target.commands; } catch { return undefined; }
+  };
+
+  if (typeof ctx?.inject === 'function') {
+    try {
+      fork = ctx.inject(['commands'], cmdCtx => {
+        const commands = readCommands(cmdCtx);
+        if (typeof cmdCtx?.effect === 'function') {
+          cmdCtx.effect(() => {
+            attach(commands);
+            return detach;
+          });
+        } else {
+          attach(commands);
         }
-        try {
-          await controller.runCommand(parsed.command);
-          const s = controller.getSummary();
-          return {
-            kind: 'success',
-            text: `KuroWhale: "${parsed.command.action}" applied (state=${s.state}, visible=${s.visible}, scale=${s.scale}x).`,
-          };
-        } catch (error) {
-          return { kind: 'error', text: `KuroWhale command failed: ${String(error?.message || error)}` };
-        }
-      },
-    });
-  } catch {
-    return () => {};
+      });
+    } catch {}
+  } else {
+    attach(readCommands(ctx));
   }
+
   return () => {
     disposed = true;
-    if (typeof unregister === 'function') {
-      try { unregister(); } catch {}
-    }
+    detach();
+    try { fork?.dispose?.(); } catch {}
+    fork = undefined;
   };
 }

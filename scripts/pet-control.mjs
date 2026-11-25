@@ -7,17 +7,27 @@ import { randomUUID } from 'node:crypto';
 const directory = join(process.env.DSH_HOME || join(homedir(), '.dsh'), 'kurowhale-pet');
 const [action = 'status', value, extra] = process.argv.slice(2);
 if (action === 'status') { console.log(await readFile(join(directory, 'status.json'), 'utf8')); process.exit(0); }
+if (action === 'stats') { console.log(await readFile(join(directory, 'stats.json'), 'utf8')); process.exit(0); }
 
-const valid = ['state', 'all', 'resume', 'show', 'hide', 'scale', 'topmost', 'center', 'focus', 'close', 'bubbles', 'patrol', 'quiet', 'sound', 'bubble'];
+const valid = [
+  'state', 'all', 'resume', 'show', 'hide', 'scale', 'topmost', 'center', 'focus', 'close',
+  'bubbles', 'patrol', 'quiet', 'sound', 'care', 'panel', 'approve', 'reject', 'stop', 'bubble',
+];
 if (!valid.includes(action)) {
-  throw Error('Usage: status | state <name> | all | resume | show | hide | scale <0.5..2> | topmost <true|false> | center | focus | bubbles <true|false> | patrol <true|false> | quiet <true|false> | sound <true|false> | bubble <text> | close');
+  throw Error('Usage: status | stats | panel | approve [id] | reject [id] | stop [alias] | state <name> | all | resume | show | hide | scale <0.5..2> | topmost <true|false> | center | focus | bubbles <true|false> | patrol <true|false> | quiet <true|false> | sound <true|false> | care <true|false> | bubble <text> | close');
 }
 
 const id = randomUUID();
 let c;
-if (['bubbles', 'patrol', 'quiet', 'sound'].includes(action)) {
-  const key = action === 'quiet' ? 'hideWhenIdle' : action;
+if (['bubbles', 'patrol', 'quiet', 'sound', 'care'].includes(action)) {
+  const key = action === 'quiet' ? 'hideWhenIdle' : action === 'care' ? 'careReminders' : action;
   c = { id, action: 'pref', key, value: value === undefined ? undefined : value !== 'false', toggle: value === undefined };
+} else if (action === 'approve' || action === 'reject') {
+  c = { id, action: 'approval-decide', approvalId: value, outcome: action === 'approve' ? 'allowed-once' : 'rejected' };
+} else if (action === 'stop') {
+  c = { id, action: 'cancel-session', alias: value };
+} else if (action === 'panel') {
+  c = { id, action: 'panel', value: value === undefined ? undefined : value !== 'false' };
 } else if (action === 'bubble') {
   c = { id, action: 'bubble', value: value ?? '', tone: extra ?? 'chat' };
 } else {

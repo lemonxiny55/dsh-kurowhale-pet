@@ -131,6 +131,9 @@ export async function createOverlay(options) {
       destroy,
       frame: directive => { void broadcast('kw.frame', directive).catch(() => {}); },
       bubble: payload => { void broadcast('kw.bubble', payload ?? { clear: true }).catch(() => {}); },
+      panel: payload => { void broadcast('kw.panel', payload ?? {}).catch(() => {}); },
+      togglePanel: open => { void broadcast('kw.togglePanel', { open }).catch(() => {}); },
+      fx: data => { void broadcast('kw.fx', data ?? {}).catch(() => {}); },
       chime: tone => { void broadcast('kw.chime', { tone: tone ?? 'waiting' }).catch(() => {}); },
       prefs: preferences => { void broadcast('kw.prefs', preferences).catch(() => {}); },
       resize: async nextScale => {

@@ -1,8 +1,8 @@
 <!doctype html><html><meta charset="utf-8"><title>KuroWhale · DSH</title>
 <style>
 html,body{margin:0;padding:0;background:transparent;overflow:hidden;user-select:none;-webkit-user-select:none}
-#stage{position:relative;width:100vw;height:100vh}
-#bubble{display:none;position:fixed;top:12px;left:50%;transform:translateX(-50%);max-width:calc(100vw - 16px);box-sizing:border-box;padding:5px 11px 5px 9px;border-radius:999px;background:rgba(252,252,255,.90);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#232430;border:1px solid rgba(28,30,42,.13);box-shadow:0 3px 12px rgba(15,18,30,.10),inset 0 1px 0 rgba(255,255,255,.85);font:500 11.5px/1.25 'Segoe UI','Microsoft YaHei UI',system-ui,sans-serif;letter-spacing:.3px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;z-index:5;cursor:default}
+#stage{position:absolute;top:0;left:0}
+#bubble{display:none;position:absolute;top:12px;left:50%;transform:translateX(-50%);max-width:calc(100% - 16px);box-sizing:border-box;padding:5px 11px 5px 9px;border-radius:999px;background:rgba(252,252,255,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#232430;border:1px solid rgba(28,30,42,.13);box-shadow:0 3px 12px rgba(15,18,30,.10),inset 0 1px 0 rgba(255,255,255,.85);font:500 11.5px/1.25 'Segoe UI','Microsoft YaHei UI',system-ui,sans-serif;letter-spacing:.3px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;z-index:5;cursor:default}
 #bubble::before{content:'';display:inline-block;vertical-align:middle;width:6px;height:6px;margin:-1px 6px 0 0;border-radius:50%;background:#8d93a6}
 #bubble.pop{animation:kwFadeIn .22s cubic-bezier(.22,1,.36,1) both}
 #bubble.clickable{cursor:pointer}
@@ -16,55 +16,108 @@ html,body{margin:0;padding:0;background:transparent;overflow:hidden;user-select:
 @keyframes kwDotPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.82)}}
 canvas{display:block;touch-action:none;cursor:grab}
 canvas:active{cursor:grabbing}
-#menu{display:none;position:fixed;inset:6px;overflow:auto;box-sizing:border-box;background:rgba(24,22,34,.95);border:1.5px solid rgba(232,226,245,.34);border-radius:15px;padding:11px;font:12.5px 'Microsoft YaHei UI','Segoe UI',sans-serif;color:#f3effa;box-shadow:0 10px 28px rgba(15,12,26,.45);z-index:10}
-.menu-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,.12)}
-.menu-head strong{font-size:13.5px;letter-spacing:.2px;color:#fff}
-#badge{font-size:11px;padding:2px 8px;border-radius:999px;background:rgba(217,143,167,.24);color:#ffdbe7}
-.row{display:flex;gap:6px;margin:5px 0}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(148,154,174,.38);border-radius:999px}
+::-webkit-scrollbar-thumb:hover{background:rgba(148,154,174,.6)}
+#panel{display:none;position:absolute;top:8px;left:0;overflow-y:auto;overflow-x:hidden;box-sizing:border-box;background:rgba(252,252,255,.96);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(28,30,42,.14);border-radius:14px;padding:10px 11px;font:12px/1.4 'Segoe UI','Microsoft YaHei UI',system-ui,sans-serif;color:#232430;box-shadow:0 8px 24px rgba(15,18,30,.15),inset 0 1px 0 rgba(255,255,255,.95);z-index:12}
+.p-head{display:flex;align-items:center;justify-content:space-between;gap:6px;padding-bottom:7px;border-bottom:1px solid rgba(28,30,42,.08);margin-bottom:8px}
+.p-title{display:flex;align-items:center;gap:6px;font-weight:600;font-size:12.5px;color:#1b1c26}
+.p-dot{width:7px;height:7px;border-radius:50%;background:#8d93a6;flex:none}
+.p-dot.running{background:#4c8ef5;box-shadow:0 0 6px rgba(76,142,245,.5)}
+.p-dot.waiting{background:#e0942a;box-shadow:0 0 6px rgba(224,148,42,.6)}
+.p-dot.review{background:#30a46c}
+.p-dot.failed{background:#dc5668}
+.p-head-actions{display:flex;gap:4px}
+.p-ghost{border:1px solid rgba(28,30,42,.12);background:rgba(28,30,42,.04);color:#3a3d4f;border-radius:7px;padding:3px 7px;font-size:11px;cursor:pointer;width:auto;margin:0}
+.p-ghost:hover{background:rgba(28,30,42,.09)}
+.p-sec{margin-bottom:8px}
+.p-label{font-size:10.5px;font-weight:600;color:#7a7e92;letter-spacing:.4px;margin-bottom:5px;text-transform:uppercase}
+.p-card{background:#fffaf0;border:1px solid rgba(224,148,42,.28);border-left:3px solid #e0942a;border-radius:9px;padding:7px 9px;margin-bottom:6px}
+.p-tool{font-weight:600;font-size:12px;color:#1d1f2b;word-break:break-all}
+.p-reason{font-size:11px;color:#5a5d70;margin:3px 0 7px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
+.p-btns{display:flex;gap:5px;flex-wrap:wrap}
+.p-btn-primary{flex:1;border:none;background:#232430;color:#fff;border-radius:7px;padding:5px 7px;font-size:11.5px;font-weight:500;cursor:pointer;text-align:center;margin:0;width:auto}
+.p-btn-primary:hover{background:#34364a}
+.p-btn-sub{flex:1;border:1px solid rgba(28,30,42,.16);background:#fff;color:#2e3040;border-radius:7px;padding:5px 7px;font-size:11.5px;cursor:pointer;text-align:center;margin:0;width:auto}
+.p-btn-sub:hover{background:#f3f4f8}
+.p-btn-danger{border:1px solid rgba(220,86,104,.35);background:#fff5f6;color:#b83246;border-radius:7px;padding:3px 8px;font-size:11px;cursor:pointer;margin:0;width:auto}
+.p-btn-danger:hover{background:#ffe8ec}
+.p-row{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:5px 8px;border-radius:8px;background:rgba(28,30,42,.035);margin-bottom:5px}
+.p-row-info{min-width:0;display:flex;align-items:center;gap:6px;font-size:11.5px;color:#2a2c3b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.p-meta{font-size:10.5px;color:#7a7e92;flex:none}
+.p-empty{font-size:11.5px;color:#83879b;padding:7px 4px;text-align:center}
+.p-stats{display:flex;flex-wrap:wrap;gap:5px 10px;padding-top:7px;border-top:1px solid rgba(28,30,42,.08);font-size:11px;color:#5d6175}
+.p-stats b{color:#232430;font-weight:600}
+#menu{display:none;position:absolute;top:8px;left:0;overflow-y:auto;overflow-x:hidden;box-sizing:border-box;background:rgba(24,23,34,.95);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(232,226,245,.26);border-radius:14px;padding:9px 10px;font:11.5px/1.3 'Microsoft YaHei UI','Segoe UI',system-ui,sans-serif;color:#f3effa;box-shadow:0 8px 24px rgba(15,12,26,.40);z-index:10}
+.menu-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,.1)}
+.menu-head-l{display:flex;align-items:center;gap:6px}
+.menu-head strong{font-size:12.5px;letter-spacing:.2px;color:#fff}
+#badge{font-size:10.5px;padding:1.5px 7px;border-radius:999px;background:rgba(217,143,167,.22);color:#ffdbe7}
+#menu .m-close{width:22px;height:22px;padding:0;margin:0;border-radius:6px;text-align:center;line-height:20px;font-size:13px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#cfc8de}
+.row{display:flex;gap:5px;margin:4px 0}
 .row button{flex:1;margin:0}
-button,select{display:block;box-sizing:border-box;width:100%;margin:5px 0;padding:6px 9px;border:1px solid rgba(226,218,242,.24);border-radius:9px;background:rgba(255,255,255,.08);color:#f5f2fb;font:inherit;cursor:pointer;text-align:left}
-button:hover{background:rgba(255,255,255,.16);border-color:rgba(244,189,207,.55)}
-.row button{text-align:center}
-button.accent{background:rgba(130,174,230,.22);border-color:rgba(165,204,248,.48)}
-button.danger{color:#ffd0d9;border-color:rgba(240,122,145,.4)}
-select{background:#1d1a2a;color:#f5f2fb}
-details{margin:8px 0 4px;padding-top:6px;border-top:1px solid rgba(255,255,255,.12)}
-summary{cursor:pointer;color:#b8b0cc;font-size:11.5px;margin-bottom:4px}
-small{display:block;color:#a59cb8;font-size:11px;margin-top:4px}
+.row-acts{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin:4px 0}
+#menu .row-acts button{margin:0;padding:5px 2px;font-size:11px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin:5px 0}
+.grid button{margin:0;text-align:center}
+#menu button,#menu select{display:block;box-sizing:border-box;width:100%;margin:4px 0;padding:5px 7px;border:1px solid rgba(226,218,242,.20);border-radius:8px;background:rgba(255,255,255,.07);color:#f5f2fb;font:inherit;cursor:pointer;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#menu button:hover{background:rgba(255,255,255,.15);border-color:rgba(244,189,207,.48)}
+#menu button.accent{background:rgba(130,174,230,.22);border-color:rgba(165,204,248,.44)}
+#menu button.danger{color:#ffd0d9;border-color:rgba(240,122,145,.38)}
+#menu select{background:#1d1a2a;color:#f5f2fb;text-align:left}
+details{margin:6px 0 0;padding-top:5px;border-top:1px solid rgba(255,255,255,.1)}
+summary{cursor:pointer;color:#b8b0cc;font-size:11px;margin-bottom:4px}
+small{display:block;color:#a59cb8;font-size:10.5px;margin-top:3px}
 </style>
 <div id="stage"><div id="bubble" role="status"></div><canvas id="pet"></canvas></div>
+<div id="panel" role="dialog" aria-label="KuroWhale tasks and stats">
+  <div class="p-head">
+    <div class="p-title"><span id="panelDot" class="p-dot"></span><span>KuroWhale</span></div>
+    <div class="p-head-actions"><button id="panelFocus" class="p-ghost">切到 DSH</button><button id="panelClose" class="p-ghost">×</button></div>
+  </div>
+  <div id="panelBody"></div>
+</div>
 <div id="menu">
-  <div class="menu-head"><strong>KuroWhale 鲸鱼娘</strong><span id="badge">idle</span></div>
+  <div class="menu-head">
+    <div class="menu-head-l"><strong>KuroWhale</strong><span id="badge">idle</span></div>
+    <button id="dismiss" class="m-close" aria-label="Close menu">×</button>
+  </div>
   <div class="row"><button id="smaller">缩小 −</button><button id="scaleLabel" disabled>1.25x</button><button id="larger">放大 +</button></div>
-  <button id="focus" class="accent">唤起 DSH 窗口</button>
-  <button id="topmost">置顶显示：开</button>
-  <button id="bubbles">台词气泡：开</button>
-  <button id="patrol">空闲巡逻：开</button>
-  <button id="quiet">空闲隐藏：关</button>
-  <button id="sound">审批提示音：关</button>
-  <div class="row"><button id="center">回屏幕中央</button><button id="hide">隐藏到托盘</button></div>
+  <div class="row-acts"><button id="actPet">摸头</button><button id="actFeed">喂鱼</button><button id="actDoze">打盹</button><button id="actCheer">欢呼</button></div>
+  <div class="row"><button id="openPanel" class="accent">任务与统计</button><button id="focus">唤起 DSH</button></div>
+  <div class="grid">
+    <button id="topmost">置顶：开</button>
+    <button id="bubbles">胶囊：开</button>
+    <button id="patrol">自主动作：开</button>
+    <button id="quiet">空闲隐藏：关</button>
+    <button id="care">关怀：开</button>
+    <button id="sound">提示音：关</button>
+  </div>
+  <div class="row"><button id="center">回中央</button><button id="hide">隐藏</button><button id="close" class="danger">关闭</button></div>
   <details><summary>开发者诊断</summary>
-    <select id="state" aria-label="Animation diagnostic"><option>idle</option><option>running-right</option><option>running-left</option><option>waving</option><option>jumping</option><option>failed</option><option>waiting</option><option>running</option><option>review</option></select>
+    <select id="state" aria-label="Animation diagnostic"><option>idle</option><option>running-right</option><option>running-left</option><option>waving</option><option>jumping</option><option>failed</option><option>waiting</option><option>running</option><option>review</option><option>petted</option><option>dozing</option><option>eating</option></select>
     <button id="resume">恢复自动状态</button>
-    <small>仅用于手动检查 9 组精灵图动作。</small>
+    <small>仅用于手动检查 12 组精灵图动作。</small>
   </details>
-  <div class="row"><button id="close" class="danger">关闭桌宠</button><button id="dismiss">收起菜单</button></div>
 </div>
 <script src="neutralino.js"></script><script>
-const canvas=document.getElementById('pet'),ctx=canvas.getContext('2d'),menu=document.getElementById('menu'),bubbleEl=document.getElementById('bubble'),badgeEl=document.getElementById('badge'),scaleLabelEl=document.getElementById('scaleLabel'),atlas=new Image();
+const stageEl=document.getElementById('stage'),canvas=document.getElementById('pet'),ctx=canvas.getContext('2d'),menu=document.getElementById('menu'),panelEl=document.getElementById('panel'),panelBody=document.getElementById('panelBody'),panelDot=document.getElementById('panelDot'),bubbleEl=document.getElementById('bubble'),badgeEl=document.getElementById('badge'),scaleLabelEl=document.getElementById('scaleLabel'),atlas=new Image();
 const later=typeof setTimeout==='function'?setTimeout:()=>0;
 const cancelLater=typeof clearTimeout==='function'?clearTimeout:()=>{};
 const raf=typeof requestAnimationFrame==='function'?requestAnimationFrame:null;
-const caf=typeof cancelAnimationFrame==='function'?cancelAnimationFrame:()=>{};
-let initialized=false,loaded=false,layout,position={x:80,y:80},drag=null,directive={row:0,index:0,state:'idle'},seen=new Set(),missingHost=0,onTop=true,uiQueue=Promise.resolve();
-let prefs={bubbles:true,patrol:true,hideWhenIdle:false,sound:false};
-let bubbleTimer=0,bubbleClickable=false,lastClickAt=0,clickTimer=0,menuOpen=false;
+let initialized=false,loaded=false,atlasRows=9,layout,position={x:80,y:80},drag=null,directive={row:0,index:0,state:'idle'},seen=new Set(),missingHost=0,onTop=true,uiQueue=Promise.resolve();
+let prefs={bubbles:true,patrol:true,hideWhenIdle:false,sound:false,careReminders:true};
+let bubbleTimer=0,bubbleClickable=false,bubbleTone='chat',lastClickAt=0,clickTimer=0,menuOpen=false,panelOpen=false;
+let panelData={state:'idle',approvals:[],sessions:[],stats:{companion:'<1m',turns:0,tools:0,tokens:''}};
 
-// Smooth 60fps true side-profile turn -> walk -> return-turn motion state.
-let bounceAnim=null,patrolAnim=null,rafId=0,moveBusy=false,dragTilt=0;
+// Smooth 60fps true side-profile turn -> walk -> return-turn motion state & micro-particles.
+let bounceAnim=null,patrolAnim=null,shakeAnim=null,particles=[],dozeParticleAt=0,rafId=0,moveBusy=false,dragTilt=0;
+let clickTimes=[],dizzyCooldownUntil=0,patTrack={lastX:null,acc:0,reversals:0,lastDir:0,at:0,cooldownUntil:0};
 const send=(name,data={})=>Neutralino.events.broadcast('kw.'+name,data).catch(()=>{});
 const serial=fn=>{uiQueue=uiQueue.then(fn).catch(()=>send('ui-error'));return uiQueue;};
 const easeInOut=t=>t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function bounds(){const d=devicePixelRatio||1;return {x:Math.round((screen.availLeft||0)*d),y:Math.round((screen.availTop||0)*d),w:Math.round(screen.availWidth*d),h:Math.round(screen.availHeight*d)};}
 function clamped(p){const b=bounds();return {x:Math.round(Math.max(b.x,Math.min(b.x+Math.max(0,b.w-layout.width),p.x))),y:Math.round(Math.max(b.y,Math.min(b.y+Math.max(0,b.h-layout.height),p.y)))};}
 async function move(p,clamp=true){position=clamp?clamped(p):{x:Math.round(p.x),y:Math.round(p.y)};await Neutralino.window.move(position.x,position.y);send('position',position);}
@@ -87,14 +140,14 @@ function ensureMotionLoop(){
       const elapsed=now-patrolAnim.start;
       const walkEnd=patrolAnim.turnMs+patrolAnim.walkMs;
       if(elapsed<patrolAnim.turnMs){
-        patrolAnim.frameIndex=0; // 3/4 turn transition pose
+        patrolAnim.frameIndex=0;
         active=true;
       }else if(elapsed<walkEnd){
         const wt=(elapsed-patrolAnim.turnMs)/patrolAnim.walkMs;
         const e=easeInOut(wt);
         const nx=Math.round(patrolAnim.startX+patrolAnim.deltaX*e);
         if(nx!==position.x)moveFast({x:nx,y:position.y});
-        patrolAnim.frameIndex=1+(Math.floor((elapsed-patrolAnim.turnMs)/115)%6); // pure side-profile 6-step walk cycle
+        patrolAnim.frameIndex=1+(Math.floor((elapsed-patrolAnim.turnMs)/115)%6);
         active=true;
       }else if(elapsed<walkEnd+patrolAnim.settleMs){
         if(!patrolAnim.landed){
@@ -102,13 +155,25 @@ function ensureMotionLoop(){
           position=clamped({x:patrolAnim.startX+patrolAnim.deltaX,y:position.y});
           Neutralino.window.move(position.x,position.y).catch(()=>{});
         }
-        patrolAnim.frameIndex=7; // 3/4 return-to-front transition pose
+        patrolAnim.frameIndex=7;
         active=true;
       }else{
         const donePos={x:position.x,y:position.y};
         patrolAnim=null;
         send('patrolDone',donePos);
       }
+    }
+    if(shakeAnim){
+      const st=(now-shakeAnim.start)/shakeAnim.duration;
+      if(st>=1)shakeAnim=null;else active=true;
+    }
+    if(particles.length){
+      particles=particles.filter(p=>now-p.start<p.ttl);
+      if(particles.length)active=true;
+    }
+    if(directive.state==='dozing'&&!patrolAnim&&!drag&&!menuOpen&&!panelOpen){
+      if(now-dozeParticleAt>=950){dozeParticleAt=now;spawnParticles('zzz');}
+      active=true;
     }
     if(drag&&Math.abs(dragTilt)>0.002){dragTilt*=0.86;active=true;}
     else if(!drag&&Math.abs(dragTilt)>0.002){dragTilt*=0.78;if(Math.abs(dragTilt)<0.002)dragTilt=0;else active=true;}
@@ -121,12 +186,61 @@ function triggerBounce(duration=200){
   bounceAnim={start:performance.now(),duration};
   ensureMotionLoop();
 }
+function spawnParticles(kind){
+  if(!layout)return;
+  const now=performance.now();
+  const pw=layout.petWidth??Math.round(192*layout.scale);
+  const ph=layout.petHeight??Math.round(208*layout.scale);
+  const cx=Math.floor(layout.width/2);
+  const headY=(layout.bubbleSpace??0)+ph*0.18;
+  const s=Math.max(0.75,layout.scale||1);
+  if(kind==='heart'){
+    for(let i=0;i<5;i++)particles.push({kind:'heart',char:i%2?'♥':'✦',color:i%2?'#f28ab2':'#ffe2ec',x:cx+(Math.random()-0.5)*pw*0.48,y:headY+Math.random()*12*s,vx:(Math.random()-0.5)*14*s,vy:-(20+Math.random()*14)*s,size:Math.round((10+Math.random()*4)*s),start:now,ttl:900});
+  }else if(kind==='sparkle'){
+    for(let i=0;i<5;i++)particles.push({kind:'sparkle',char:i%2?'✦':'✧',color:i%2?'#ffd875':'#dbe6ff',x:cx+(Math.random()-0.5)*pw*0.56,y:headY+ph*0.24+(Math.random()-0.5)*16*s,vx:(Math.random()-0.5)*28*s,vy:-(14+Math.random()*18)*s,size:Math.round((10+Math.random()*4)*s),start:now,ttl:750});
+  }else if(kind==='dizzy'){
+    for(let i=0;i<3;i++)particles.push({kind:'dizzy',char:'★',color:'#f4c96b',x:cx,y:headY-4*s,phase:i*Math.PI*2/3,rx:pw*0.24,ry:6*s,size:Math.round(11*s),start:now,ttl:1100});
+  }else if(kind==='zzz'){
+    particles.push({kind:'zzz',char:'z',color:'#d8e2ff',x:cx+pw*0.22,y:headY+4*s,vx:10*s,vy:-18*s,size:Math.round(12*s),start:now,ttl:1450});
+  }
+  if(particles.length>14)particles=particles.slice(-14);
+  ensureMotionLoop();
+}
+function triggerFx(fx={}){
+  if(fx.bounce)triggerBounce(240);
+  if(fx.shake){shakeAnim={start:performance.now(),duration:900};ensureMotionLoop();}
+  if(fx.kind)spawnParticles(fx.kind);
+}
+function drawParticles(now){
+  if(!particles.length||typeof ctx.save!=='function'||typeof ctx.fillText!=='function')return;
+  ctx.save();
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  for(const p of particles){
+    const t=(now-p.start)/p.ttl;
+    if(t<0||t>=1)continue;
+    const alpha=t<0.15?t/0.15:1-(t-0.15)/0.85;
+    let x=p.x+(p.vx||0)*t,y=p.y+(p.vy||0)*t;
+    if(p.kind==='dizzy'){
+      const a=p.phase+t*Math.PI*4;
+      x=p.x+Math.cos(a)*p.rx;
+      y=p.y+Math.sin(a)*p.ry;
+    }
+    ctx.globalAlpha=Math.max(0,Math.min(1,alpha*0.92));
+    ctx.font='600 '+p.size+'px "Segoe UI","Microsoft YaHei UI",sans-serif';
+    ctx.fillStyle='rgba(24,25,36,0.55)';
+    ctx.fillText(p.char,x+1,y+1);
+    ctx.fillStyle=p.color;
+    ctx.fillText(p.char,x,y);
+  }
+  ctx.restore();
+}
 function stopLocalPatrol(){
   if(!patrolAnim)return;
   patrolAnim=null;
 }
 function startLocalPatrol(plan){
-  if(!initialized||!layout||drag||menuOpen)return;
+  if(!initialized||!layout||drag||menuOpen||panelOpen)return;
   const dir=plan.dir<0?-1:1;
   const b=bounds();
   const minX=b.x+20;
@@ -142,19 +256,62 @@ function startLocalPatrol(plan){
 }
 function applyCanvasLayout(){
   const d=devicePixelRatio||1;
+  const cssW=layout.width/d,cssH=layout.height/d;
   canvas.width=layout.width;canvas.height=layout.height;
-  canvas.style.width=layout.width/d+'px';canvas.style.height=layout.height/d+'px';
+  canvas.style.width=cssW+'px';canvas.style.height=cssH+'px';
+  if(stageEl){stageEl.style.width=cssW+'px';stageEl.style.height=cssH+'px';if(!menuOpen&&!panelOpen)stageEl.style.left='0px';}
   if(ctx)ctx.imageSmoothingEnabled=true;
   if(scaleLabelEl)scaleLabelEl.textContent=Number(layout.scale||1).toFixed(2).replace(/\.00$/,'')+'x';
 }
 function syncMenuLabels(){
   const set=(id,text)=>{const el=document.getElementById(id);if(el)el.textContent=text;};
-  set('topmost','置顶显示：'+(onTop?'开':'关'));
-  set('bubbles','台词气泡：'+(prefs.bubbles!==false?'开':'关'));
-  set('patrol','空闲巡逻：'+(prefs.patrol!==false?'开':'关'));
+  set('topmost','置顶：'+(onTop?'开':'关'));
+  set('bubbles','胶囊：'+(prefs.bubbles!==false?'开':'关'));
+  set('patrol','自主动作：'+(prefs.patrol!==false?'开':'关'));
   set('quiet','空闲隐藏：'+(prefs.hideWhenIdle?'开':'关'));
-  set('sound','审批提示音：'+(prefs.sound?'开':'关'));
+  set('care','关怀：'+(prefs.careReminders!==false?'开':'关'));
+  set('sound','提示音：'+(prefs.sound?'开':'关'));
   if(badgeEl)badgeEl.textContent=directive.state||'idle';
+}
+function renderPanel(){
+  if(!panelBody)return;
+  if(panelDot)panelDot.className='p-dot '+(panelData.state||'idle');
+  const approvals=Array.isArray(panelData.approvals)?panelData.approvals:[];
+  const sessions=Array.isArray(panelData.sessions)?panelData.sessions:[];
+  const stats=panelData.stats||{};
+  const parts=[];
+  if(approvals.length){
+    parts.push('<div class="p-sec"><div class="p-label">待审批 ('+approvals.length+')</div>');
+    for(const item of approvals){
+      parts.push('<div class="p-card"><div class="p-tool">'+esc(item.toolName||'工具审批')+'</div>');
+      if(item.reason)parts.push('<div class="p-reason">'+esc(item.reason)+'</div>');
+      parts.push('<div class="p-btns">');
+      if(item.canDecide){
+        parts.push('<button class="p-btn-primary" data-act="approve" data-id="'+esc(item.id)+'">允许一次</button>');
+        parts.push('<button class="p-btn-sub" data-act="reject" data-id="'+esc(item.id)+'">拒绝</button>');
+      }
+      parts.push('<button class="p-btn-sub" data-act="focus">切到 DSH</button></div></div>');
+    }
+    parts.push('</div>');
+  }
+  const active=sessions.filter(s=>s.state!=='idle');
+  parts.push('<div class="p-sec"><div class="p-label">活跃会话 ('+active.length+')</div>');
+  if(!active.length){
+    parts.push('<div class="p-empty">当前无进行中的会话</div>');
+  }else{
+    for(const s of active){
+      const label=s.toolName?s.toolName:(s.detail||s.state);
+      const dur=s.elapsedSec>0?(' · '+s.elapsedSec+'s'):'';
+      parts.push('<div class="p-row"><div class="p-row-info"><span class="p-dot '+esc(s.state)+'"></span><span>'+esc(s.alias)+' · '+esc(label)+'</span><span class="p-meta">'+esc(dur)+'</span></div>');
+      if(s.canCancel)parts.push('<button class="p-btn-danger" data-act="stop" data-alias="'+esc(s.alias)+'">停止</button>');
+      parts.push('</div>');
+    }
+  }
+  parts.push('</div>');
+  parts.push('<div class="p-stats"><span>陪伴 <b>'+esc(stats.companion||'<1m')+'</b></span><span>完成 <b>'+esc(stats.turns??0)+'</b> 轮</span><span>工具 <b>'+esc(stats.tools??0)+'</b></span>');
+  if(stats.tokens)parts.push('<span>Token <b>'+esc(stats.tokens)+'</b></span>');
+  parts.push('</div>');
+  panelBody.innerHTML=parts.join('');
 }
 function draw(now=performance.now()){
   if(!loaded||!layout)return;
@@ -165,28 +322,37 @@ function draw(now=performance.now()){
   const py=layout.bubbleSpace??0;
   const drawRow=patrolAnim?patrolAnim.row:directive.row;
   const drawIndex=patrolAnim?patrolAnim.frameIndex:directive.index;
-  let hopY=0,tilt=dragTilt,sx=1,sy=1;
+  const fallbackRow={9:3,10:0,11:8};
+  const safeRow=drawRow<atlasRows?drawRow:(fallbackRow[drawRow]??0);
+  let hopY=0,shakeX=0,tilt=dragTilt,sx=1,sy=1;
   if(patrolAnim){
     const elapsed=now-patrolAnim.start;
     if(elapsed>=patrolAnim.turnMs&&elapsed<patrolAnim.turnMs+patrolAnim.walkMs){
       tilt+=patrolAnim.dir*0.02;
     }
   }
+  if(shakeAnim){
+    const st=Math.min(1,(now-shakeAnim.start)/shakeAnim.duration);
+    const wave=Math.sin(st*Math.PI*8)*(1-st);
+    shakeX=wave*7;
+    tilt+=wave*0.07;
+  }
   if(bounceAnim){
     const bt=Math.min(1,(now-bounceAnim.start)/bounceAnim.duration);
     const wave=Math.sin(bt*Math.PI*2)*(1-bt)*0.04;
     sy-=wave;sx+=wave;
   }
-  if((tilt||hopY||sx!==1||sy!==1)&&typeof ctx.save==='function'&&typeof ctx.translate==='function'&&typeof ctx.scale==='function'&&typeof ctx.rotate==='function'&&typeof ctx.restore==='function'){
+  if((tilt||hopY||shakeX||sx!==1||sy!==1)&&typeof ctx.save==='function'&&typeof ctx.translate==='function'&&typeof ctx.scale==='function'&&typeof ctx.rotate==='function'&&typeof ctx.restore==='function'){
     ctx.save();
-    ctx.translate(px+pw/2,py+ph+hopY);
+    ctx.translate(px+pw/2+shakeX,py+ph+hopY);
     if(tilt)ctx.rotate(tilt);
     ctx.scale(sx,sy);
-    ctx.drawImage(atlas,drawIndex*192,drawRow*208,192,208,-pw/2,-ph,pw,ph);
+    ctx.drawImage(atlas,drawIndex*192,safeRow*208,192,208,-pw/2,-ph,pw,ph);
     ctx.restore();
   }else{
-    ctx.drawImage(atlas,drawIndex*192,drawRow*208,192,208,px,py,pw,ph);
+    ctx.drawImage(atlas,drawIndex*192,safeRow*208,192,208,px,py,pw,ph);
   }
+  drawParticles(now);
   const key=drawRow+':'+drawIndex;
   if(!seen.has(key)){seen.add(key);send('drawn',{row:drawRow,index:drawIndex});}
   if(directive.trace)send('rendered-frame',{row:drawRow,index:drawIndex,time:performance.now()});
@@ -196,11 +362,12 @@ function showBubble(payload){
   if(!bubbleEl)return;
   if(!payload||payload.clear||!payload.text||prefs.bubbles===false){bubbleEl.style.display='none';bubbleClickable=false;return;}
   bubbleEl.textContent=payload.text;
+  bubbleTone=payload.tone||'chat';
   bubbleClickable=Boolean(payload.clickable);
-  bubbleEl.className='tone-'+(payload.tone||'chat')+(bubbleClickable?' clickable':'');
+  bubbleEl.className='tone-'+bubbleTone+(bubbleClickable?' clickable':'');
   if(bubbleEl.offsetWidth!==undefined)void bubbleEl.offsetWidth;
-  bubbleEl.className='pop tone-'+(payload.tone||'chat')+(bubbleClickable?' clickable':'');
-  bubbleEl.style.display=menuOpen?'none':'block';
+  bubbleEl.className='pop tone-'+bubbleTone+(bubbleClickable?' clickable':'');
+  bubbleEl.style.display=(menuOpen||panelOpen)?'none':'block';
   if(!payload.sticky&&payload.ttlMs>0){bubbleTimer=later(()=>{bubbleEl.style.display='none';bubbleClickable=false;},payload.ttlMs);}
 }
 function playChime(){
@@ -221,7 +388,9 @@ function playChime(){
   }catch{}
 }
 atlas.onload=()=>{
-  if(atlas.naturalWidth!==1536||atlas.naturalHeight!==1872){send('error');return;}
+  const rows=atlas.naturalHeight/208;
+  if(atlas.naturalWidth!==1536||!Number.isInteger(rows)||rows<9){send('error');return;}
+  atlasRows=rows;
   loaded=true;draw();
   const r=canvas.getBoundingClientRect();
   send('ready',{width:atlas.naturalWidth,height:atlas.naturalHeight,dpr:devicePixelRatio,canvas:{width:canvas.width,height:canvas.height,cssWidth:r.width,cssHeight:r.height},viewport:{width:innerWidth,height:innerHeight},bounds:bounds()});
@@ -237,7 +406,7 @@ Neutralino.events.on('kw.resize',e=>serial(async()=>{
   if(!initialized||!e.detail)return;
   layout={...layout,...e.detail};
   applyCanvasLayout();
-  if(!menuOpen){await Neutralino.window.setSize({width:layout.width,height:layout.height,resizable:false});await move(position);}
+  if(!menuOpen&&!panelOpen){await Neutralino.window.setSize({width:layout.width,height:layout.height,resizable:false});await move(position);}
   draw();
 }));
 Neutralino.events.on('kw.patrol',e=>startLocalPatrol(e.detail||{}));
@@ -245,19 +414,108 @@ Neutralino.events.on('kw.stopPatrol',()=>stopLocalPatrol());
 Neutralino.events.on('kw.topmost',e=>{onTop=e.detail.enabled;syncMenuLabels();});
 Neutralino.events.on('kw.prefs',e=>{prefs={...prefs,...(e.detail||{})};syncMenuLabels();if(prefs.bubbles===false)showBubble({clear:true});if(prefs.patrol===false)stopLocalPatrol();});
 Neutralino.events.on('kw.bubble',e=>showBubble(e.detail));
+Neutralino.events.on('kw.panel',e=>{panelData={...panelData,...(e.detail||{})};renderPanel();});
+Neutralino.events.on('kw.togglePanel',e=>serial(async()=>{
+  const want=e.detail?.open;
+  const next=want===undefined?!panelOpen:Boolean(want);
+  if(next)await openPanelView();else await closeOverlays();
+}));
+Neutralino.events.on('kw.fx',e=>triggerFx(e.detail||{}));
 Neutralino.events.on('kw.chime',()=>{if(prefs.sound)playChime();});
 Neutralino.events.on('kw.reposition',e=>serial(()=>move(e.detail)));
-Neutralino.events.on('kw.frame',e=>{directive=e.detail;if(badgeEl)badgeEl.textContent=directive.state||'idle';draw();});
+Neutralino.events.on('kw.frame',e=>{directive=e.detail;if(badgeEl)badgeEl.textContent=directive.state||'idle';if(directive.state==='dozing'&&raf&&performance.now()-dozeParticleAt>=950){dozeParticleAt=performance.now();spawnParticles('zzz');}draw();});
 Neutralino.events.on('extClientDisconnect',e=>{if(e.detail==='kurowhaleHost')Neutralino.app.exit().catch(()=>{});});
 setInterval(async()=>{if(!initialized)return;try{const s=await Neutralino.extensions.getStats();missingHost=s.connected.includes('kurowhaleHost')?0:missingHost+1;if(missingHost>=2)await Neutralino.app.exit();}catch{}},5000);
-async function dismiss(){menuOpen=false;menu.style.display='none';await Neutralino.window.setSize({width:layout.width,height:layout.height,resizable:false});await move(position);}
-async function openMenu(){menuOpen=true;stopLocalPatrol();drag=null;send('dragEnd',position);showBubble({clear:true});syncMenuLabels();const d=devicePixelRatio||1;await Neutralino.window.setSize({width:Math.max(layout.width,Math.round(256*d)),height:Math.max(layout.height,Math.round(420*d))});menu.style.display='block';}
-if(bubbleEl)bubbleEl.onclick=()=>{if(bubbleClickable)send('control',{action:'focus'});else send('click');};
+
+// Position menu or task card BESIDE the character (right side by default, auto-flip to left near screen edge)
+// so the pet stays completely unobstructed and stationary on screen.
+async function openBeside(el,drawerCssW,drawerCssH){
+  const d=devicePixelRatio||1;
+  const gapCss=8;
+  const drawerW=Math.round(drawerCssW*d),gap=Math.round(gapCss*d);
+  const totalW=layout.width+gap+drawerW;
+  const totalH=Math.max(layout.height,Math.round((drawerCssH+16)*d));
+  const b=bounds();
+  const fitsRight=position.x+totalW<=b.x+b.w-4;
+  let winX=position.x;
+  let stageLeftCss=0,drawerLeftCss=layout.width/d+gapCss;
+  if(!fitsRight){
+    winX=Math.max(b.x+4,position.x-gap-drawerW);
+    const shift=position.x-winX;
+    stageLeftCss=shift/d;
+    drawerLeftCss=0;
+  }
+  const winY=Math.max(b.y+4,Math.min(b.y+Math.max(0,b.h-totalH),position.y));
+  if(stageEl)stageEl.style.left=stageLeftCss+'px';
+  if(el){
+    el.style.left=drawerLeftCss+'px';
+    el.style.width=drawerCssW+'px';
+    el.style.maxHeight=(totalH/d-16)+'px';
+  }
+  await Neutralino.window.setSize({width:totalW,height:totalH,resizable:false});
+  await Neutralino.window.move(winX,winY);
+  if(el)el.style.display='block';
+}
+async function closeOverlays(){
+  menuOpen=false;panelOpen=false;
+  if(menu)menu.style.display='none';
+  if(panelEl)panelEl.style.display='none';
+  if(stageEl)stageEl.style.left='0px';
+  await Neutralino.window.setSize({width:layout.width,height:layout.height,resizable:false});
+  await move(position);
+}
+async function openMenu(){
+  menuOpen=true;panelOpen=false;stopLocalPatrol();drag=null;send('dragEnd',position);showBubble({clear:true});syncMenuLabels();
+  if(panelEl)panelEl.style.display='none';
+  await openBeside(menu,228,346);
+}
+async function openPanelView(){
+  panelOpen=true;menuOpen=false;stopLocalPatrol();drag=null;send('dragEnd',position);showBubble({clear:true});renderPanel();
+  if(menu)menu.style.display='none';
+  const h=panelData.approvals?.length?300:230;
+  await openBeside(panelEl,264,h);
+}
+if(bubbleEl)bubbleEl.onclick=()=>{
+  if(bubbleTone==='waiting'||panelData.approvals?.length)serial(openPanelView);
+  else if(bubbleClickable)send('control',{action:'focus'});
+  else send('click');
+};
+if(panelEl)panelEl.onclick=e=>{
+  const btn=e?.target?.dataset?e.target:null;
+  const act=btn?.dataset?.act;
+  if(!act)return;
+  if(act==='approve')serial(async()=>{send('control',{action:'approval-decide',approvalId:btn.dataset.id,outcome:'allowed-once'});});
+  else if(act==='reject')serial(async()=>{send('control',{action:'approval-decide',approvalId:btn.dataset.id,outcome:'rejected'});});
+  else if(act==='stop')serial(async()=>{send('control',{action:'cancel-session',alias:btn.dataset.alias});});
+  else if(act==='focus')serial(async()=>{await closeOverlays();send('control',{action:'focus'});});
+};
+function pointerZone(e){
+  if(!layout)return 'head';
+  const r=canvas.getBoundingClientRect?canvas.getBoundingClientRect():null;
+  const cssScale=r&&r.height?layout.height/r.height:(devicePixelRatio||1);
+  const cy=r&&Number.isFinite(e?.clientY)?(e.clientY-r.top)*cssScale:(layout.bubbleSpace??0);
+  const py=layout.bubbleSpace??0,ph=layout.petHeight??Math.round(208*layout.scale);
+  return (cy-py)/Math.max(1,ph)<0.46?'head':'body';
+}
 canvas.onpointerenter=()=>{if(!drag&&!patrolAnim)send('hover');};
-canvas.onpointerleave=()=>{if(!drag&&!patrolAnim)send('unhover');};
-canvas.onpointerdown=e=>{if(e.button!==0)return;stopLocalPatrol();drag={sx:e.screenX,sy:e.screenY,lastX:e.screenX,x:position.x,y:position.y,moved:false};if(canvas.setPointerCapture)canvas.setPointerCapture(e.pointerId);};
+canvas.onpointerleave=()=>{patTrack.lastX=null;patTrack.acc=0;patTrack.reversals=0;patTrack.lastDir=0;if(!drag&&!patrolAnim)send('unhover');};
+canvas.onpointerdown=e=>{if(e.button!==0)return;if(menuOpen||panelOpen){serial(closeOverlays);return;}stopLocalPatrol();drag={sx:e.screenX,sy:e.screenY,lastX:e.screenX,x:position.x,y:position.y,moved:false};if(canvas.setPointerCapture)canvas.setPointerCapture(e.pointerId);};
 canvas.onpointermove=e=>{
-  if(!drag)return;
+  if(!drag){
+    if(!loaded||menuOpen||panelOpen||patrolAnim||pointerZone(e)!=='head'){patTrack.lastX=null;patTrack.acc=0;patTrack.reversals=0;patTrack.lastDir=0;return;}
+    const now=Date.now();
+    if(patTrack.lastX===null||now-patTrack.at>900){patTrack.lastX=e.screenX;patTrack.acc=0;patTrack.reversals=0;patTrack.lastDir=0;patTrack.at=now;return;}
+    const mdx=e.screenX-patTrack.lastX;patTrack.lastX=e.screenX;
+    if(Math.abs(mdx)<2)return;
+    const mdir=mdx>0?1:-1;
+    if(patTrack.lastDir&&mdir!==patTrack.lastDir)patTrack.reversals++;
+    patTrack.lastDir=mdir;patTrack.acc+=Math.abs(mdx);patTrack.at=now;
+    if(patTrack.acc>=42&&patTrack.reversals>=1&&now>=patTrack.cooldownUntil){
+      patTrack.cooldownUntil=now+2200;patTrack.acc=0;patTrack.reversals=0;
+      triggerBounce(260);spawnParticles('heart');send('interact',{kind:'head-pat'});
+    }
+    return;
+  }
   const d=devicePixelRatio||1;
   const dx=(e.screenX-drag.sx)*d,dy=(e.screenY-drag.sy)*d;
   if(Math.abs(dx)+Math.abs(dy)<3)return;
@@ -269,33 +527,49 @@ canvas.onpointermove=e=>{
   position=p;Neutralino.window.move(p.x,p.y).catch(()=>{});
   send('dragMove',{direction:vx<0?'left':vx>0?'right':(dx<0?'left':'right')});
 };
-canvas.onpointerup=()=>{
+canvas.onpointerup=e=>{
   if(!drag)return;
   const moved=drag.moved;drag=null;
   if(moved)triggerBounce(240);
   send('dragEnd',moved?position:{});
   if(!moved){
+    const zone=pointerZone(e);
     const now=Date.now();
+    clickTimes=clickTimes.filter(t=>now-t<2200);
+    clickTimes.push(now);
+    if(clickTimes.length>=4&&now>=dizzyCooldownUntil){
+      cancelLater(clickTimer);lastClickAt=0;clickTimes=[];dizzyCooldownUntil=now+2500;
+      shakeAnim={start:performance.now(),duration:900};spawnParticles('dizzy');ensureMotionLoop();
+      send('interact',{kind:'dizzy'});
+      return;
+    }
     if(now-lastClickAt<320){cancelLater(clickTimer);lastClickAt=0;send('dblclick');}
-    else{lastClickAt=now;clickTimer=later(()=>{lastClickAt=0;triggerBounce(220);send('click');},260);}
+    else{lastClickAt=now;clickTimer=later(()=>{lastClickAt=0;triggerBounce(220);spawnParticles(zone==='head'?'heart':'sparkle');send('interact',{kind:zone==='head'?'head-tap':'body-poke'});},260);}
   }
 };
 canvas.onpointercancel=()=>{drag=null;triggerBounce(200);send('dragEnd',position);};
-canvas.oncontextmenu=e=>{e.preventDefault();serial(openMenu);};
+canvas.oncontextmenu=e=>{e.preventDefault();serial(menuOpen?closeOverlays:openMenu);};
 const bind=(id,fn)=>{const el=document.getElementById(id);if(el)el.onclick=fn;};
-bind('dismiss',()=>serial(dismiss));
-const stateSelect=document.getElementById('state');
-if(stateSelect)stateSelect.onchange=e=>{const value=e.target.value;serial(async()=>{await dismiss();send('control',{action:'state',value});});};
-for(const [id,action,value] of [['resume','resume'],['larger','scale',.25],['smaller','scale',-.25],['focus','focus'],['hide','hide'],['center','center'],['close','close']]){
-  bind(id,()=>serial(async()=>{await dismiss();send('control',{action,value,relative:action==='scale'});}));
+bind('dismiss',()=>serial(closeOverlays));
+bind('panelClose',()=>serial(closeOverlays));
+bind('panelFocus',()=>serial(async()=>{await closeOverlays();send('control',{action:'focus'});}));
+bind('openPanel',()=>serial(openPanelView));
+for(const [id,kind] of [['actPet','pet'],['actFeed','feed'],['actDoze','doze'],['actCheer','cheer']]){
+  bind(id,()=>serial(async()=>{await closeOverlays();send('control',{action:'interact',kind});}));
 }
-bind('topmost',()=>serial(async()=>{onTop=!onTop;await dismiss();send('control',{action:'topmost',value:onTop});}));
-for(const [id,key] of [['bubbles','bubbles'],['patrol','patrol'],['quiet','hideWhenIdle'],['sound','sound']]){
-  bind(id,()=>serial(async()=>{const next=!(prefs[key]!==false&&(key==='bubbles'||key==='patrol')||prefs[key]===true);await dismiss();send('control',{action:'pref',key,value:next});}));
+const stateSelect=document.getElementById('state');
+if(stateSelect)stateSelect.onchange=e=>{const value=e.target.value;serial(async()=>{await closeOverlays();send('control',{action:'state',value});});};
+for(const [id,action,value] of [['resume','resume'],['larger','scale',.25],['smaller','scale',-.25],['focus','focus'],['hide','hide'],['center','center'],['close','close']]){
+  bind(id,()=>serial(async()=>{await closeOverlays();send('control',{action,value,relative:action==='scale'});}));
+}
+bind('topmost',()=>serial(async()=>{onTop=!onTop;await closeOverlays();send('control',{action:'topmost',value:onTop});}));
+for(const [id,key] of [['bubbles','bubbles'],['patrol','patrol'],['quiet','hideWhenIdle'],['care','careReminders'],['sound','sound']]){
+  bind(id,()=>serial(async()=>{const isDefaultOn=(key==='bubbles'||key==='patrol'||key==='careReminders');const cur=isDefaultOn?prefs[key]!==false:prefs[key]===true;await closeOverlays();send('control',{action:'pref',key,value:!cur});}));
 }
 Neutralino.events.on('trayMenuItemClicked',e=>{
   const id=e.detail.id;
-  if(id==='bubbles')send('control',{action:'pref',key:'bubbles',toggle:true});
+  if(id==='panel')serial(openPanelView);
+  else if(id==='bubbles')send('control',{action:'pref',key:'bubbles',toggle:true});
   else if(id==='quiet')send('control',{action:'pref',key:'hideWhenIdle',toggle:true});
   else{const action={show:'show',hide:'hide',center:'center',focus:'focus',close:'close'}[id];if(action)send('control',{action});}
 });
@@ -303,11 +577,12 @@ async function setupTray(){
   try{
     await Neutralino.os.setTray({icon:'/resources/tray.png',menuItems:[
       {id:'show',text:'KuroWhale · 显示'},
-      {id:'hide',text:'隐藏'},
+      {id:'panel',text:'任务与今日统计'},
       {id:'focus',text:'唤起 DSH 窗口'},
+      {id:'hide',text:'隐藏'},
       {id:'center',text:'移回屏幕中央'},
       {text:'-'},
-      {id:'bubbles',text:'切换台词气泡'},
+      {id:'bubbles',text:'切换状态胶囊'},
       {id:'quiet',text:'切换空闲隐藏'},
       {text:'-'},
       {id:'close',text:'关闭桌宠'},

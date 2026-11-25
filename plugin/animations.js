@@ -8,6 +8,9 @@ export const animations = [
   ['waiting', [150,150,150,150,150,260]],
   ['running', [120,120,120,120,120,220]],
   ['review', [150,150,150,150,150,280]],
+  ['petted', [150,150,150,150,150,220]],
+  ['dozing', [280,260,280,260,280,320]],
+  ['eating', [220,180,220,180,180,260]],
 ];
 
 const CODING_TOOLS = /edit|write|patch|create_file|replace|apply_diff|format/i;
@@ -94,8 +97,65 @@ const CLICK_LINES = {
   ],
 };
 
+const INTERACTION_LINES = {
+  'head-pat': {
+    zh: ['好舒服…', '蹭蹭～', '呼噜呼噜', '再摸摸头', '心情变好了'],
+    en: ['So cozy…', 'Purr~', 'That feels nice', 'Headpats accepted'],
+  },
+  'body-poke': {
+    zh: ['别戳肚子啦', '痒！', '欸嘿，躲开了', '戳到围裙啦'],
+    en: ['Hey, that tickles!', 'Dodged it!', "Don't poke the apron"],
+  },
+  dizzy: {
+    zh: ['别戳啦，转晕了…', '头昏眼花…', '求放过…歇一秒'],
+    en: ['Whoa, getting dizzy…', 'Easy on the clicks…'],
+  },
+  feed: {
+    zh: ['咔嚓咔嚓，小鱼干真香', '投喂收到～', '能量补充完毕'],
+    en: ['Crunch crunch, tasty fish!', 'Snack received~'],
+  },
+  doze: {
+    zh: ['有点困了…', '眯一小会…', 'zZz…'],
+    en: ['Getting sleepy…', 'Short nap…'],
+  },
+  cheer: {
+    zh: ['元气满满！', '给你加油～', '随时准备出发'],
+    en: ['Full of energy!', 'Cheering you on~'],
+  },
+};
+
 export function pickClickLine(locale = 'zh', index = 0) {
   const list = CLICK_LINES[locale === 'en' ? 'en' : 'zh'];
+  return list[Math.abs(index) % list.length];
+}
+
+export function pickInteractionLine(kind, locale = 'zh', index = 0) {
+  const key = kind === 'head-tap' || kind === 'pet' ? 'head-pat' : kind;
+  const pool = INTERACTION_LINES[key];
+  if (!pool) return pickClickLine(locale, index);
+  const list = pool[locale === 'en' ? 'en' : 'zh'];
+  return list[Math.abs(index) % list.length];
+}
+
+const IDLE_LIFE_LINES = {
+  eating: {
+    zh: ['偷偷啃根小鱼干…', '补充点能量～', '咔嚓咔嚓'],
+    en: ['Sneaking a fish snack…', 'Refueling~'],
+  },
+  dozing: {
+    zh: ['有点困了…', '小憩一会…'],
+    en: ['Getting sleepy…', 'Quick nap…'],
+  },
+  petted: {
+    zh: ['今天状态不错～', '心情很好哦'],
+    en: ['Feeling cozy~', 'Good mood today'],
+  },
+};
+
+export function pickAutoIdleLine(kind, locale = 'zh', index = 0) {
+  const pool = IDLE_LIFE_LINES[kind];
+  if (!pool) return '';
+  const list = pool[locale === 'en' ? 'en' : 'zh'];
   return list[Math.abs(index) % list.length];
 }
 

@@ -73,3 +73,53 @@ test('missing or corrupt asset cache triggers bounded download and reports failu
     assert.equal(calls,3);assert.equal(errors.length,3);assert.equal(errors[0].resource,'artwork');
   } finally {await rm(dir,{recursive:true,force:true});}
 });
+
+test('upgrades legacy v0.1.x stock assetDirectory to verified local v0.2.0 cache without network, leaving custom skins untouched',async()=>{
+  const dir=await mkdtemp(join(tmpdir(),'kurowhale-upgrade-art-'));
+  try {
+    const legacyDir=join(dir,'old-stock');await mkdir(legacyDir,{recursive:true});
+    const customDir=join(dir,'custom-skin');await mkdir(customDir,{recursive:true});
+    const cacheDir=join(dir,'assets',artworkVersion);await mkdir(cacheDir,{recursive:true});
+    await writeFile(join(legacyDir,'spritesheet.webp'),'legacy-v01-sheet');
+    await writeFile(join(customDir,'spritesheet.webp'),'custom-skin-sheet');
+    await writeFile(join(cacheDir,'spritesheet.webp'),'v02-turnaround-sheet');
+    const legacyHash=hash('legacy-v01-sheet');
+    let cacheValid=true;
+    const checkValidAssets=async candidate=>cacheValid&&candidate===cacheDir;
+    const noFetch=()=>{throw Error('unexpected download');};
+
+    const upgraded=await resolveResources({
+      directory:dir,
+      config:{assetDirectory:legacyDir,runtimePath:'existing-runtime'},
+      platform:'win32',
+      arch:'x64',
+      downloadOptions:{fetch:noFetch},
+      legacySheetHashes:[legacyHash],
+      checkValidAssets,
+    });
+    assert.equal(upgraded.assetDirectory,cacheDir);
+
+    const customKept=await resolveResources({
+      directory:dir,
+      config:{assetDirectory:customDir,runtimePath:'existing-runtime'},
+      platform:'win32',
+      arch:'x64',
+      downloadOptions:{fetch:noFetch},
+      legacySheetHashes:[legacyHash],
+      checkValidAssets,
+    });
+    assert.equal(customKept.assetDirectory,customDir);
+
+    cacheValid=false;
+    const legacyKeptOffline=await resolveResources({
+      directory:dir,
+      config:{assetDirectory:legacyDir,runtimePath:'existing-runtime'},
+      platform:'win32',
+      arch:'x64',
+      downloadOptions:{fetch:noFetch},
+      legacySheetHashes:[legacyHash],
+      checkValidAssets,
+    });
+    assert.equal(legacyKeptOffline.assetDirectory,legacyDir);
+  } finally {await rm(dir,{recursive:true,force:true});}
+});

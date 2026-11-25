@@ -9,11 +9,11 @@ const root = new URL('../../', import.meta.url);
 const source = JSON.parse(await readFile(new URL('package.json', root), 'utf8'));
 const plugin = JSON.parse(await readFile(new URL('plugin/package.json', root), 'utf8'));
 
-test('both installable manifests identify the repository and declare 0.2.x support', () => {
+test('both installable manifests identify the repository and declare >=0.2.1-rc.3 support', () => {
   assert.deepEqual(source.repository, { type: 'git', url: 'git+https://github.com/lemonxiny55/dsh-kurowhale-pet.git' });
   assert.equal(source.homepage, 'https://github.com/lemonxiny55/dsh-kurowhale-pet#readme');
   assert.equal(source.bugs.url, 'https://github.com/lemonxiny55/dsh-kurowhale-pet/issues');
-  assert.equal(source.engines.dsh, '>=0.2.1-rc.3 <0.3.0 || >=0.2.2-rc.0 <0.3.0');
+  assert.equal(source.engines.dsh, '>=0.2.1-rc.3');
   for (const key of ['name', 'version', 'repository', 'homepage', 'bugs', 'engines']) {
     assert.deepEqual(plugin[key], source[key], key);
   }

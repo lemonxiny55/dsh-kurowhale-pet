@@ -163,3 +163,192 @@ test('idle patrol animates during idle and yields immediately to agent activity'
     await cleanup();cleanup=null;
   }finally{if(cleanup)await cleanup();if(previous===undefined)delete process.env.DSH_HOME;else process.env.DSH_HOME=previous;await rm(temp,{recursive:true,force:true});}
 });
+
+test('approval waterfall race, session cancel, token stats, and care reminder work end-to-end',async()=>{
+  const temp=await mkdtemp(join(tmpdir(),'kurowhale-v03-'));const previous=process.env.DSH_HOME;process.env.DSH_HOME=temp;
+  let cleanup,onEvent,sessionHandler,statusHandler,approvalHandler,registered;
+  const panels=[],bubbles=[];let cancelled=0,nextInvoked=0;
+  let fakeNow=new Date(2026,10,22,14,0,0);
+  try{
+    const dir=join(temp,'kurowhale-pet');await mkdir(dir);
+    await writeFile(join(dir,'local.json'),JSON.stringify({patrol:false,careIntervalMs:60000}));
+    await writeFile(join(dir,'pet.json'),JSON.stringify({spritesheetPath:'spritesheet.webp'}));
+    apply({
+      effect:fn=>{cleanup=fn();},
+      on:(ev,fn)=>{
+        if(ev==='session/event')sessionHandler=fn;
+        if(ev==='agent/status')statusHandler=fn;
+        if(ev==='approval/request')approvalHandler=fn;
+        return ()=>{};
+      },
+      commands:{register:def=>{registered=def;return ()=>{};}},
+    },{
+      nowFn:()=>fakeNow,
+      resolveResources:async()=>({assetDirectory:dir,runtimePath:'custom-runtime'}),
+      createOverlay:async options=>{
+        onEvent=options.onEvent;
+        return {pid:300,destroy(){},frame(){},bubble:b=>bubbles.push(b),panel:p=>panels.push(p),togglePanel(){},prefs(){},inspect:async()=>({visible:true}),hide:async()=>{},show:async()=>{}};
+      },
+    });
+    await wait(40);
+    const liveAgent={session:{id:'s-live'},cancel:async()=>{cancelled++;}};
+    statusHandler({agent:liveAgent,status:'running'});
+    sessionHandler({id:'s-live'},{type:'turn/start',data:{}});
+    sessionHandler({id:'s-live'},{type:'tool/call',data:{name:'run_command'}});
+    sessionHandler({id:'s-live'},{type:'assistant/message',data:{usage:{inputTokens:1500,outputTokens:500,cachedInputTokens:300}}});
+
+    // Trigger approval waterfall where host next() stays pending while user clicks Allow in pet panel.
+    const approvalOutcomePromise=approvalHandler(
+      {agent:liveAgent,toolName:'run_command',callId:'c1',reason:'Run test suite'},
+      ()=>{nextInvoked++;return new Promise(()=>{});},
+    );
+    await wait(30);
+    assert.equal(nextInvoked,1,'native approval next() must always be called without blocking');
+    const latestPanel=panels.at(-1);
+    assert.equal(latestPanel.approvals.length,1);
+    assert.equal(latestPanel.approvals[0].canDecide,true);
+    assert.equal(latestPanel.approvals[0].toolName,'run_command');
+
+    onEvent('control',{action:'approval-decide',approvalId:latestPanel.approvals[0].id,outcome:'allowed-once'});
+    assert.equal(await approvalOutcomePromise,'allowed-once');
+
+    // Cancel active turn via /kurowhale stop.
+    const stopRes=await registered.handler({rawInput:'stop session-1'});
+    assert.equal(stopRes.kind,'success');
+    assert.equal(cancelled,1);
+
+    // Complete turn, advance fake clock past careIntervalMs, verify stats & care reminder.
+    sessionHandler({id:'s-live'},{type:'turn/end',data:{reason:{kind:'completed'}}});
+    const statsRes=await registered.handler({rawInput:'stats'});
+    assert.equal(statsRes.kind,'success');
+    assert.match(statsRes.text,/完成 1 轮.*工具 1 次.*审批 1 次.*2\.0k/);
+
+    fakeNow=new Date(2026,10,22,14,2,0);
+    statusHandler({agent:liveAgent,status:'idle'});
+    // Force transition from review -> idle after advancing time.
+    await registered.handler({rawInput:'resume'});
+    const savedStats=JSON.parse(await readFile(join(dir,'stats.json'),'utf8'));
+    assert.equal(savedStats.today.tokens.total,2000);
+    assert.equal(savedStats.today.approvalsQuickAllowed,1);
+    await cleanup();cleanup=null;
+  }finally{if(cleanup)await cleanup();if(previous===undefined)delete process.env.DSH_HOME;else process.env.DSH_HOME=previous;await rm(temp,{recursive:true,force:true});}
+});
+
+test('activates cleanly under strict Cordis proxy and resolves agents via ctx.get',async()=>{
+  const temp=await mkdtemp(join(tmpdir(),'kurowhale-cordis-'));const previous=process.env.DSH_HOME;process.env.DSH_HOME=temp;
+  let cleanup,sessionHandler,registered=null,effectCleanup=null,cancelled=0;
+  try{
+    const dir=join(temp,'kurowhale-pet');await mkdir(dir);
+    await writeFile(join(dir,'local.json'),JSON.stringify({rendererEnabled:false}));
+    const agentsMap=new Map([['s-get',{cancel:async()=>{cancelled++;}}]]);
+    const cmdSvc={register:def=>{registered=def;return ()=>{registered=null;};}};
+    const strictCtx={
+      effect:fn=>{cleanup=fn();},
+      on:(ev,fn)=>{if(ev==='session/event')sessionHandler=fn;return ()=>{};},
+      get:name=>(name==='agents'?agentsMap:undefined),
+      inject:(deps,cb)=>{
+        assert.deepEqual(deps,['commands']);
+        cb({get:name=>(name==='commands'?cmdSvc:undefined),effect:fn=>{effectCleanup=fn();}});
+        return {dispose:()=>{effectCleanup?.();}};
+      },
+      get commands(){throw new Error('cannot get property "commands" without inject');},
+      get agents(){throw new Error('cannot get property "agents" without inject');},
+    };
+    apply(strictCtx);
+    await wait(30);
+    assert.equal(registered?.name,'kurowhale');
+    sessionHandler({id:'s-get'},{type:'turn/start',data:{}});
+    const stopRes=await registered.handler({rawInput:'stop session-1'});
+    assert.equal(stopRes.kind,'success');
+    assert.equal(cancelled,1);
+    await cleanup();cleanup=null;
+    assert.equal(registered,null);
+  }finally{if(cleanup)await cleanup();if(previous===undefined)delete process.env.DSH_HOME;else process.env.DSH_HOME=previous;await rm(temp,{recursive:true,force:true});}
+});
+
+test('partitioned interact events and menu commands animate new poses and yield to agent work',async()=>{
+  const temp=await mkdtemp(join(tmpdir(),'kurowhale-interact-'));const previous=process.env.DSH_HOME;process.env.DSH_HOME=temp;
+  let cleanup,onEvent,sessionHandler,registered;
+  const states=[],fxCalls=[];
+  try{
+    const dir=join(temp,'kurowhale-pet');await mkdir(dir);
+    await writeFile(join(dir,'local.json'),JSON.stringify({patrol:false}));
+    await writeFile(join(dir,'pet.json'),JSON.stringify({spritesheetPath:'spritesheet.webp'}));
+    apply({
+      effect:fn=>{cleanup=fn();},
+      on:(ev,fn)=>{if(ev==='session/event')sessionHandler=fn;return ()=>{};},
+      commands:{register:def=>{registered=def;return ()=>{};}},
+    },{
+      resolveResources:async()=>({assetDirectory:dir,runtimePath:'custom-runtime'}),
+      createOverlay:async options=>{
+        onEvent=options.onEvent;
+        return {pid:400,destroy(){},frame:d=>states.push(d.state),bubble(){},fx:f=>fxCalls.push(f),patrol(){},prefs(){},inspect:async()=>({visible:true}),hide:async()=>{},show:async()=>{}};
+      },
+    });
+    await wait(40);
+    onEvent('interact',{kind:'head-pat'});await wait(25);
+    assert.equal(states.at(-1),'petted');
+    assert.deepEqual(fxCalls.at(-1),{kind:'heart',bounce:true});
+
+    onEvent('interact',{kind:'body-poke'});await wait(25);
+    assert.equal(states.at(-1),'jumping');
+    assert.deepEqual(fxCalls.at(-1),{kind:'sparkle',bounce:true});
+
+    onEvent('interact',{kind:'dizzy'});await wait(25);
+    assert.equal(states.at(-1),'failed');
+    assert.deepEqual(fxCalls.at(-1),{kind:'dizzy',shake:true});
+
+    await registered.handler({rawInput:'feed'});await wait(25);
+    assert.equal(states.at(-1),'eating');
+    await registered.handler({rawInput:'doze'});await wait(25);
+    assert.equal(states.at(-1),'dozing');
+    await registered.handler({rawInput:'cheer'});await wait(25);
+    assert.equal(states.at(-1),'jumping');
+
+    sessionHandler({id:'s1'},{type:'tool/call',data:{name:'bash'}});await wait(25);
+    assert.equal(states.at(-1),'running');
+    await cleanup();cleanup=null;
+  }finally{if(cleanup)await cleanup();if(previous===undefined)delete process.env.DSH_HOME;else process.env.DSH_HOME=previous;await rm(temp,{recursive:true,force:true});}
+});
+
+test('autonomous idle routine automatically triggers eating, dozing, petted and other poses without consecutive repeats',async()=>{
+  const temp=await mkdtemp(join(tmpdir(),'kurowhale-autoidle-'));const previous=process.env.DSH_HOME;process.env.DSH_HOME=temp;
+  let cleanup,sessionHandler;
+  const actionSeq=[];
+  try{
+    const dir=join(temp,'kurowhale-pet');await mkdir(dir);
+    await writeFile(join(dir,'local.json'),JSON.stringify({patrol:true,patrolIntervalMs:25,patrolAutoAll:true,patrolActionDurationMs:25}));
+    await writeFile(join(dir,'pet.json'),JSON.stringify({spritesheetPath:'spritesheet.webp'}));
+    let prevTracked='idle';
+    apply({
+      effect:fn=>{cleanup=fn();},
+      on:(ev,fn)=>{if(ev==='session/event')sessionHandler=fn;return ()=>{};},
+    },{
+      resolveResources:async()=>({assetDirectory:dir,runtimePath:'custom-runtime'}),
+      createOverlay:async()=>({
+        pid:401,destroy(){},bubble(){},fx(){},prefs(){},inspect:async()=>({visible:true}),hide:async()=>{},show:async()=>{},
+        patrol(){},
+        frame:d=>{
+          const kind=d.state==='running-left'||d.state==='running-right'?'walk':d.state;
+          if(kind!==prevTracked){
+            prevTracked=kind;
+            if(kind!=='idle')actionSeq.push(kind);
+          }
+        },
+      }),
+    });
+    await wait(520);
+    assert.ok(actionSeq.length>=4,`expected >=4 autonomous actions, got ${JSON.stringify(actionSeq)}`);
+    for(let i=1;i<actionSeq.length;i++){
+      assert.notEqual(actionSeq[i],actionSeq[i-1],`consecutive autonomous action must not repeat: ${JSON.stringify(actionSeq)}`);
+    }
+    const allowed=new Set(['walk','eating','dozing','petted','jumping','waving']);
+    assert.ok(actionSeq.every(k=>allowed.has(k)));
+    assert.ok(new Set(actionSeq).size>=3,`expected >=3 distinct autonomous poses, got ${JSON.stringify(actionSeq)}`);
+
+    sessionHandler({id:'s1'},{type:'tool/call',data:{name:'bash'}});await wait(25);
+    const status=JSON.parse(await readFile(join(dir,'status.json'),'utf8'));
+    assert.equal(status.state,'running');assert.equal(status.source,'agent');
+    await cleanup();cleanup=null;
+  }finally{if(cleanup)await cleanup();if(previous===undefined)delete process.env.DSH_HOME;else process.env.DSH_HOME=previous;await rm(temp,{recursive:true,force:true});}
+});
