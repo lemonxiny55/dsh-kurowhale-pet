@@ -155,3 +155,34 @@ test('native frontend generates geek report card PNG via local Canvas and trigge
  for(let i=0;i<20;i++)await Promise.resolve();
  assert.ok(sent.some(e=>e.n==='kw.reportCardCopy'&&e.data.dataUrl.startsWith('data:image/png;base64,')));
 });
+
+test('native frontend hot-swaps 9-row and 12-row skins without restart and falls back cleanly on error',async()=>{
+ const html=await readFile(new URL('../native/index.html',import.meta.url),'utf8');
+ const source=[...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].at(-1)[1];
+ const listeners=new Map(),sent=[],syList=[],elements=new Map();
+ const element=id=>{if(!elements.has(id))elements.set(id,{style:{},getBoundingClientRect:()=>({width:160,height:232}),getContext:()=>({clearRect(){},drawImage(_img,_sx,sy){syList.push(sy);}})});return elements.get(id);};
+ const dispatch=(name,data)=>listeners.get(name)?.({detail:data});
+ class MockImg{
+  naturalWidth=1536;naturalHeight=2496;
+  set src(val){
+   if(val.includes('legacy-9'))this.naturalHeight=1872;
+   else if(val.includes('broken')){queueMicrotask(()=>this.onerror?.());return;}
+   else this.naturalHeight=2496;
+   queueMicrotask(()=>this.onload?.());
+  }
+ }
+ const sandbox={console,Date,Math,Set,Promise,Number,Boolean,performance:{now:()=>100},devicePixelRatio:1.5,innerWidth:160,innerHeight:232,screen:{availLeft:0,availTop:0,availWidth:1707,availHeight:1020},document:{getElementById:element},setInterval:()=>0,setTimeout:()=>0,clearTimeout:()=>{},
+ Image:MockImg,
+ Neutralino:{init:()=>Promise.resolve(),app:{exit:()=>Promise.resolve()},extensions:{getStats:async()=>({connected:['kurowhaleHost']})},os:{setTray:()=>Promise.resolve()},window:{move:async()=>{},setSize:async()=>{}},events:{on:(n,fn)=>listeners.set(n,fn),broadcast:async(n,data)=>{sent.push({n,data});queueMicrotask(()=>dispatch(n,data));}}}};
+ vm.runInNewContext(source,sandbox);
+ await dispatch('kw.initialize',{width:240,height:438,petWidth:240,petHeight:260,bubbleSpace:68,x:120,y:120,scale:1.25,topmost:true});
+ for(let i=0;i<20;i++)await Promise.resolve();
+ dispatch('kw.swapSkin',{atlasSrc:'atlas-legacy-9.webp',skinId:'leg9',skinName:'Legacy 9'});
+ for(let i=0;i<20;i++)await Promise.resolve();
+ assert.ok(sent.some(e=>e.n==='kw.skinLoaded'&&e.data.rows===9));
+ dispatch('kw.frame',{state:'petted',row:9,index:0});
+ assert.equal(syList.at(-1),3*208,'hot-swapped 9-row skin must degrade row 9 -> row 3');
+ dispatch('kw.swapSkin',{atlasSrc:'atlas-broken.webp',skinId:'bad',skinName:'Bad'});
+ for(let i=0;i<20;i++)await Promise.resolve();
+ assert.ok(sent.some(e=>e.n==='kw.skinError'));
+});

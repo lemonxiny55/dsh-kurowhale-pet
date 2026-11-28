@@ -1,6 +1,6 @@
 {
   "name": "dsh-kurowhale-pet",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/lemonxiny55/dsh-kurowhale-pet.git"
@@ -28,6 +28,7 @@
     "notify.js",
     "overlay.js",
     "report-card.js",
+    "skins.js",
     "stats.js",
     "native/",
     "cordis.patch.yml",

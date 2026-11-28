@@ -23,6 +23,8 @@ test('parseSlashInput handles control, preference and diagnostic subcommands', (
   assert.deepEqual(parseSlashInput('stats'), { kind: 'stats' });
   assert.deepEqual(parseSlashInput('stats export week'), { kind: 'command', command: { action: 'export-report', period: 'week', mode: 'save' } });
   assert.deepEqual(parseSlashInput('report'), { kind: 'command', command: { action: 'export-report', period: 'today', mode: 'save' } });
+  assert.deepEqual(parseSlashInput('skin reset'), { kind: 'command', command: { action: 'skin', path: null } });
+  assert.deepEqual(parseSlashInput('skin "C:\\Skins\\Whale"'), { kind: 'command', command: { action: 'skin', path: 'C:\\Skins\\Whale' } });
   assert.deepEqual(parseSlashInput('panel'), { kind: 'command', command: { action: 'panel' } });
   assert.deepEqual(parseSlashInput('approve req-1'), { kind: 'command', command: { action: 'approval-decide', approvalId: 'req-1', outcome: 'allowed-once' } });
   assert.deepEqual(parseSlashInput('reject'), { kind: 'command', command: { action: 'approval-decide', approvalId: undefined, outcome: 'rejected' } });

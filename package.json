@@ -1,6 +1,6 @@
 {
   "name": "dsh-kurowhale-pet",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/lemonxiny55/dsh-kurowhale-pet.git"
@@ -23,6 +23,10 @@
     "THIRD_PARTY_NOTICES.md"
   ],
   "license": "MIT",
+  "scripts": {
+    "test": "node --test plugin/test/*.test.mjs",
+    "validate-skin": "node scripts/validate-skin.mjs"
+  },
   "engines": {
     "node": ">=22.18.0",
     "dsh": ">=0.2.1-rc.3"

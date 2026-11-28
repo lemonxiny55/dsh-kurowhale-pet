@@ -2,7 +2,7 @@
 import { spawn, execFile, execFileSync } from 'node:child_process';
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { extname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const frontend = fileURLToPath(new URL('./native/', import.meta.url));
@@ -67,12 +67,23 @@ export async function createOverlay(options) {
   mkdirSync(join(work, 'resources'));
   for (const name of ['index.html', 'neutralino.js', 'tray.png']) copyFileSync(join(frontend, name), join(work, 'resources', name));
   copyFileSync(options.sheet, join(work, 'resources', 'atlas.webp'));
+  let skinGen = 0;
+  let skinLoadedFiles = [];
+  if (options.sounds && typeof options.sounds === 'object') {
+    for (const [tone, srcPath] of Object.entries(options.sounds)) {
+      if (typeof srcPath === 'string' && existsSync(srcPath)) {
+        const fname = `sound-${tone}-0${extname(srcPath).toLowerCase()}`;
+        copyFileSync(srcPath, join(work, 'resources', fname));
+        skinLoadedFiles.push(fname);
+      }
+    }
+  }
   const layout = computeWindowLayout(options.scale);
   writeFileSync(join(work, 'neutralino.config.json'), JSON.stringify({
     applicationId: 'community.kurowhale.pet', defaultMode: 'window', documentRoot: '/resources/', url: '/',
     enableServer: true, enableNativeAPI: true, enableExtensions: true, exportAuthInfo: true,
     extensions: [{ id: 'kurowhaleHost' }], logging: { enabled: false, writeToLogFile: false },
-    nativeAllowList: ['app.*', 'events.*', 'window.*', 'os.setTray', 'os.showSaveDialog', 'extensions.getStats', 'computer.getDisplays', 'clipboard.writeText'],
+    nativeAllowList: ['app.*', 'events.*', 'window.*', 'os.setTray', 'os.showSaveDialog', 'os.showFolderDialog', 'extensions.getStats', 'computer.getDisplays', 'clipboard.writeText'],
     modes: {
       window: {
         title: 'KuroWhale · DSH', width: layout.width, height: layout.height, x: options.x, y: options.y,
@@ -124,6 +135,7 @@ export async function createOverlay(options) {
     });
     const broadcast = (event, data) => call('app.broadcast', { event, data });
     let ready = false; let uiError;
+    let skinWaiter = null;
     ws.addEventListener('message', e => {
       let m; try { m = JSON.parse(String(e.data)); } catch { return; }
       if (m.id && pending.has(m.id)) {
@@ -132,6 +144,8 @@ export async function createOverlay(options) {
       }
       if (m.event === 'kw.ready') ready = true;
       if (m.event === 'kw.error') uiError = Error('Native atlas decode or frontend initialization failed');
+      if (m.event === 'kw.skinLoaded' && skinWaiter) { const w = skinWaiter; skinWaiter = null; w.resolve(m.data ?? {}); }
+      if (m.event === 'kw.skinError' && skinWaiter) { const w = skinWaiter; skinWaiter = null; w.reject(Error(m.data?.error || 'Skin decode failed')); }
       if (m.event?.startsWith('kw.')) options.onEvent(m.event.slice(3), m.data ?? {});
     });
     await new Promise((resolve, reject) => {
@@ -147,6 +161,7 @@ export async function createOverlay(options) {
         ...layout, x: options.x, y: options.y, topmost: options.topmost !== false,
         displays: options.displays ?? [],
         preferences: options.preferences ?? {},
+        sounds: Object.fromEntries(skinLoadedFiles.map(fname => [fname.split('-')[1], fname])),
       });
       await pause(150);
     }
@@ -166,6 +181,43 @@ export async function createOverlay(options) {
       chime: tone => { void broadcast('kw.chime', { tone: tone ?? 'waiting' }).catch(() => {}); },
       prefs: preferences => { void broadcast('kw.prefs', preferences).catch(() => {}); },
       exportReportCard: (model, mode = 'save') => { void broadcast('kw.renderReportCard', { model, mode }).catch(() => {}); },
+      swapSkin: async ({ sheetPath, sounds = {}, skinId = 'custom', skinName = 'Custom' }) => {
+        skinGen += 1;
+        const nextFiles = [];
+        const atlasName = `atlas-${skinGen}.webp`;
+        copyFileSync(sheetPath, join(work, 'resources', atlasName));
+        nextFiles.push(atlasName);
+        const soundMap = {};
+        for (const [tone, src] of Object.entries(sounds || {})) {
+          if (typeof src === 'string' && existsSync(src)) {
+            const fname = `sound-${tone}-${skinGen}${extname(src).toLowerCase()}`;
+            copyFileSync(src, join(work, 'resources', fname));
+            soundMap[tone] = fname;
+            nextFiles.push(fname);
+          }
+        }
+        const ack = await new Promise((resolveAck, rejectAck) => {
+          const t = setTimeout(() => {
+            if (skinWaiter) { skinWaiter = null; rejectAck(Error('Skin swap timed out')); }
+          }, 5000);
+          skinWaiter = {
+            resolve: data => { clearTimeout(t); resolveAck(data); },
+            reject: err => { clearTimeout(t); rejectAck(err); },
+          };
+          void broadcast('kw.swapSkin', { atlasSrc: atlasName, sounds: soundMap, skinId, skinName }).catch(err => {
+            clearTimeout(t);
+            skinWaiter = null;
+            rejectAck(err);
+          });
+        });
+        for (const old of skinLoadedFiles) {
+          if (old !== 'atlas.webp') {
+            try { rmSync(join(work, 'resources', old), { force: true }); } catch {}
+          }
+        }
+        skinLoadedFiles = nextFiles;
+        return ack;
+      },
       setClickThrough: async (enabled, meta = {}) => {
         const applied = await setWindowClickThrough(child.pid, Boolean(enabled));
         void broadcast('kw.clickThrough', { enabled: Boolean(enabled), ...meta }).catch(() => {});

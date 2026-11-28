@@ -86,7 +86,7 @@ small{display:block;color:#a59cb8;font-size:10.5px;margin-top:3px}
 <div id="panel" role="dialog" aria-label="KuroWhale tasks and stats">
   <div class="p-head">
     <div class="p-title"><span id="panelDot" class="p-dot"></span><span>KuroWhale</span></div>
-    <div class="p-head-actions"><button id="panelFocus" class="p-ghost">切到 DSH</button><button id="panelClose" class="p-ghost">×</button></div>
+    <div class="p-head-actions"><button id="panelSkin" class="p-ghost">换肤</button><button id="panelFocus" class="p-ghost">切到 DSH</button><button id="panelClose" class="p-ghost">×</button></div>
   </div>
   <div id="panelBody"></div>
 </div>
@@ -109,6 +109,7 @@ small{display:block;color:#a59cb8;font-size:10.5px;margin-top:3px}
     <button id="dnd">勿扰：关</button>
     <button id="toast">桌面通知：开</button>
   </div>
+  <div class="row"><button id="pickSkin">切换本地皮肤…</button><button id="resetSkin">默认皮肤</button></div>
   <div class="row"><button id="center">回中央</button><button id="hide">隐藏</button><button id="close" class="danger">关闭</button></div>
   <details><summary>开发者诊断</summary>
     <select id="state" aria-label="Animation diagnostic"><option>idle</option><option>running-right</option><option>running-left</option><option>waving</option><option>jumping</option><option>failed</option><option>waiting</option><option>running</option><option>review</option><option>petted</option><option>dozing</option><option>eating</option></select>
@@ -118,11 +119,13 @@ small{display:block;color:#a59cb8;font-size:10.5px;margin-top:3px}
   </details>
 </div>
 <script src="neutralino.js"></script><script>
-const stageEl=document.getElementById('stage'),canvas=document.getElementById('pet'),ctx=canvas.getContext('2d'),menu=document.getElementById('menu'),panelEl=document.getElementById('panel'),panelBody=document.getElementById('panelBody'),panelDot=document.getElementById('panelDot'),bubbleEl=document.getElementById('bubble'),badgeEl=document.getElementById('badge'),scaleLabelEl=document.getElementById('scaleLabel'),atlas=new Image();
+const stageEl=document.getElementById('stage'),canvas=document.getElementById('pet'),ctx=canvas.getContext('2d'),menu=document.getElementById('menu'),panelEl=document.getElementById('panel'),panelBody=document.getElementById('panelBody'),panelDot=document.getElementById('panelDot'),bubbleEl=document.getElementById('bubble'),badgeEl=document.getElementById('badge'),scaleLabelEl=document.getElementById('scaleLabel');
+let atlas=new Image();
 const later=typeof setTimeout==='function'?setTimeout:()=>0;
 const cancelLater=typeof clearTimeout==='function'?clearTimeout:()=>{};
 const raf=typeof requestAnimationFrame==='function'?requestAnimationFrame:null;
 let initialized=false,loaded=false,atlasRows=9,layout,position={x:80,y:80},drag=null,directive={row:0,index:0,state:'idle'},seen=new Set(),missingHost=0,onTop=true,uiQueue=Promise.resolve();
+let skinSounds={};
 let prefs={bubbles:true,patrol:true,hideWhenIdle:false,clickThrough:false,sound:false,dndEnabled:false,dndStart:'23:00',dndEnd:'08:00',toast:true,careReminders:true};
 let clickThroughActive=false,wakeHighlight=false,displaysCache=[],lastScreenSig='',sessionsExpanded=false;
 let bubbleTimer=0,bubbleClickable=false,bubbleTone='chat',lastClickAt=0,clickTimer=0,menuOpen=false,panelOpen=false;
@@ -522,6 +525,19 @@ function showBubble(payload){
   if(!payload.sticky&&payload.ttlMs>0){bubbleTimer=later(()=>{bubbleEl.style.display='none';bubbleClickable=false;},payload.ttlMs);}
 }
 function playChime(tone='waiting'){
+  const customSrc=skinSounds&&skinSounds[tone];
+  if(customSrc&&typeof Audio==='function'){
+    try{
+      const audio=new Audio(customSrc);
+      audio.volume=0.55;
+      const p=audio.play();
+      if(p&&typeof p.catch==='function')p.catch(()=>playSynthChime(tone));
+      return;
+    }catch{}
+  }
+  playSynthChime(tone);
+}
+function playSynthChime(tone='waiting'){
   try{
     const AC=typeof AudioContext!=='undefined'?AudioContext:(typeof webkitAudioContext!=='undefined'?webkitAudioContext:null);
     if(!AC)return;
@@ -558,11 +574,33 @@ Neutralino.events.on('kw.initialize',e=>serial(async()=>{
   initialized=true;layout=e.detail;onTop=layout.topmost!==false;position={x:layout.x,y:layout.y};
   if(Array.isArray(layout.displays))displaysCache=layout.displays;
   if(layout.preferences)prefs={...prefs,...layout.preferences};
+  if(layout.sounds&&typeof layout.sounds==='object')skinSounds={...layout.sounds};
   clickThroughActive=Boolean(prefs.clickThrough);applyClickThroughClass();
   lastScreenSig=screenSignature();
   await refreshDisplays();
   applyCanvasLayout();syncMenuLabels();await move(position);atlas.src='atlas.webp';await setupTray();
 }));
+Neutralino.events.on('kw.swapSkin',e=>{
+  const d=e.detail||{};
+  if(!d.atlasSrc){send('skinError',{error:'Missing atlasSrc'});return;}
+  const nextImg=new Image();
+  nextImg.onload=()=>{
+    const rows=nextImg.naturalHeight/208;
+    if(nextImg.naturalWidth!==1536||!Number.isInteger(rows)||rows<9){
+      send('skinError',{error:'Invalid skin spritesheet dimensions'});
+      return;
+    }
+    atlas=nextImg;
+    atlasRows=rows;
+    loaded=true;
+    skinSounds=(d.sounds&&typeof d.sounds==='object')?{...d.sounds}:{};
+    seen.clear();
+    draw();
+    send('skinLoaded',{rows,skinId:d.skinId,skinName:d.skinName});
+  };
+  nextImg.onerror=()=>send('skinError',{error:'Failed to decode skin image'});
+  nextImg.src=d.atlasSrc;
+});
 Neutralino.events.on('kw.resize',e=>serial(async()=>{
   if(!initialized||!e.detail)return;
   layout={...layout,...e.detail};
@@ -770,6 +808,18 @@ const bind=(id,fn)=>{const el=document.getElementById(id);if(el)el.onclick=fn;};
 bind('dismiss',()=>serial(closeOverlays));
 bind('panelClose',()=>serial(closeOverlays));
 bind('panelFocus',()=>serial(async()=>{await closeOverlays();send('control',{action:'focus'});}));
+async function chooseSkinFolder(){
+  let picked;
+  try{
+    if(typeof Neutralino?.os?.showFolderDialog==='function'){
+      picked=await Neutralino.os.showFolderDialog('选择 KuroWhale 本地皮肤目录');
+    }
+  }catch{}
+  if(picked)send('control',{action:'skin',path:picked});
+}
+bind('panelSkin',()=>serial(async()=>{await closeOverlays();await chooseSkinFolder();}));
+bind('pickSkin',()=>serial(async()=>{await closeOverlays();await chooseSkinFolder();}));
+bind('resetSkin',()=>serial(async()=>{await closeOverlays();send('control',{action:'skin',path:null});}));
 bind('openPanel',()=>serial(openPanelView));
 for(const [id,kind] of [['actPet','pet'],['actFeed','feed'],['actDoze','doze'],['actCheer','cheer']]){
   bind(id,()=>serial(async()=>{await closeOverlays();send('control',{action:'interact',kind});}));

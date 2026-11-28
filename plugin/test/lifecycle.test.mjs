@@ -526,3 +526,53 @@ test('dried-fish stock earns from work, consumes on feed, unlocks milestone fx, 
     await cleanup();cleanup=null;
   }finally{if(cleanup)await cleanup();if(previous===undefined)delete process.env.DSH_HOME;else process.env.DSH_HOME=previous;await rm(temp,{recursive:true,force:true});}
 });
+
+test('skin hot-swap switches without restarting overlay and rolls back cleanly on invalid or failing skin',async()=>{
+  const temp=await mkdtemp(join(tmpdir(),'kurowhale-m4-'));const previous=process.env.DSH_HOME;process.env.DSH_HOME=temp;
+  let cleanup,registered,overlayCreates=0;
+  const swaps=[],bubbles=[];
+  try{
+    const dir=join(temp,'kurowhale-pet');await mkdir(dir);
+    await writeFile(join(dir,'local.json'),JSON.stringify({patrol:false}));
+    await writeFile(join(dir,'pet.json'),JSON.stringify({spritesheetPath:'spritesheet.webp'}));
+    const goodSkin=join(temp,'good-skin');await mkdir(goodSkin);
+    const badSkin=join(temp,'bad-skin');await mkdir(badSkin);
+    apply({
+      effect:fn=>{cleanup=fn();},
+      on:()=>()=>{},
+      commands:{register:def=>{registered=def;return ()=>{};}},
+    },{
+      validateSkin:p=>{
+        if(p===goodSkin)return {ok:true,skinId:'starry',skinName:'Starry',mode:'skin-pack-12row',skinDir:goodSkin,sheetPath:join(goodSkin,'spritesheet.webp'),sounds:{}};
+        return {ok:false,errors:['invalid dimensions']};
+      },
+      resolveResources:async()=>({assetDirectory:dir,runtimePath:'custom-runtime'}),
+      createOverlay:async()=>{
+        overlayCreates++;
+        return {
+          pid:801,destroy(){},frame(){},prefs(){},panel(){},
+          bubble:b=>bubbles.push(b),
+          swapSkin:async opts=>{swaps.push(opts);return {rows:12};},
+          inspect:async()=>({visible:true}),hide:async()=>{},show:async()=>{},
+        };
+      },
+    });
+    await wait(40);
+    assert.equal(overlayCreates,1);
+
+    const okRes=await registered.handler({rawInput:`skin "${goodSkin}"`});
+    assert.equal(okRes.kind,'success');
+    assert.match(okRes.text,/Starry/);
+    assert.equal(overlayCreates,1,'hot-swap must not recreate overlay process');
+    assert.equal(swaps.at(-1).skinId,'starry');
+
+    const failRes=await registered.handler({rawInput:`skin "${badSkin}"`});
+    assert.equal(failRes.kind,'success');
+    assert.match(failRes.text,/rolled back/);
+    assert.equal(swaps.at(-1).skinId,'kurowhale','must roll back to default skin');
+    const savedPos=JSON.parse(await readFile(join(dir,'position.json'),'utf8'));
+    assert.equal(savedPos.skinDir,undefined);
+
+    await cleanup();cleanup=null;
+  }finally{if(cleanup)await cleanup();if(previous===undefined)delete process.env.DSH_HOME;else process.env.DSH_HOME=previous;await rm(temp,{recursive:true,force:true});}
+});

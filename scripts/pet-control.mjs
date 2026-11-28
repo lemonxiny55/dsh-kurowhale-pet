@@ -11,10 +11,10 @@ if (action === 'stats') { console.log(await readFile(join(directory, 'stats.json
 
 const valid = [
   'state', 'all', 'resume', 'show', 'hide', 'scale', 'topmost', 'center', 'focus', 'close',
-  'bubbles', 'patrol', 'quiet', 'clickthrough', 'sound', 'dnd', 'toast', 'care', 'panel', 'approve', 'reject', 'stop', 'bubble', 'diag', 'report',
+  'bubbles', 'patrol', 'quiet', 'clickthrough', 'sound', 'dnd', 'toast', 'care', 'panel', 'approve', 'reject', 'stop', 'bubble', 'diag', 'report', 'skin',
 ];
 if (!valid.includes(action)) {
-  throw Error('Usage: status | stats | panel | approve [id] | reject [id] | stop [alias] | state <name> | all | resume | show | hide | scale <0.5..2> | topmost <true|false> | center | focus | bubbles <true|false> | patrol <true|false> | quiet <true|false> | clickthrough <true|false> | sound <true|false> | dnd <true|false> | toast <true|false> | care <true|false> | diag | report [today|week] | bubble <text> | close');
+  throw Error('Usage: status | stats | panel | approve [id] | reject [id] | stop [alias] | state <name> | all | resume | show | hide | scale <0.5..2> | topmost <true|false> | center | focus | bubbles <true|false> | patrol <true|false> | quiet <true|false> | clickthrough <true|false> | sound <true|false> | dnd <true|false> | toast <true|false> | care <true|false> | diag | report [today|week] | skin [dir|reset] | bubble <text> | close');
 }
 
 const id = randomUUID();
@@ -26,6 +26,8 @@ if (['bubbles', 'patrol', 'quiet', 'clickthrough', 'sound', 'dnd', 'toast', 'car
   c = { id, action: 'diagnostics' };
 } else if (action === 'report') {
   c = { id, action: 'export-report', period: value === 'week' ? 'week' : 'today', mode: 'save' };
+} else if (action === 'skin') {
+  c = { id, action: 'skin', path: (!value || value === 'reset' || value === 'default') ? null : value };
 } else if (action === 'approve' || action === 'reject') {
   c = { id, action: 'approval-decide', approvalId: value, outcome: action === 'approve' ? 'allowed-once' : 'rejected' };
 } else if (action === 'stop') {

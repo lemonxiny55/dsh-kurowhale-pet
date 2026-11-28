@@ -6,7 +6,7 @@
 
 **A whale-girl desktop pet inspired by the official DeepSeek Harness icon.** KuroWhale keeps you company on Windows and reacts to DSH Agent activity.
 
-[GitHub repository](https://github.com/lemonxiny55/dsh-kurowhale-pet) · **DSH Desktop → Add plugin: `dsh-kurowhale-pet@0.3.0`** · [DSH Market](https://awesome-dsh-plugin.com/p/lemonxiny55/dsh-kurowhale-pet/)
+[GitHub repository](https://github.com/lemonxiny55/dsh-kurowhale-pet) · **DSH Desktop → Add plugin: `dsh-kurowhale-pet@0.4.0`** · [DSH Market](https://awesome-dsh-plugin.com/p/lemonxiny55/dsh-kurowhale-pet/)
 
 This is a free, unofficial community project. It is not affiliated with or endorsed by DeepSeek or the related creators.
 
@@ -15,28 +15,27 @@ This is a free, unofficial community project. It is not affiliated with or endor
 Requires **Windows x64, WebView2, and DSH Desktop (`>=0.2.1-rc.3`, without an artificial upper cap, supporting `0.2.3-alpha.2` and future updates)**.
 
 1. Open **Plugin management → Add plugin** in DSH Desktop.
-2. Enter `dsh-kurowhale-pet@0.3.0` (or previous `0.2.0`), select the **official npm registry**, and click **Install**.
+2. Enter `dsh-kurowhale-pet@0.4.0` (or previous `0.3.0`), select the **official npm registry**, and click **Install**.
 3. Click **Enable now** when installation finishes, then restart DSH.
 
 The first launch prefers bundled artwork. Missing artwork and the official Neutralino 6.9.0 runtime are downloaded from pinned sources with mirror fallback and verified with SHA-256. Existing custom paths, visibility preferences, and position are retained. Download or verification failures are logged while DSH remains usable. Desktop requires uninstalling a same-name plugin before reinstalling it; back up your configuration first.
 
-**v0.3.0 release info:** [GitHub Release](https://github.com/lemonxiny55/dsh-kurowhale-pet/releases) · [Bilingual release notes](docs/RELEASE-NOTES-0.3.0.md) · [npm](https://www.npmjs.com/package/dsh-kurowhale-pet)
+**v0.4.0 release info:** [GitHub Release](https://github.com/lemonxiny55/dsh-kurowhale-pet/releases) · [Bilingual release notes](docs/RELEASE-NOTES-0.4.0.md) · [Skin-pack spec](docs/SKIN-PACK.md) · [npm](https://www.npmjs.com/package/dsh-kurowhale-pet)
 
 | Installation entry | Action | Verification |
 | --- | --- | --- |
-| DSH Desktop (npm) | Add `dsh-kurowhale-pet@0.3.0`, enable, and restart | 0.3.0 passed 39 Node unit tests, 2 bundle tests, 1 upgrade/rollback test, standalone Neutralino 6.9.0 interactive visual verification, and upstream catalog checks; available via npm once published. |
+| DSH Desktop (npm) | Add `dsh-kurowhale-pet@0.4.0`, enable, and restart | 0.4.0 passed the full Node unit suite, release bundle tests, upgrade/rollback test, skin-pack validation, and upstream `buildMarketIndex` catalog check; see the desktop checklist for live Windows visual sign-off. |
 | GitHub repository | Enter `https://github.com/lemonxiny55/dsh-kurowhale-pet` in Add plugin, enable, and restart | Previously verified via CLI and visible after rc.5 restart; GitHub URL installation through the add-plugin UI remains unverified. |
-| DSH Market | Open Plugins → Discover and search for KuroWhale | 0.3.0 metadata passed upstream `buildMarketIndex` validation (`>=0.2.1-rc.3`, covering `0.2.1-rc.3` through `0.2.3-alpha.2` and future DSH updates); catalog sync follows npm publication. |
+| DSH Market | Open Plugins → Discover and search for KuroWhale | 0.4.0 metadata passed upstream `buildMarketIndex` validation (`>=0.2.1-rc.3`, covering `0.2.1-rc.3` through `0.2.3-alpha.2` and future DSH updates); catalog sync follows npm publication. |
 
 See the [post-release acceptance record](docs/POST-RELEASE-0.1.3.md) for historical index notes. The [Windows code bundle](docs/WINDOWS-INSTALL.md) remains an alternative requiring manual configuration.
 
 ## Features and preview
 
-- **Twelve animation poses, lively autonomous idle routine & partitioned interactions:** idle, side-profile left/right turn/walk, waving, jumping, failure, awaiting approval, working (thinking, coding, shell commands, searching, collaboration), completion review, plus `v0.3.0` interactive poses (**`petted` head-pats, `dozing` sleepy nap, and `eating` dried fish snack**). Automatically cycles without consecutive repeats after a 6–10s startup warm-up and every 9–15s of idle across walking, snacking, dozing, happy tail-wags, hopping, and waving; also supports head-pat hover rub, head tap, body poke dodge, 4-click dizzy wobble, and Canvas heart/sparkle/`zZz` particles (gracefully compatible with custom 9-row skins).
-- **Side-mounted frosted multi-session & approval floating card:** click the waiting capsule (or menu/tray/`/kurowhale panel`) to open a frosted floating card beside the character without covering her, inspect live sessions, `toolName`, and approval `reason`, and act via in-process `approval/request` racing (**Allow once**, **Reject**, **Stop turn** via `agent.cancel`, or **Focus DSH**) with zero HTTP ports and `0` security red lines.
-- **Offline daily companion stats & gentle care reminders:** tracks daily companion time, completed turns, tool calls, approvals, and passive read-only token usage in `~/.dsh/kurowhale-pet/stats.json` (`/kurowhale stats`); fires 50-minute focus-break and once-per-night late-night care nudges only on return to idle (toggleable).
-- **Smooth controls, side-mounted compact menu & slash commands:** flicker-free in-place scaling, autonomous patrol/naps, `hideWhenIdle` focus mode, bounded auto-restart, plus a compact 2-column right-click menu (`openBeside()`, quick-play strip, 4px subtle scrollbar), tray actions, and `/kurowhale` commands (`pet`, `feed`, `doze`, `cheer`, `panel`, `stats`, `approve`, `reject`, `stop`, `care`, etc.).
-- **Mirror fallback with strict verification:** automatic runtime/asset downloads support mirror fallback while enforcing SHA-256 verification.
+- **Mixed-DPI multi-display self-healing, smart click-through & redacted diagnostics:** persists window positions as display ID + relative work-area percentage anchors (auto-migrating legacy pixel configs) and heals back into the primary display's safe area on launch, hotplug, or DPI change; adds a translucent **Smart Click-through** focus mode that automatically suspends and highlights on `waiting` or `failed` states and restores afterward; copies redacted diagnostic summaries via tray, menu, or `/kurowhale diag`.
+- **Desktop alert loop & upgraded frosted card:** adds tiered Web Audio chimes (`waiting`, `review`, `failed`) with one-click mute and `HH:MM-HH:MM` DND quiet hours; triggers native Windows Toast notifications when DSH is unfocused (clicking opens the card or focuses DSH); collapses 3+ concurrent sessions cleanly and gracefully supports `question` and `plan-review` events with zero HTTP ports.
+- **Dried-fish progression & Vibe Coding report card:** extends `stats.json` (smooth migration from v0.3.0) to earn fish snacks from work, spend them on feeding with streak/milestone particles, and render local Canvas PNG daily/weekly **Vibe Coding** report cards (save PNG or copy to clipboard).
+- **Twelve poses, autonomous routine & hot-swappable Skin Packs:** keeps the 12-row interactive atlas and 9-row custom-skin fallback while supporting restart-free local `skin-pack` hot-swapping (with optional custom alert sounds and automatic fallback on error), validated by `npm run validate-skin`.
 
 <details>
 <summary>View all nine states (static frames from the v0.2.0 animation atlas)</summary>

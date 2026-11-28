@@ -17,6 +17,7 @@ const HELP_TEXT = [
   '  status              Show pet state, scale and preferences',
   '  stats [export [today|week]]  Show companion stats or export PNG report card',
   '  report [today|week] Generate today or weekly Vibe Coding report card',
+  '  skin [dir|reset|status]  Hot-swap local skin-pack or reset default skin',
   '  panel               Toggle the multi-session approval & stats card',
   '  approve [id]        Allow a pending approval once',
   '  reject [id]         Reject a pending approval',
@@ -61,6 +62,16 @@ export function parseSlashInput(rawInput = '') {
     case 'report': {
       const period = arg?.toLowerCase() === 'week' ? 'week' : 'today';
       return { kind: 'command', command: { action: 'export-report', period, mode: 'save' } };
+    }
+    case 'skin': {
+      const rawTail = String(rawInput ?? '').trim().slice(head.length).trim();
+      if (!rawTail || rawTail.toLowerCase() === 'status') {
+        return { kind: 'command', command: { action: 'skin-status' } };
+      }
+      if (rawTail.toLowerCase() === 'reset' || rawTail.toLowerCase() === 'default') {
+        return { kind: 'command', command: { action: 'skin', path: null } };
+      }
+      return { kind: 'command', command: { action: 'skin', path: rawTail.replace(/^["']|["']$/g, '') } };
     }
     case 'panel':
     case 'card':

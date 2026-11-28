@@ -9,6 +9,7 @@ import { isHostWindowFocused, sendWindowsToast, shouldTriggerAlert } from './not
 import { computeWindowLayout, createOverlay, focusHostWindow } from './overlay.js';
 import { buildReportCardModel, copyImageFileToClipboard, saveReportCardPng } from './report-card.js';
 import { resolveResources } from './resources.js';
+import { validateSkinDirectory } from './skins.js';
 import { createCareMonitor, createStatsTracker, formatCompanionTime, formatTokens } from './stats.js';
 
 export const name = 'dsh-kurowhale-pet';
@@ -29,6 +30,7 @@ export function apply(ctx, dependencies = {}) {
   const toastSender = dependencies.sendToast
     ?? (dependencies.createOverlay ? async () => false : sendWindowsToast);
   const imageClipboardCopier = dependencies.copyImageToClipboard ?? copyImageFileToClipboard;
+  const skinValidator = dependencies.validateSkin ?? validateSkinDirectory;
   const nowFn = dependencies.nowFn ?? (() => new Date());
   const restartDelays = dependencies.restartDelays ?? [1500, 4000, 8000];
   const directory = join(process.env.DSH_HOME || join(homedir(), '.dsh'), 'kurowhale-pet');
@@ -56,6 +58,8 @@ export function apply(ctx, dependencies = {}) {
     scale = Math.max(0.5, Math.min(2, scale));
     let x = saved.x ?? 120, y = saved.y ?? 120, visible = saved.visible !== false, topmost = saved.topmost !== false;
     let positionAnchor = saved.anchor && typeof saved.anchor === 'object' ? saved.anchor : null;
+    let skinDir = typeof saved.skinDir === 'string' && saved.skinDir.trim() ? saved.skinDir.trim() : null;
+    let activeSkin = null;
     const preferences = {
       bubbles: saved.bubbles ?? config.bubbles ?? true,
       patrol: saved.patrol ?? config.patrol ?? true,
@@ -111,6 +115,7 @@ export function apply(ctx, dependencies = {}) {
     const persist = () => atomic('position.json', {
       x, y, scale, visible, topmost,
       ...(positionAnchor ? { anchor: positionAnchor } : {}),
+      ...(skinDir ? { skinDir } : {}),
       ...preferences,
     });
     const persistStats = () => {
@@ -269,6 +274,7 @@ export function apply(ctx, dependencies = {}) {
     const buildSummary = () => ({
       ...status, state, source, visible, autoHidden, x, y, scale, topmost,
       ...(positionAnchor ? { anchor: positionAnchor } : {}),
+      skin: activeSkin,
       displays: currentDisplays,
       preferences: { ...preferences }, lastCommand,
       sessions: [...activities].map(([key, value]) => ({
@@ -787,6 +793,22 @@ export function apply(ctx, dependencies = {}) {
       if (!manifest || basename(manifest.spritesheetPath ?? '') !== manifest.spritesheetPath || !manifest.spritesheetPath?.endsWith('.webp')) {
         throw Error('A local pet.json with a safe WebP filename is required');
       }
+      const defaultSheet = resolve(resources.assetDirectory, manifest.spritesheetPath);
+      let launchSheet = defaultSheet;
+      let launchSounds = {};
+      if (skinDir) {
+        const checked = skinValidator(skinDir);
+        if (checked.ok && checked.sheetPath) {
+          launchSheet = checked.sheetPath;
+          launchSounds = checked.sounds ?? {};
+          activeSkin = { id: checked.skinId, name: checked.skinName, mode: checked.mode, dir: checked.skinDir };
+        } else {
+          audit('skin-rollback', { reason: checked.errors?.[0] || 'invalid-saved-skin' });
+          skinDir = null;
+          activeSkin = null;
+          persist();
+        }
+      }
       try {
         const queried = await displayQuerier();
         if (Array.isArray(queried) && queried.length) currentDisplays = normalizeDisplays(queried);
@@ -808,7 +830,8 @@ export function apply(ctx, dependencies = {}) {
         }
       }
       overlay = await overlayFactory({
-        sheet: resolve(resources.assetDirectory, manifest.spritesheetPath),
+        sheet: launchSheet,
+        sounds: launchSounds,
         runtimePath: resources.runtimePath,
         scale, x, y, topmost, displays: currentDisplays, preferences: { ...preferences }, signal: abort.signal,
         onEvent: (event, data) => {
@@ -1109,6 +1132,88 @@ export function apply(ctx, dependencies = {}) {
           }
           break;
         }
+        case 'skin-status': {
+          note = activeSkin
+            ? `KuroWhale skin: ${activeSkin.name} (${activeSkin.id}, ${activeSkin.mode})`
+            : 'KuroWhale skin: default (kurowhale)';
+          break;
+        }
+        case 'skin': {
+          resources ??= await resourceResolver({
+            directory, config, signal: abort.signal,
+            onStage: stage => { status.stage = stage; snapshot(); },
+            onAttempt: details => audit('download-error', details),
+          });
+          const defaultManifest = read(join(resources.assetDirectory, 'pet.json'), null);
+          const defaultSheet = resolve(resources.assetDirectory, defaultManifest?.spritesheetPath ?? 'spritesheet.webp');
+          const rollbackDefault = async reason => {
+            skinDir = null;
+            activeSkin = null;
+            persist();
+            if (overlay && status.rendererReady && typeof overlay.swapSkin === 'function') {
+              try {
+                await overlay.swapSkin({ sheetPath: defaultSheet, sounds: {}, skinId: 'kurowhale', skinName: 'KuroWhale' });
+              } catch {}
+            }
+            audit('skin-switch-failed', { reason });
+            if (preferences.bubbles) {
+              showBubble({
+                text: preferences.locale === 'en' ? 'Skin failed; rolled back to default' : '皮肤加载失败，已自动回滚默认皮肤',
+                tone: 'failed',
+                ttlMs: 3200,
+              });
+            }
+            snapshot();
+          };
+          if (!c.path) {
+            if (overlay && status.rendererReady && typeof overlay.swapSkin === 'function') {
+              await overlay.swapSkin({ sheetPath: defaultSheet, sounds: {}, skinId: 'kurowhale', skinName: 'KuroWhale' });
+            }
+            skinDir = null;
+            activeSkin = null;
+            persist();
+            audit('skin-reset');
+            if (preferences.bubbles) {
+              showBubble({ text: preferences.locale === 'en' ? 'Restored default skin' : '已恢复默认皮肤', tone: 'review', ttlMs: 2600 });
+            }
+            note = 'KuroWhale: restored default skin.';
+            break;
+          }
+          const validation = skinValidator(c.path);
+          if (!validation.ok || !validation.sheetPath) {
+            const errMsg = validation.errors?.join('; ') || 'Invalid skin directory';
+            await rollbackDefault(errMsg);
+            note = `KuroWhale: skin invalid (${errMsg}); rolled back to default.`;
+            break;
+          }
+          try {
+            if (overlay && status.rendererReady && typeof overlay.swapSkin === 'function') {
+              await overlay.swapSkin({
+                sheetPath: validation.sheetPath,
+                sounds: validation.sounds ?? {},
+                skinId: validation.skinId,
+                skinName: validation.skinName,
+              });
+            }
+            skinDir = validation.skinDir;
+            activeSkin = { id: validation.skinId, name: validation.skinName, mode: validation.mode, dir: validation.skinDir };
+            persist();
+            audit('skin-swapped', { id: validation.skinId, mode: validation.mode });
+            if (preferences.bubbles) {
+              showBubble({
+                text: preferences.locale === 'en' ? `Skin: ${validation.skinName}` : `已切换皮肤：${validation.skinName}`,
+                tone: 'review',
+                ttlMs: 2800,
+              });
+            }
+            note = `KuroWhale: swapped skin to "${validation.skinName}" (${validation.mode}).`;
+          } catch (err) {
+            const msg = String(err?.message || err);
+            await rollbackDefault(msg);
+            note = `KuroWhale: skin swap failed (${msg}); rolled back to default.`;
+          }
+          break;
+        }
         case 'diagnostics': {
           if (!currentDisplays.length) {
             try {
@@ -1123,6 +1228,7 @@ export function apply(ctx, dependencies = {}) {
             displays: currentDisplays,
             dshVersion,
             recentErrors,
+            skin: activeSkin,
             extraSecrets: [directory],
           });
           let copied = false;
