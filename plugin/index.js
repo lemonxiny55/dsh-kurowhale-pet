@@ -3,7 +3,9 @@ import { homedir } from 'node:os';
 import { basename, join, resolve } from 'node:path';
 import { animations, activityState, activityDetail, resolveActivities, bubbleForState, pickClickLine, pickInteractionLine, pickAutoIdleLine } from './animations.js';
 import { registerKuroWhaleCommand } from './commands.js';
-import { createOverlay, focusHostWindow } from './overlay.js';
+import { buildDiagnosticReport, copyTextToClipboard, readRecentErrors } from './diagnostics.js';
+import { computeAnchor, normalizeDisplays, queryWindowsDisplays, resolveSafePosition } from './display.js';
+import { computeWindowLayout, createOverlay, focusHostWindow } from './overlay.js';
 import { resolveResources } from './resources.js';
 import { createCareMonitor, createStatsTracker, formatCompanionTime, formatTokens } from './stats.js';
 
@@ -17,6 +19,9 @@ export function apply(ctx, dependencies = {}) {
   const resourceResolver = dependencies.resolveResources ?? resolveResources;
   const overlayFactory = dependencies.createOverlay ?? createOverlay;
   const hostFocuser = dependencies.focusHostWindow ?? focusHostWindow;
+  const displayQuerier = dependencies.queryDisplays
+    ?? (dependencies.createOverlay ? async () => [] : queryWindowsDisplays);
+  const clipboardCopier = dependencies.copyToClipboard ?? copyTextToClipboard;
   const nowFn = dependencies.nowFn ?? (() => new Date());
   const restartDelays = dependencies.restartDelays ?? [1500, 4000, 8000];
   const directory = join(process.env.DSH_HOME || join(homedir(), '.dsh'), 'kurowhale-pet');
@@ -43,10 +48,12 @@ export function apply(ctx, dependencies = {}) {
     let scale = Number.isFinite(saved.scale) ? saved.scale : (config.scale ?? 1.25);
     scale = Math.max(0.5, Math.min(2, scale));
     let x = saved.x ?? 120, y = saved.y ?? 120, visible = saved.visible !== false, topmost = saved.topmost !== false;
+    let positionAnchor = saved.anchor && typeof saved.anchor === 'object' ? saved.anchor : null;
     const preferences = {
       bubbles: saved.bubbles ?? config.bubbles ?? true,
       patrol: saved.patrol ?? config.patrol ?? true,
       hideWhenIdle: saved.hideWhenIdle ?? config.hideWhenIdle ?? false,
+      clickThrough: saved.clickThrough ?? config.clickThrough ?? false,
       sound: saved.sound ?? config.sound ?? false,
       careReminders: saved.careReminders ?? config.careReminders ?? true,
       quickApprove: saved.quickApprove ?? config.quickApprove ?? true,
@@ -60,6 +67,7 @@ export function apply(ctx, dependencies = {}) {
     let autoHidden = false;
     let state = 'idle', source = 'agent', index = 0, diagnostic = false, dragging = false;
     let clickCount = 0, restartAttempts = 0, screenBounds = null;
+    let currentDisplays = [], overlayOpen = false, clickThroughSuspended = false;
     const activities = new Map(), details = new Map(), toolNames = new Map(), turnStarts = new Map();
     // Session-level approval audit metadata from `approval/asked` events: key -> Map<approvalId, meta>
     const approvals = new Map();
@@ -74,12 +82,22 @@ export function apply(ctx, dependencies = {}) {
     const status = {
       version: pkgVersion, hostPid: process.pid, rendererReady: false, visibilityVerified: false,
       nativePid: null, lastError: null, stage: 'starting', restartAttempts: 0,
+      clickThroughSuspended: false,
     };
     const atomic = (file, value) => {
       const target = join(directory, file), tmp = target + '.tmp';
       try { writeFileSync(tmp, JSON.stringify(value, null, 2)); renameSync(tmp, target); return true; } catch { return false; }
     };
-    const persist = () => atomic('position.json', { x, y, scale, visible, topmost, ...preferences });
+    const refreshAnchor = () => {
+      if (currentDisplays.length) {
+        positionAnchor = computeAnchor({ x, y }, computeWindowLayout(scale), currentDisplays);
+      }
+    };
+    const persist = () => atomic('position.json', {
+      x, y, scale, visible, topmost,
+      ...(positionAnchor ? { anchor: positionAnchor } : {}),
+      ...preferences,
+    });
     const persistStats = () => {
       if (!statsTracker.isDirty()) return;
       if (atomic('stats.json', statsTracker.snapshot())) statsTracker.markSaved();
@@ -161,6 +179,8 @@ export function apply(ctx, dependencies = {}) {
 
     const buildSummary = () => ({
       ...status, state, source, visible, autoHidden, x, y, scale, topmost,
+      ...(positionAnchor ? { anchor: positionAnchor } : {}),
+      displays: currentDisplays,
       preferences: { ...preferences }, lastCommand,
       sessions: [...activities].map(([key, value]) => ({
         alias: alias(key),
@@ -331,6 +351,49 @@ export function apply(ctx, dependencies = {}) {
       }, waitMs);
     };
 
+    const syncClickThrough = async (reasonState = state) => {
+      const needsAttention = reasonState === 'waiting' || reasonState === 'failed' || collectPendingApprovals().length > 0;
+      const shouldSuspend = Boolean(preferences.clickThrough && (needsAttention || overlayOpen));
+      const effective = Boolean(preferences.clickThrough && !shouldSuspend);
+      const prevSuspended = clickThroughSuspended;
+      clickThroughSuspended = shouldSuspend;
+      status.clickThroughSuspended = shouldSuspend;
+      if (!overlay || !status.rendererReady) return;
+      if (preferences.clickThrough) {
+        await overlay.setClickThrough?.(effective, {
+          suspended: shouldSuspend,
+          highlight: needsAttention ? (reasonState === 'failed' ? 'failed' : 'waiting') : null,
+        });
+        if (shouldSuspend && !prevSuspended && needsAttention) {
+          audit('click-through-wake', { reason: reasonState });
+        } else if (!shouldSuspend && prevSuspended) {
+          audit('click-through-restored');
+        }
+      } else {
+        await overlay.setClickThrough?.(false, { suspended: false, highlight: null });
+      }
+    };
+
+    const healDisplayPosition = async (rawDisplays, reasonTrigger = 'display-check') => {
+      const normalized = normalizeDisplays(rawDisplays);
+      if (normalized.length) currentDisplays = normalized;
+      if (!currentDisplays.length) return false;
+      const layout = computeWindowLayout(scale);
+      const savedInput = { x, y, ...(positionAnchor ? { anchor: positionAnchor } : {}) };
+      const resolved = resolveSafePosition({ saved: savedInput, layout, displays: currentDisplays });
+      if (resolved.anchor) positionAnchor = resolved.anchor;
+      if (!resolved.healed) return false;
+      x = resolved.x;
+      y = resolved.y;
+      persist();
+      if (overlay && status.rendererReady) {
+        overlay.move?.({ x, y });
+      }
+      audit('display-healed', { trigger: reasonTrigger, reason: resolved.reason, x, y, displayId: positionAnchor?.displayId });
+      snapshot();
+      return true;
+    };
+
     const tick = () => {
       clearTimeout(frameTimer);
       if (closed || !overlay || !visible || autoHidden) return;
@@ -354,6 +417,7 @@ export function apply(ctx, dependencies = {}) {
         } else {
           stopIdleHide();
         }
+        void syncClickThrough(next);
         pushPanel();
         snapshot();
       }
@@ -386,6 +450,7 @@ export function apply(ctx, dependencies = {}) {
       const prevState = state;
       if (next !== 'idle') void wakeFromAutoHide();
       setState(next, 'agent');
+      void syncClickThrough(next);
       pushPanel();
       if (next === 'idle') {
         if (prevState === 'waiting') showBubble({ clear: true });
@@ -551,20 +616,57 @@ export function apply(ctx, dependencies = {}) {
       if (!manifest || basename(manifest.spritesheetPath ?? '') !== manifest.spritesheetPath || !manifest.spritesheetPath?.endsWith('.webp')) {
         throw Error('A local pet.json with a safe WebP filename is required');
       }
+      try {
+        const queried = await displayQuerier();
+        if (Array.isArray(queried) && queried.length) currentDisplays = normalizeDisplays(queried);
+      } catch {}
+      if (closed) return;
+      if (currentDisplays.length) {
+        const layout = computeWindowLayout(scale);
+        const resolved = resolveSafePosition({
+          saved: { x, y, ...(positionAnchor ? { anchor: positionAnchor } : {}) },
+          layout,
+          displays: currentDisplays,
+        });
+        if (resolved.anchor) positionAnchor = resolved.anchor;
+        if (resolved.healed) {
+          x = resolved.x;
+          y = resolved.y;
+          persist();
+          audit('display-healed', { trigger: 'startup', reason: resolved.reason, x, y, displayId: positionAnchor?.displayId });
+        }
+      }
       overlay = await overlayFactory({
         sheet: resolve(resources.assetDirectory, manifest.spritesheetPath),
         runtimePath: resources.runtimePath,
-        scale, x, y, topmost, preferences: { ...preferences }, signal: abort.signal,
+        scale, x, y, topmost, displays: currentDisplays, preferences: { ...preferences }, signal: abort.signal,
         onEvent: (event, data) => {
           if (closed) return;
           if (event === 'ready') {
             if (data.canvas) status.canvasLayout = data;
             if (data.bounds) screenBounds = data.bounds;
+            if (Array.isArray(data.displays) && data.displays.length) {
+              void healDisplayPosition(data.displays, 'ready');
+            }
+            void syncClickThrough(state);
             pushPanel();
           }
+          if (event === 'displayChanged' && Array.isArray(data.displays)) {
+            if (data.bounds) screenBounds = data.bounds;
+            void healDisplayPosition(data.displays, 'display-changed');
+          }
+          if (event === 'overlayState') {
+            overlayOpen = Boolean(data?.open);
+            void syncClickThrough(state);
+          }
           if (event === 'position' && Number.isFinite(data.x) && Number.isFinite(data.y)) {
+            const moved = data.x !== x || data.y !== y;
             x = data.x; y = data.y;
-            if (source !== 'patrol') persist();
+            if (Array.isArray(data.displays) && data.displays.length) currentDisplays = normalizeDisplays(data.displays);
+            if (source !== 'patrol' && moved) {
+              refreshAnchor();
+              persist();
+            }
           }
           if (event === 'rendered-frame' && config.diagnostics === true) audit('frame', { row: data.row, index: data.index, renderTime: data.time });
           if (event === 'tray-ready') status.trayReady = true;
@@ -580,7 +682,13 @@ export function apply(ctx, dependencies = {}) {
           }
           if (event === 'dragEnd') {
             dragging = false;
-            if (Number.isFinite(data.x) && Number.isFinite(data.y)) { x = data.x; y = data.y; persist(); audit('dragged', { x, y }); }
+            if (Number.isFinite(data.x) && Number.isFinite(data.y)) {
+              x = data.x; y = data.y;
+              if (Array.isArray(data.displays) && data.displays.length) currentDisplays = normalizeDisplays(data.displays);
+              refreshAnchor();
+              persist();
+              audit('dragged', { x, y, displayId: positionAnchor?.displayId });
+            }
             if (!diagnostic) resume();
           }
           if (event === 'hover' && !diagnostic && !dragging && state === 'idle') {
@@ -701,6 +809,8 @@ export function apply(ctx, dependencies = {}) {
         case 'center':
           if (!overlay || !status.rendererReady) await reopen();
           await overlay.center();
+          refreshAnchor();
+          persist();
           snapshot();
           break;
         case 'focus': {
@@ -713,7 +823,7 @@ export function apply(ctx, dependencies = {}) {
         }
         case 'pref': {
           const key = c.key;
-          if (!['bubbles', 'patrol', 'hideWhenIdle', 'sound', 'careReminders', 'quickApprove', 'locale'].includes(key)) {
+          if (!['bubbles', 'patrol', 'hideWhenIdle', 'clickThrough', 'sound', 'careReminders', 'quickApprove', 'locale'].includes(key)) {
             throw Error(`Unknown preference: ${key}`);
           }
           if (key === 'locale') {
@@ -729,9 +839,53 @@ export function apply(ctx, dependencies = {}) {
             if (preferences.hideWhenIdle) scheduleIdleHide();
             else await wakeFromAutoHide();
           }
+          if (key === 'clickThrough') {
+            await syncClickThrough(state);
+            if (preferences.bubbles) {
+              const zhText = preferences.clickThrough ? '已开启专注穿透（托盘可随时关闭）' : '已关闭专注穿透';
+              const enText = preferences.clickThrough ? 'Click-through enabled (toggle in tray)' : 'Click-through disabled';
+              showBubble({ text: preferences.locale === 'en' ? enText : zhText, tone: 'chat', ttlMs: 2600 });
+            }
+          }
           if (key === 'careReminders' && preferences.careReminders) careMonitor.resetFocus();
           audit('preference', { key, value: preferences[key] });
           snapshot();
+          break;
+        }
+        case 'diagnostics': {
+          if (!currentDisplays.length) {
+            try {
+              const queried = await displayQuerier();
+              if (Array.isArray(queried) && queried.length) currentDisplays = normalizeDisplays(queried);
+            } catch {}
+          }
+          const dshVersion = ctx?.app?.version ?? ctx?.config?.version ?? process.env.DSH_VERSION ?? 'unknown';
+          const recentErrors = readRecentErrors(join(directory, 'lifecycle.jsonl'), 15, [directory]);
+          const report = buildDiagnosticReport({
+            status: buildSummary(),
+            displays: currentDisplays,
+            dshVersion,
+            recentErrors,
+            extraSecrets: [directory],
+          });
+          let copied = false;
+          if (overlay && status.rendererReady && typeof overlay.copyClipboard === 'function') {
+            try { await overlay.copyClipboard(report); copied = true; } catch {}
+          }
+          if (!copied) {
+            try { copied = await clipboardCopier(report); } catch {}
+          }
+          audit('diagnostics-copied', { copied, length: report.length });
+          if (preferences.bubbles) {
+            showBubble({
+              text: copied
+                ? (preferences.locale === 'en' ? 'Redacted diagnostics copied' : '已复制脱敏诊断信息')
+                : (preferences.locale === 'en' ? 'Diagnostics generated (clipboard unavailable)' : '已生成诊断信息（剪贴板不可用）'),
+              tone: 'chat',
+              ttlMs: 2600,
+            });
+          }
+          note = copied ? report : `Diagnostics (clipboard unavailable):\n${report}`;
           break;
         }
         case 'bubble':

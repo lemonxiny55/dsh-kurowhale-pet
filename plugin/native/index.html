@@ -1,11 +1,13 @@
 <!doctype html><html><meta charset="utf-8"><title>KuroWhale · DSH</title>
 <style>
 html,body{margin:0;padding:0;background:transparent;overflow:hidden;user-select:none;-webkit-user-select:none}
-#stage{position:absolute;top:0;left:0}
+#stage{position:absolute;top:0;left:0;transition:opacity .22s ease}
+body.click-through #stage{opacity:.52}
 #bubble{display:none;position:absolute;top:12px;left:50%;transform:translateX(-50%);max-width:calc(100% - 16px);box-sizing:border-box;padding:5px 11px 5px 9px;border-radius:999px;background:rgba(252,252,255,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#232430;border:1px solid rgba(28,30,42,.13);box-shadow:0 3px 12px rgba(15,18,30,.10),inset 0 1px 0 rgba(255,255,255,.85);font:500 11.5px/1.25 'Segoe UI','Microsoft YaHei UI',system-ui,sans-serif;letter-spacing:.3px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;z-index:5;cursor:default}
 #bubble::before{content:'';display:inline-block;vertical-align:middle;width:6px;height:6px;margin:-1px 6px 0 0;border-radius:50%;background:#8d93a6}
 #bubble.pop{animation:kwFadeIn .22s cubic-bezier(.22,1,.36,1) both}
 #bubble.clickable{cursor:pointer}
+#bubble.wake-highlight{border-color:rgba(224,148,42,.72);box-shadow:0 0 0 3px rgba(224,148,42,.24),0 5px 18px rgba(224,148,42,.26);transform:translateX(-50%) scale(1.04)}
 #bubble.tone-chat::before{background:#8d93a6}
 #bubble.tone-running::before{background:#4c8ef5;box-shadow:0 0 6px rgba(76,142,245,.55);animation:kwDotPulse 1.6s ease-in-out infinite}
 #bubble.tone-waiting{border-color:rgba(224,148,42,.38);box-shadow:0 3px 14px rgba(224,148,42,.16),inset 0 1px 0 rgba(255,255,255,.9)}
@@ -91,6 +93,7 @@ small{display:block;color:#a59cb8;font-size:10.5px;margin-top:3px}
     <button id="bubbles">胶囊：开</button>
     <button id="patrol">自主动作：开</button>
     <button id="quiet">空闲隐藏：关</button>
+    <button id="clickThrough">专注穿透：关</button>
     <button id="care">关怀：开</button>
     <button id="sound">提示音：关</button>
   </div>
@@ -98,6 +101,7 @@ small{display:block;color:#a59cb8;font-size:10.5px;margin-top:3px}
   <details><summary>开发者诊断</summary>
     <select id="state" aria-label="Animation diagnostic"><option>idle</option><option>running-right</option><option>running-left</option><option>waving</option><option>jumping</option><option>failed</option><option>waiting</option><option>running</option><option>review</option><option>petted</option><option>dozing</option><option>eating</option></select>
     <button id="resume">恢复自动状态</button>
+    <button id="copyDiag">复制脱敏诊断信息</button>
     <small>仅用于手动检查 12 组精灵图动作。</small>
   </details>
 </div>
@@ -107,7 +111,8 @@ const later=typeof setTimeout==='function'?setTimeout:()=>0;
 const cancelLater=typeof clearTimeout==='function'?clearTimeout:()=>{};
 const raf=typeof requestAnimationFrame==='function'?requestAnimationFrame:null;
 let initialized=false,loaded=false,atlasRows=9,layout,position={x:80,y:80},drag=null,directive={row:0,index:0,state:'idle'},seen=new Set(),missingHost=0,onTop=true,uiQueue=Promise.resolve();
-let prefs={bubbles:true,patrol:true,hideWhenIdle:false,sound:false,careReminders:true};
+let prefs={bubbles:true,patrol:true,hideWhenIdle:false,clickThrough:false,sound:false,careReminders:true};
+let clickThroughActive=false,wakeHighlight=false,displaysCache=[],lastScreenSig='';
 let bubbleTimer=0,bubbleClickable=false,bubbleTone='chat',lastClickAt=0,clickTimer=0,menuOpen=false,panelOpen=false;
 let panelData={state:'idle',approvals:[],sessions:[],stats:{companion:'<1m',turns:0,tools:0,tokens:''}};
 
@@ -118,9 +123,43 @@ const send=(name,data={})=>Neutralino.events.broadcast('kw.'+name,data).catch(()
 const serial=fn=>{uiQueue=uiQueue.then(fn).catch(()=>send('ui-error'));return uiQueue;};
 const easeInOut=t=>t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function bounds(){const d=devicePixelRatio||1;return {x:Math.round((screen.availLeft||0)*d),y:Math.round((screen.availTop||0)*d),w:Math.round(screen.availWidth*d),h:Math.round(screen.availHeight*d)};}
-function clamped(p){const b=bounds();return {x:Math.round(Math.max(b.x,Math.min(b.x+Math.max(0,b.w-layout.width),p.x))),y:Math.round(Math.max(b.y,Math.min(b.y+Math.max(0,b.h-layout.height),p.y)))};}
-async function move(p,clamp=true){position=clamp?clamped(p):{x:Math.round(p.x),y:Math.round(p.y)};await Neutralino.window.move(position.x,position.y);send('position',position);}
+function fallbackBounds(){const d=devicePixelRatio||1;return {x:Math.round((screen.availLeft||0)*d),y:Math.round((screen.availTop||0)*d),w:Math.round(screen.availWidth*d),h:Math.round(screen.availHeight*d)};}
+function boundsFor(p){
+  const list=Array.isArray(displaysCache)?displaysCache:[];
+  if(list.length&&layout){
+    const cx=(p?.x??position.x)+(layout.width||248)/2,cy=(p?.y??position.y)+(layout.height||360)/2;
+    const hit=list.find(d=>{const wa=d.workArea||d.bounds;return wa&&cx>=wa.x&&cx<wa.x+wa.w&&cy>=wa.y&&cy<wa.y+wa.h;})
+      ||list.find(d=>d.primary)||list[0];
+    if(hit?.workArea||hit?.bounds)return hit.workArea||hit.bounds;
+  }
+  return fallbackBounds();
+}
+function bounds(){return boundsFor(position);}
+function clamped(p){const b=boundsFor(p);return {x:Math.round(Math.max(b.x,Math.min(b.x+Math.max(0,b.w-layout.width),p.x))),y:Math.round(Math.max(b.y,Math.min(b.y+Math.max(0,b.h-layout.height),p.y)))};}
+function screenSignature(){const d=devicePixelRatio||1;return [screen.availLeft||0,screen.availTop||0,screen.availWidth||0,screen.availHeight||0,d].join(':');}
+async function refreshDisplays(){
+  try{
+    if(typeof Neutralino?.computer?.getDisplays==='function'){
+      const res=await Neutralino.computer.getDisplays();
+      if(Array.isArray(res)&&res.length){
+        displaysCache=res.map((d,i)=>({
+          id:d.id??('display-'+i),
+          primary:Boolean(d.primary??(i===0)),
+          bounds:d.resolution?{x:d.resolution.x??0,y:d.resolution.y??0,w:d.resolution.width??1920,h:d.resolution.height??1080}:(d.bounds||fallbackBounds()),
+          workArea:d.workArea||(d.resolution?{x:d.resolution.x??0,y:d.resolution.y??0,w:d.resolution.width??1920,h:d.resolution.height??1040}:fallbackBounds()),
+          dpiScale:d.dpi?Math.round((d.dpi/96)*100)/100:1,
+        }));
+      }
+    }
+  }catch{}
+  return displaysCache;
+}
+function applyClickThroughClass(){
+  if(typeof document!=='undefined'&&document.body?.classList){
+    document.body.classList.toggle('click-through',Boolean(clickThroughActive));
+  }
+}
+async function move(p,clamp=true){position=clamp?clamped(p):{x:Math.round(p.x),y:Math.round(p.y)};await Neutralino.window.move(position.x,position.y);send('position',{...position,displays:displaysCache});}
 function moveFast(p){
   position=clamped(p);
   if(moveBusy)return;
@@ -269,6 +308,7 @@ function syncMenuLabels(){
   set('bubbles','胶囊：'+(prefs.bubbles!==false?'开':'关'));
   set('patrol','自主动作：'+(prefs.patrol!==false?'开':'关'));
   set('quiet','空闲隐藏：'+(prefs.hideWhenIdle?'开':'关'));
+  set('clickThrough','专注穿透：'+(prefs.clickThrough?'开':'关'));
   set('care','关怀：'+(prefs.careReminders!==false?'开':'关'));
   set('sound','提示音：'+(prefs.sound?'开':'关'));
   if(badgeEl)badgeEl.textContent=directive.state||'idle';
@@ -364,9 +404,9 @@ function showBubble(payload){
   bubbleEl.textContent=payload.text;
   bubbleTone=payload.tone||'chat';
   bubbleClickable=Boolean(payload.clickable);
-  bubbleEl.className='tone-'+bubbleTone+(bubbleClickable?' clickable':'');
+  bubbleEl.className='tone-'+bubbleTone+(bubbleClickable?' clickable':'')+(wakeHighlight?' wake-highlight':'');
   if(bubbleEl.offsetWidth!==undefined)void bubbleEl.offsetWidth;
-  bubbleEl.className='pop tone-'+bubbleTone+(bubbleClickable?' clickable':'');
+  bubbleEl.className='pop tone-'+bubbleTone+(bubbleClickable?' clickable':'')+(wakeHighlight?' wake-highlight':'');
   bubbleEl.style.display=(menuOpen||panelOpen)?'none':'block';
   if(!payload.sticky&&payload.ttlMs>0){bubbleTimer=later(()=>{bubbleEl.style.display='none';bubbleClickable=false;},payload.ttlMs);}
 }
@@ -393,13 +433,17 @@ atlas.onload=()=>{
   atlasRows=rows;
   loaded=true;draw();
   const r=canvas.getBoundingClientRect();
-  send('ready',{width:atlas.naturalWidth,height:atlas.naturalHeight,dpr:devicePixelRatio,canvas:{width:canvas.width,height:canvas.height,cssWidth:r.width,cssHeight:r.height},viewport:{width:innerWidth,height:innerHeight},bounds:bounds()});
+  send('ready',{width:atlas.naturalWidth,height:atlas.naturalHeight,dpr:devicePixelRatio,canvas:{width:canvas.width,height:canvas.height,cssWidth:r.width,cssHeight:r.height},viewport:{width:innerWidth,height:innerHeight},bounds:bounds(),displays:displaysCache});
 };
 atlas.onerror=()=>send('error');
 Neutralino.events.on('kw.initialize',e=>serial(async()=>{
   if(initialized){if(loaded)send('ready');return;}
   initialized=true;layout=e.detail;onTop=layout.topmost!==false;position={x:layout.x,y:layout.y};
+  if(Array.isArray(layout.displays))displaysCache=layout.displays;
   if(layout.preferences)prefs={...prefs,...layout.preferences};
+  clickThroughActive=Boolean(prefs.clickThrough);applyClickThroughClass();
+  lastScreenSig=screenSignature();
+  await refreshDisplays();
   applyCanvasLayout();syncMenuLabels();await move(position);atlas.src='atlas.webp';await setupTray();
 }));
 Neutralino.events.on('kw.resize',e=>serial(async()=>{
@@ -412,7 +456,18 @@ Neutralino.events.on('kw.resize',e=>serial(async()=>{
 Neutralino.events.on('kw.patrol',e=>startLocalPatrol(e.detail||{}));
 Neutralino.events.on('kw.stopPatrol',()=>stopLocalPatrol());
 Neutralino.events.on('kw.topmost',e=>{onTop=e.detail.enabled;syncMenuLabels();});
-Neutralino.events.on('kw.prefs',e=>{prefs={...prefs,...(e.detail||{})};syncMenuLabels();if(prefs.bubbles===false)showBubble({clear:true});if(prefs.patrol===false)stopLocalPatrol();});
+Neutralino.events.on('kw.prefs',e=>{prefs={...prefs,...(e.detail||{})};if(typeof e.detail?.clickThrough==='boolean'&&!wakeHighlight){clickThroughActive=e.detail.clickThrough;applyClickThroughClass();}syncMenuLabels();if(prefs.bubbles===false)showBubble({clear:true});if(prefs.patrol===false)stopLocalPatrol();});
+Neutralino.events.on('kw.clickThrough',e=>{
+  const d=e.detail||{};
+  clickThroughActive=Boolean(d.enabled);
+  wakeHighlight=Boolean(d.suspended&&d.highlight);
+  applyClickThroughClass();
+  if(wakeHighlight&&bubbleEl&&bubbleEl.style.display==='block'){
+    bubbleEl.classList?.add?.('wake-highlight');
+  }else if(!wakeHighlight&&bubbleEl){
+    bubbleEl.classList?.remove?.('wake-highlight');
+  }
+});
 Neutralino.events.on('kw.bubble',e=>showBubble(e.detail));
 Neutralino.events.on('kw.panel',e=>{panelData={...panelData,...(e.detail||{})};renderPanel();});
 Neutralino.events.on('kw.togglePanel',e=>serial(async()=>{
@@ -425,7 +480,16 @@ Neutralino.events.on('kw.chime',()=>{if(prefs.sound)playChime();});
 Neutralino.events.on('kw.reposition',e=>serial(()=>move(e.detail)));
 Neutralino.events.on('kw.frame',e=>{directive=e.detail;if(badgeEl)badgeEl.textContent=directive.state||'idle';if(directive.state==='dozing'&&raf&&performance.now()-dozeParticleAt>=950){dozeParticleAt=performance.now();spawnParticles('zzz');}draw();});
 Neutralino.events.on('extClientDisconnect',e=>{if(e.detail==='kurowhaleHost')Neutralino.app.exit().catch(()=>{});});
-setInterval(async()=>{if(!initialized)return;try{const s=await Neutralino.extensions.getStats();missingHost=s.connected.includes('kurowhaleHost')?0:missingHost+1;if(missingHost>=2)await Neutralino.app.exit();}catch{}},5000);
+setInterval(async()=>{
+  if(!initialized)return;
+  const sig=screenSignature();
+  if(sig!==lastScreenSig){
+    lastScreenSig=sig;
+    const list=await refreshDisplays();
+    send('displayChanged',{bounds:bounds(),displays:list});
+  }
+  try{const s=await Neutralino.extensions.getStats();missingHost=s.connected.includes('kurowhaleHost')?0:missingHost+1;if(missingHost>=2)await Neutralino.app.exit();}catch{}
+},5000);
 
 // Position menu or task card BESIDE the character (right side by default, auto-flip to left near screen edge)
 // so the pet stays completely unobstructed and stationary on screen.
@@ -463,14 +527,17 @@ async function closeOverlays(){
   if(stageEl)stageEl.style.left='0px';
   await Neutralino.window.setSize({width:layout.width,height:layout.height,resizable:false});
   await move(position);
+  send('overlayState',{open:false});
 }
 async function openMenu(){
   menuOpen=true;panelOpen=false;stopLocalPatrol();drag=null;send('dragEnd',position);showBubble({clear:true});syncMenuLabels();
+  send('overlayState',{open:true});
   if(panelEl)panelEl.style.display='none';
-  await openBeside(menu,228,346);
+  await openBeside(menu,228,376);
 }
 async function openPanelView(){
   panelOpen=true;menuOpen=false;stopLocalPatrol();drag=null;send('dragEnd',position);showBubble({clear:true});renderPanel();
+  send('overlayState',{open:true});
   if(menu)menu.style.display='none';
   const h=panelData.approvals?.length?300:230;
   await openBeside(panelEl,264,h);
@@ -563,14 +630,17 @@ for(const [id,action,value] of [['resume','resume'],['larger','scale',.25],['sma
   bind(id,()=>serial(async()=>{await closeOverlays();send('control',{action,value,relative:action==='scale'});}));
 }
 bind('topmost',()=>serial(async()=>{onTop=!onTop;await closeOverlays();send('control',{action:'topmost',value:onTop});}));
-for(const [id,key] of [['bubbles','bubbles'],['patrol','patrol'],['quiet','hideWhenIdle'],['care','careReminders'],['sound','sound']]){
+for(const [id,key] of [['bubbles','bubbles'],['patrol','patrol'],['quiet','hideWhenIdle'],['clickThrough','clickThrough'],['care','careReminders'],['sound','sound']]){
   bind(id,()=>serial(async()=>{const isDefaultOn=(key==='bubbles'||key==='patrol'||key==='careReminders');const cur=isDefaultOn?prefs[key]!==false:prefs[key]===true;await closeOverlays();send('control',{action:'pref',key,value:!cur});}));
 }
+bind('copyDiag',()=>serial(async()=>{await closeOverlays();send('control',{action:'diagnostics'});}));
 Neutralino.events.on('trayMenuItemClicked',e=>{
   const id=e.detail.id;
   if(id==='panel')serial(openPanelView);
   else if(id==='bubbles')send('control',{action:'pref',key:'bubbles',toggle:true});
   else if(id==='quiet')send('control',{action:'pref',key:'hideWhenIdle',toggle:true});
+  else if(id==='clickThrough')send('control',{action:'pref',key:'clickThrough',toggle:true});
+  else if(id==='diag')send('control',{action:'diagnostics'});
   else{const action={show:'show',hide:'hide',center:'center',focus:'focus',close:'close'}[id];if(action)send('control',{action});}
 });
 async function setupTray(){
@@ -584,6 +654,8 @@ async function setupTray(){
       {text:'-'},
       {id:'bubbles',text:'切换状态胶囊'},
       {id:'quiet',text:'切换空闲隐藏'},
+      {id:'clickThrough',text:'切换专注穿透模式'},
+      {id:'diag',text:'复制脱敏诊断信息'},
       {text:'-'},
       {id:'close',text:'关闭桌宠'},
     ]});

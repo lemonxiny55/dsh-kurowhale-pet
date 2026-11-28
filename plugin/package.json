@@ -23,6 +23,8 @@
     "index.js",
     "animations.js",
     "commands.js",
+    "diagnostics.js",
+    "display.js",
     "overlay.js",
     "stats.js",
     "native/",

@@ -352,3 +352,63 @@ test('autonomous idle routine automatically triggers eating, dozing, petted and 
     await cleanup();cleanup=null;
   }finally{if(cleanup)await cleanup();if(previous===undefined)delete process.env.DSH_HOME;else process.env.DSH_HOME=previous;await rm(temp,{recursive:true,force:true});}
 });
+
+test('smart click-through wakes on approval/failure, restores afterward, and diag copies redacted report',async()=>{
+  const temp=await mkdtemp(join(tmpdir(),'kurowhale-m1-'));const previous=process.env.DSH_HOME;process.env.DSH_HOME=temp;
+  let cleanup,onEvent,sessionHandler,registered;
+  const ctCalls=[],moved=[],copied=[];
+  try{
+    const dir=join(temp,'kurowhale-pet');await mkdir(dir);
+    await writeFile(join(dir,'local.json'),JSON.stringify({patrol:false}));
+    await writeFile(join(dir,'position.json'),JSON.stringify({x:5000,y:5000,scale:1.25,visible:true,topmost:true,clickThrough:true}));
+    await writeFile(join(dir,'pet.json'),JSON.stringify({spritesheetPath:'spritesheet.webp'}));
+    apply({
+      effect:fn=>{cleanup=fn();},
+      on:(ev,fn)=>{if(ev==='session/event')sessionHandler=fn;return ()=>{};},
+      commands:{register:def=>{registered=def;return ()=>{};}},
+    },{
+      queryDisplays:async()=>[{id:'MAIN',primary:true,dpiScale:1.5,bounds:{x:0,y:0,w:1920,h:1080},workArea:{x:0,y:0,w:1920,h:1040}}],
+      copyToClipboard:async text=>{copied.push(text);return true;},
+      resolveResources:async()=>({assetDirectory:dir,runtimePath:'custom-runtime'}),
+      createOverlay:async options=>{
+        onEvent=options.onEvent;
+        return {
+          pid:501,destroy(){},frame(){},bubble(){},panel(){},prefs(){},
+          move:p=>moved.push(p),
+          setClickThrough:async(enabled,meta)=>{ctCalls.push({enabled,meta});return true;},
+          inspect:async()=>({visible:true}),hide:async()=>{},show:async()=>{},
+        };
+      },
+    });
+    await wait(50);
+    // Out-of-bounds 5000,5000 must have healed into primary 1920x1040.
+    const posAfterHeal=JSON.parse(await readFile(join(dir,'position.json'),'utf8'));
+    assert.ok(posAfterHeal.x<1920&&posAfterHeal.y<1040,'out-of-bounds startup position should heal');
+    assert.equal(posAfterHeal.anchor.displayId,'MAIN');
+    onEvent('ready',{bounds:{x:0,y:0,w:1920,h:1040}});
+    await wait(25);
+    assert.equal(ctCalls.at(-1).enabled,true,'click-through should start enabled in idle');
+
+    // Waiting approval wakes click-through and highlights.
+    sessionHandler({id:'s1'},{type:'approval/asked',data:{id:'ap-1',toolName:'bash'}});
+    await wait(25);
+    assert.equal(ctCalls.at(-1).enabled,false);
+    assert.equal(ctCalls.at(-1).meta.suspended,true);
+    assert.equal(ctCalls.at(-1).meta.highlight,'waiting');
+
+    // Resolving approval restores click-through.
+    sessionHandler({id:'s1'},{type:'approval/decided',data:{id:'ap-1'}});
+    await wait(25);
+    assert.equal(ctCalls.at(-1).enabled,true);
+    assert.equal(ctCalls.at(-1).meta.suspended,false);
+
+    // Diagnostics command copies redacted report without leaking temp DSH_HOME path.
+    const diagRes=await registered.handler({rawInput:'diag'});
+    assert.equal(diagRes.kind,'success');
+    assert.equal(copied.length,1);
+    assert.match(copied[0],/KuroWhale Diagnostic Report/);
+    assert.doesNotMatch(copied[0],new RegExp(temp.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')));
+
+    await cleanup();cleanup=null;
+  }finally{if(cleanup)await cleanup();if(previous===undefined)delete process.env.DSH_HOME;else process.env.DSH_HOME=previous;await rm(temp,{recursive:true,force:true});}
+});

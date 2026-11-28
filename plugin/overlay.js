@@ -36,6 +36,30 @@ export function focusHostWindow() {
   });
 }
 
+export function setWindowClickThrough(pid, enabled, platform = process.platform) {
+  if (platform !== 'win32' || !Number.isInteger(pid) || pid <= 0) return Promise.resolve(false);
+  const script = [
+    "$ErrorActionPreference='SilentlyContinue'",
+    "Add-Type -TypeDefinition 'using System; using System.Runtime.InteropServices; public class KwPass { public delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam); [DllImport(\"user32.dll\")] public static extern bool EnumWindows(EnumWindowsProc lpEnumFunc, IntPtr lParam); [DllImport(\"user32.dll\")] public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId); [DllImport(\"user32.dll\")] public static extern bool IsWindowVisible(IntPtr hWnd); [DllImport(\"user32.dll\", EntryPoint=\"GetWindowLongPtrW\")] private static extern IntPtr GetWindowLongPtr64(IntPtr hWnd, int nIndex); [DllImport(\"user32.dll\", EntryPoint=\"GetWindowLongW\")] private static extern int GetWindowLong32(IntPtr hWnd, int nIndex); [DllImport(\"user32.dll\", EntryPoint=\"SetWindowLongPtrW\")] private static extern IntPtr SetWindowLongPtr64(IntPtr hWnd, int nIndex, IntPtr dwNewLong); [DllImport(\"user32.dll\", EntryPoint=\"SetWindowLongW\")] private static extern int SetWindowLong32(IntPtr hWnd, int nIndex, int dwNewLong); public static long GetExStyle(IntPtr hWnd) { return IntPtr.Size == 8 ? GetWindowLongPtr64(hWnd, -20).ToInt64() : (long)GetWindowLong32(hWnd, -20); } public static void SetExStyle(IntPtr hWnd, long style) { if (IntPtr.Size == 8) SetWindowLongPtr64(hWnd, -20, new IntPtr(style)); else SetWindowLong32(hWnd, -20, (int)style); } }'",
+    `$targetPid = [uint32]${pid}; $enable = ${enabled ? '$true' : '$false'}; $updated = 0`,
+    '[KwWin]::EnumWindows({ param($hWnd, $lParam) return $true }, [IntPtr]::Zero) | Out-Null',
+  ].join('; ');
+  // Keep single self-contained P/Invoke class without depending on KwWin.
+  void script;
+  const cleanScript = [
+    "$ErrorActionPreference='SilentlyContinue'",
+    "Add-Type -TypeDefinition 'using System; using System.Runtime.InteropServices; public class KwPass { public delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam); [DllImport(\"user32.dll\")] public static extern bool EnumWindows(EnumWindowsProc lpEnumFunc, IntPtr lParam); [DllImport(\"user32.dll\")] public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId); [DllImport(\"user32.dll\")] public static extern bool IsWindowVisible(IntPtr hWnd); [DllImport(\"user32.dll\", EntryPoint=\"GetWindowLongPtrW\")] private static extern IntPtr GetWindowLongPtr64(IntPtr hWnd, int nIndex); [DllImport(\"user32.dll\", EntryPoint=\"GetWindowLongW\")] private static extern int GetWindowLong32(IntPtr hWnd, int nIndex); [DllImport(\"user32.dll\", EntryPoint=\"SetWindowLongPtrW\")] private static extern IntPtr SetWindowLongPtr64(IntPtr hWnd, int nIndex, IntPtr dwNewLong); [DllImport(\"user32.dll\", EntryPoint=\"SetWindowLongW\")] private static extern int SetWindowLong32(IntPtr hWnd, int nIndex, int dwNewLong); public static long GetExStyle(IntPtr hWnd) { return IntPtr.Size == 8 ? GetWindowLongPtr64(hWnd, -20).ToInt64() : (long)GetWindowLong32(hWnd, -20); } public static void SetExStyle(IntPtr hWnd, long style) { if (IntPtr.Size == 8) SetWindowLongPtr64(hWnd, -20, new IntPtr(style)); else SetWindowLong32(hWnd, -20, (int)style); } }'",
+    `$targetPid = [uint32]${pid}; $enable = ${enabled ? '$true' : '$false'}; $updated = 0`,
+    '$cb = [KwPass+EnumWindowsProc]{ param($hWnd, $lParam) [uint32]$winPid = 0; [KwPass]::GetWindowThreadProcessId($hWnd, [ref]$winPid) | Out-Null; if ($winPid -eq $targetPid -and [KwPass]::IsWindowVisible($hWnd)) { $style = [KwPass]::GetExStyle($hWnd); if ($enable) { $style = $style -bor 0x80000 -bor 0x20 } else { $style = $style -band (-bnot 0x20L) }; [KwPass]::SetExStyle($hWnd, $style) | Out-Null; $script:updated++ }; return $true }',
+    '[KwPass]::EnumWindows($cb, [IntPtr]::Zero) | Out-Null; if ($updated -gt 0) { Write-Output "OK" }',
+  ].join('; ');
+  return new Promise(resolve => {
+    execFile('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', cleanScript], { windowsHide: true, timeout: 4000 }, (error, stdout) => {
+      resolve(!error && String(stdout).includes('OK'));
+    });
+  });
+}
+
 export async function createOverlay(options) {
   if (process.platform !== 'win32') throw Error('This development build targets Windows only');
   if (!existsSync(options.runtimePath)) throw Error('Configure an existing official Neutralino 6.9.0 runtimePath');
@@ -48,7 +72,7 @@ export async function createOverlay(options) {
     applicationId: 'community.kurowhale.pet', defaultMode: 'window', documentRoot: '/resources/', url: '/',
     enableServer: true, enableNativeAPI: true, enableExtensions: true, exportAuthInfo: true,
     extensions: [{ id: 'kurowhaleHost' }], logging: { enabled: false, writeToLogFile: false },
-    nativeAllowList: ['app.*', 'events.*', 'window.*', 'os.setTray', 'extensions.getStats'],
+    nativeAllowList: ['app.*', 'events.*', 'window.*', 'os.setTray', 'extensions.getStats', 'computer.getDisplays', 'clipboard.writeText'],
     modes: {
       window: {
         title: 'KuroWhale · DSH', width: layout.width, height: layout.height, x: options.x, y: options.y,
@@ -121,11 +145,16 @@ export async function createOverlay(options) {
       if (uiError) throw uiError;
       await broadcast('kw.initialize', {
         ...layout, x: options.x, y: options.y, topmost: options.topmost !== false,
+        displays: options.displays ?? [],
         preferences: options.preferences ?? {},
       });
       await pause(150);
     }
     if (!ready) throw Error('Native atlas readiness timed out');
+    if (options.preferences?.clickThrough) {
+      await setWindowClickThrough(child.pid, true);
+      void broadcast('kw.clickThrough', { enabled: true, suspended: false }).catch(() => {});
+    }
     return {
       pid: child.pid,
       destroy,
@@ -136,6 +165,13 @@ export async function createOverlay(options) {
       fx: data => { void broadcast('kw.fx', data ?? {}).catch(() => {}); },
       chime: tone => { void broadcast('kw.chime', { tone: tone ?? 'waiting' }).catch(() => {}); },
       prefs: preferences => { void broadcast('kw.prefs', preferences).catch(() => {}); },
+      setClickThrough: async (enabled, meta = {}) => {
+        const applied = await setWindowClickThrough(child.pid, Boolean(enabled));
+        void broadcast('kw.clickThrough', { enabled: Boolean(enabled), ...meta }).catch(() => {});
+        return applied;
+      },
+      copyClipboard: text => call('clipboard.writeText', { data: String(text ?? '') }),
+      getDisplays: () => call('computer.getDisplays'),
       resize: async nextScale => {
         const nextLayout = computeWindowLayout(nextScale);
         await call('window.setSize', { width: nextLayout.width, height: nextLayout.height, resizable: false });

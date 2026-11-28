@@ -26,8 +26,10 @@ const HELP_TEXT = [
   '  bubbles [on|off]    Toggle speech bubbles',
   '  patrol [on|off]     Toggle idle desktop patrol',
   '  quiet [on|off]      Toggle hide-when-idle focus mode',
+  '  clickthrough [on|off] Toggle smart click-through focus mode',
   '  sound [on|off]      Toggle gentle approval chime',
   '  care [on|off]       Toggle gentle focus-break & late-night reminders',
+  '  diag                Copy redacted diagnostics to clipboard',
   '  pet | feed | doze | cheer  Trigger playful interactive reactions',
   '  demo <state> | all  Preview an animation or cycle all 12 states',
   '  resume              Return to automatic agent tracking',
@@ -116,6 +118,18 @@ export function parseSlashInput(rawInput = '') {
       if (arg && value === undefined) return { kind: 'error', text: 'Usage: /kurowhale quiet [on|off]' };
       return { kind: 'command', command: { action: 'pref', key: 'hideWhenIdle', value, toggle: value === undefined } };
     }
+    case 'clickthrough':
+    case 'passthrough':
+    case 'ghost':
+    case 'through': {
+      const value = parseBool(arg);
+      if (arg && value === undefined) return { kind: 'error', text: 'Usage: /kurowhale clickthrough [on|off]' };
+      return { kind: 'command', command: { action: 'pref', key: 'clickThrough', value, toggle: value === undefined } };
+    }
+    case 'diag':
+    case 'diagnostics':
+    case 'debug':
+      return { kind: 'command', command: { action: 'diagnostics' } };
     case 'sound':
     case 'chime': {
       const value = parseBool(arg);
@@ -172,7 +186,7 @@ export function registerKuroWhaleCommand(ctx, controller) {
             const prefs = s.preferences ?? {};
             return {
               kind: 'success',
-              text: `KuroWhale v${s.version}: state=${s.state} (${s.source}), visible=${s.visible}, scale=${s.scale}x, topmost=${s.topmost}, bubbles=${prefs.bubbles !== false}, patrol=${prefs.patrol !== false}, quiet=${Boolean(prefs.hideWhenIdle)}, sound=${Boolean(prefs.sound)}, care=${prefs.careReminders !== false}, sessions=${s.sessions.length}, approvals=${(s.pendingApprovals ?? []).length}`,
+              text: `KuroWhale v${s.version}: state=${s.state} (${s.source}), visible=${s.visible}, scale=${s.scale}x, topmost=${s.topmost}, bubbles=${prefs.bubbles !== false}, patrol=${prefs.patrol !== false}, quiet=${Boolean(prefs.hideWhenIdle)}, clickThrough=${Boolean(prefs.clickThrough)}, sound=${Boolean(prefs.sound)}, care=${prefs.careReminders !== false}, sessions=${s.sessions.length}, approvals=${(s.pendingApprovals ?? []).length}`,
             };
           }
           if (parsed.kind === 'stats') {

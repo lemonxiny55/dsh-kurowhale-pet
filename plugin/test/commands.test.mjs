@@ -13,6 +13,8 @@ test('parseSlashInput handles control, preference and diagnostic subcommands', (
   assert.deepEqual(parseSlashInput('bubbles off'), { kind: 'command', command: { action: 'pref', key: 'bubbles', value: false, toggle: false } });
   assert.deepEqual(parseSlashInput('patrol'), { kind: 'command', command: { action: 'pref', key: 'patrol', value: undefined, toggle: true } });
   assert.deepEqual(parseSlashInput('quiet on'), { kind: 'command', command: { action: 'pref', key: 'hideWhenIdle', value: true, toggle: false } });
+  assert.deepEqual(parseSlashInput('clickthrough on'), { kind: 'command', command: { action: 'pref', key: 'clickThrough', value: true, toggle: false } });
+  assert.deepEqual(parseSlashInput('diag'), { kind: 'command', command: { action: 'diagnostics' } });
   assert.deepEqual(parseSlashInput('sound on'), { kind: 'command', command: { action: 'pref', key: 'sound', value: true, toggle: false } });
   assert.deepEqual(parseSlashInput('care off'), { kind: 'command', command: { action: 'pref', key: 'careReminders', value: false, toggle: false } });
   assert.deepEqual(parseSlashInput('stats'), { kind: 'stats' });
