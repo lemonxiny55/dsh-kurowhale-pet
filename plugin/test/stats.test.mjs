@@ -73,3 +73,48 @@ test('careMonitor triggers focus break with cooldown and once-per-night late-nig
   assert.equal(care.checkIdle({ enabled: true, locale: 'zh' }), null);
   assert.equal(care.checkIdle({ enabled: false, locale: 'zh' }), null);
 });
+
+test('migrates v0.3.0 stats smoothly, earns and consumes dried fish, and unlocks streak/feed milestones', () => {
+  const legacyV03 = {
+    today: {
+      date: '2026-11-27',
+      companionSec: 2400,
+      turnsCompleted: 4,
+      turnsFailed: 0,
+      toolCalls: 9,
+      toolsByKind: { coding: 6, command: 3, searching: 0, subagent: 0, working: 0 },
+      approvalsHandled: 9,
+      approvalsQuickAllowed: 5,
+      approvalsQuickRejected: 1,
+      tokens: { input: 3000, output: 1000, cached: 500, total: 4000 },
+    },
+    lifetimeTurns: 4,
+    lifetimeCompanionSec: 2400,
+  };
+  let now = new Date(2026, 10, 28, 10, 0, 0);
+  const tracker = createStatsTracker(legacyV03, () => now);
+  const migrated = tracker.snapshot();
+  assert.equal(migrated.schemaVersion, 2);
+  assert.equal(migrated.history.length, 1);
+  assert.equal(migrated.history[0].date, '2026-11-27');
+  assert.equal(migrated.streak.currentDays, 2);
+
+  // Empty fish jar returns consumed=false cleanly.
+  assert.equal(tracker.feedFish().consumed, false);
+
+  // Earning fish: 5 tool calls (+1), 1 turn (+1), 1 approval (+1) -> 3 fish.
+  for (let i = 0; i < 5; i++) tracker.recordToolCall('coding');
+  tracker.recordTurnEnd(true);
+  tracker.recordApproval('allowed-once', true);
+  assert.equal(tracker.snapshot().fish.stock, 3);
+
+  const fed = tracker.feedFish();
+  assert.equal(fed.consumed, true);
+  assert.equal(fed.stock, 2);
+
+  // Cross another day to unlock 3-day streak milestone.
+  now = new Date(2026, 10, 29, 10, 0, 0);
+  const day3 = tracker.snapshot();
+  assert.equal(day3.streak.currentDays, 3);
+  assert.ok(day3.milestones.unlocked.includes('streak_3'));
+});

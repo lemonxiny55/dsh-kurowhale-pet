@@ -57,6 +57,10 @@ canvas:active{cursor:grabbing}
 .p-empty{font-size:11.5px;color:#83879b;padding:7px 4px;text-align:center}
 .p-stats{display:flex;flex-wrap:wrap;gap:5px 10px;padding-top:7px;border-top:1px solid rgba(28,30,42,.08);font-size:11px;color:#5d6175}
 .p-stats b{color:#232430;font-weight:600}
+.p-report-bar{display:flex;gap:5px;margin-top:7px}
+.p-report-preview{margin-top:7px;padding:7px;border-radius:10px;background:#0b1120;border:1px solid rgba(114,167,255,.32);color:#e7efff}
+.p-report-preview img{display:block;width:100%;height:auto;border-radius:7px;margin-bottom:6px}
+.p-report-actions{display:flex;gap:5px}
 #menu{display:none;position:absolute;top:8px;left:0;overflow-y:auto;overflow-x:hidden;box-sizing:border-box;background:rgba(24,23,34,.95);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(232,226,245,.26);border-radius:14px;padding:9px 10px;font:11.5px/1.3 'Microsoft YaHei UI','Segoe UI',system-ui,sans-serif;color:#f3effa;box-shadow:0 8px 24px rgba(15,12,26,.40);z-index:10}
 .menu-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,.1)}
 .menu-head-l{display:flex;align-items:center;gap:6px}
@@ -122,7 +126,8 @@ let initialized=false,loaded=false,atlasRows=9,layout,position={x:80,y:80},drag=
 let prefs={bubbles:true,patrol:true,hideWhenIdle:false,clickThrough:false,sound:false,dndEnabled:false,dndStart:'23:00',dndEnd:'08:00',toast:true,careReminders:true};
 let clickThroughActive=false,wakeHighlight=false,displaysCache=[],lastScreenSig='',sessionsExpanded=false;
 let bubbleTimer=0,bubbleClickable=false,bubbleTone='chat',lastClickAt=0,clickTimer=0,menuOpen=false,panelOpen=false;
-let panelData={state:'idle',approvals:[],questions:[],planReviews:[],sessions:[],stats:{companion:'<1m',turns:0,tools:0,tokens:''}};
+let panelData={state:'idle',approvals:[],questions:[],planReviews:[],sessions:[],stats:{companion:'<1m',turns:0,tools:0,tokens:'',fishStock:0,feeds:0,streakDays:1},reports:{}};
+let reportPreview=null;
 
 // Smooth 60fps true side-profile turn -> walk -> return-turn motion state & micro-particles.
 let bounceAnim=null,patrolAnim=null,shakeAnim=null,particles=[],dozeParticleAt=0,rafId=0,moveBusy=false,dragTilt=0;
@@ -249,6 +254,8 @@ function spawnParticles(kind){
     for(let i=0;i<3;i++)particles.push({kind:'dizzy',char:'★',color:'#f4c96b',x:cx,y:headY-4*s,phase:i*Math.PI*2/3,rx:pw*0.24,ry:6*s,size:Math.round(11*s),start:now,ttl:1100});
   }else if(kind==='zzz'){
     particles.push({kind:'zzz',char:'z',color:'#d8e2ff',x:cx+pw*0.22,y:headY+4*s,vx:10*s,vy:-18*s,size:Math.round(12*s),start:now,ttl:1450});
+  }else if(kind==='milestone'){
+    for(let i=0;i<8;i++)particles.push({kind:'milestone',char:i%3===0?'★':(i%2?'♥':'✦'),color:i%3===0?'#ffd875':(i%2?'#ff98c3':'#9ac6ff'),x:cx+(Math.random()-0.5)*pw*0.64,y:headY+Math.random()*16*s,vx:(Math.random()-0.5)*36*s,vy:-(24+Math.random()*22)*s,size:Math.round((11+Math.random()*5)*s),start:now,ttl:1100});
   }
   if(particles.length>14)particles=particles.slice(-14);
   ensureMotionLoop();
@@ -321,7 +328,62 @@ function syncMenuLabels(){
   set('sound','提示音：'+(prefs.sound?'开':'关'));
   set('dnd','勿扰：'+(prefs.dndEnabled?'开':'关'));
   set('toast','桌面通知：'+(prefs.toast!==false?'开':'关'));
+  const stock=panelData?.stats?.fishStock;
+  set('actFeed',Number.isFinite(stock)?('喂鱼 🐟'+stock):'喂鱼');
   if(badgeEl)badgeEl.textContent=directive.state||'idle';
+}
+function drawRoundRect(c,x,y,w,h,r){
+  if(typeof c.beginPath!=='function')return;
+  c.beginPath();c.moveTo(x+r,y);c.lineTo(x+w-r,y);c.quadraticCurveTo(x+w,y,x+w,y+r);
+  c.lineTo(x+w,y+h-r);c.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  c.lineTo(x+r,y+h);c.quadraticCurveTo(x,y+h,x,y+h-r);c.lineTo(x,y+r);c.quadraticCurveTo(x,y,x+r,y);c.closePath();
+}
+function generateReportCardDataUrl(model){
+  if(typeof document==='undefined'||typeof document.createElement!=='function'||!model)return null;
+  const cvs=document.createElement('canvas');
+  if(!cvs||typeof cvs.getContext!=='function')return null;
+  cvs.width=760;cvs.height=440;
+  const c=cvs.getContext('2d');
+  if(!c)return null;
+  const bg=c.createLinearGradient(0,0,760,440);
+  bg.addColorStop(0,'#070b14');bg.addColorStop(0.55,'#0d182b');bg.addColorStop(1,'#14243e');
+  c.fillStyle=bg;c.fillRect(0,0,760,440);
+  c.strokeStyle='rgba(148,184,255,0.08)';c.lineWidth=1;
+  for(let gx=24;gx<760;gx+=28){c.beginPath();c.moveTo(gx,0);c.lineTo(gx,440);c.stroke();}
+  for(let gy=24;gy<440;gy+=28){c.beginPath();c.moveTo(0,gy);c.lineTo(760,gy);c.stroke();}
+  const glow=c.createRadialGradient(620,175,18,620,175,190);
+  glow.addColorStop(0,'rgba(84,152,255,0.28)');glow.addColorStop(1,'rgba(84,152,255,0)');
+  c.fillStyle=glow;c.fillRect(420,0,340,380);
+  c.fillStyle='rgba(245,248,255,0.95)';
+  drawRoundRect(c,20,20,720,400,20);c.strokeStyle='rgba(198,218,255,0.22)';c.lineWidth=1.5;c.stroke();
+  c.font='700 22px "Segoe UI","Microsoft YaHei UI",sans-serif';c.fillText(String(model.title||'Vibe Coding Report'),42,60);
+  c.fillStyle='#96b0dc';c.font='500 13px "Segoe UI","Microsoft YaHei UI",sans-serif';
+  c.fillText(String(model.subtitle||'')+'  ·  连续陪伴 '+(model.streakDays??1)+' 天  ·  小鱼干库存 '+(model.fishStock??0),42,84);
+  const metrics=Array.isArray(model.metrics)?model.metrics.slice(0,6):[];
+  for(let i=0;i<metrics.length;i++){
+    const col=i%2,row=Math.floor(i/2);
+    const bx=42+col*224,by=108+row*84,bw=208,bh=70;
+    c.fillStyle='rgba(244,247,255,0.08)';drawRoundRect(c,bx,by,bw,bh,12);c.fill();
+    c.strokeStyle='rgba(218,231,255,0.20)';c.lineWidth=1;c.stroke();
+    c.fillStyle='#9ab2da';c.font='500 12px "Segoe UI","Microsoft YaHei UI",sans-serif';c.fillText(String(metrics[i].label),bx+14,by+24);
+    c.fillStyle='#f6f9ff';c.font='700 21px "Segoe UI","Microsoft YaHei UI",sans-serif';c.fillText(String(metrics[i].value),bx+14,by+52);
+  }
+  const badges=Array.isArray(model.badges)?model.badges:[];
+  let tagX=42;
+  c.font='500 11.5px "Segoe UI","Microsoft YaHei UI",sans-serif';
+  for(const bText of badges.slice(0,2)){
+    const tw=Math.min(220,(c.measureText?c.measureText(bText).width:bText.length*11)+20);
+    c.fillStyle='rgba(122,175,255,0.16)';drawRoundRect(c,tagX,374,tw,26,999);c.fill();
+    c.fillStyle='#cfe1ff';c.fillText(String(bText),tagX+10,391);
+    tagX+=tw+8;
+  }
+  if(loaded&&atlas){
+    const poseRow=atlasRows>=10?9:3;
+    try{c.drawImage(atlas,2*192,poseRow*208,192,208,510,82,212,230);}catch{}
+  }
+  c.fillStyle='rgba(182,203,238,0.62)';c.font='600 11px "Segoe UI",monospace';
+  c.fillText(String(model.brand||'dsh-kurowhale-pet'),602,402);
+  return typeof cvs.toDataURL==='function'?cvs.toDataURL('image/png'):null;
 }
 function renderPanel(){
   if(!panelBody)return;
@@ -393,9 +455,13 @@ function renderPanel(){
     }
   }
   parts.push('</div>');
-  parts.push('<div class="p-stats"><span>陪伴 <b>'+esc(stats.companion||'<1m')+'</b></span><span>完成 <b>'+esc(stats.turns??0)+'</b> 轮</span><span>工具 <b>'+esc(stats.tools??0)+'</b></span>');
+  parts.push('<div class="p-stats"><span>陪伴 <b>'+esc(stats.companion||'<1m')+'</b></span><span>完成 <b>'+esc(stats.turns??0)+'</b> 轮</span><span>工具 <b>'+esc(stats.tools??0)+'</b></span><span>🐟 <b>'+esc(stats.fishStock??0)+'</b></span><span>连续 <b>'+esc(stats.streakDays??1)+'</b> 天</span>');
   if(stats.tokens)parts.push('<span>Token <b>'+esc(stats.tokens)+'</b></span>');
   parts.push('</div>');
+  parts.push('<div class="p-report-bar"><button class="p-btn-sub" data-act="gen-report" data-period="today">生成今日战报</button><button class="p-btn-sub" data-act="gen-report" data-period="week">本周战报</button></div>');
+  if(reportPreview?.dataUrl){
+    parts.push('<div class="p-report-preview"><img src="'+esc(reportPreview.dataUrl)+'" alt="Report Card"><div class="p-report-actions"><button class="p-btn-primary" data-act="save-report">保存 PNG</button><button class="p-btn-sub" data-act="copy-report">复制图片</button></div></div>');
+  }
   panelBody.innerHTML=parts.join('');
 }
 function draw(now=performance.now()){
@@ -520,7 +586,14 @@ Neutralino.events.on('kw.clickThrough',e=>{
   }
 });
 Neutralino.events.on('kw.bubble',e=>showBubble(e.detail));
-Neutralino.events.on('kw.panel',e=>{panelData={...panelData,...(e.detail||{})};renderPanel();});
+Neutralino.events.on('kw.panel',e=>{panelData={...panelData,...(e.detail||{})};syncMenuLabels();renderPanel();});
+Neutralino.events.on('kw.renderReportCard',e=>serial(async()=>{
+  const model=e.detail?.model||panelData.reports?.[e.detail?.period||'today'];
+  const dataUrl=generateReportCardDataUrl(model);
+  if(!dataUrl)return;
+  reportPreview={period:model.period||'today',dataUrl};
+  await openPanelView();
+}));
 Neutralino.events.on('kw.togglePanel',e=>serial(async()=>{
   const want=e.detail?.open;
   const next=want===undefined?!panelOpen:Boolean(want);
@@ -592,8 +665,8 @@ async function openPanelView(){
   if(menu)menu.style.display='none';
   const hasWaiting=(panelData.approvals?.length||0)+(panelData.questions?.length||0)+(panelData.planReviews?.length||0)>0;
   const activeCount=(panelData.sessions||[]).filter(s=>s.state!=='idle').length;
-  const h=(hasWaiting?320:230)+(sessionsExpanded&&activeCount>2?Math.min(120,(activeCount-2)*34):0);
-  await openBeside(panelEl,272,h);
+  const h=(hasWaiting?336:256)+(sessionsExpanded&&activeCount>2?Math.min(120,(activeCount-2)*34):0)+(reportPreview?.dataUrl?185:0);
+  await openBeside(panelEl,276,h);
 }
 if(bubbleEl)bubbleEl.onclick=()=>{
   if(bubbleTone==='waiting'||panelData.approvals?.length||panelData.questions?.length||panelData.planReviews?.length)serial(openPanelView);
@@ -610,6 +683,26 @@ if(panelEl)panelEl.onclick=e=>{
   else if(act==='plan-approve')serial(async()=>{send('control',{action:'plan-decide',planId:btn.dataset.id,outcome:'approved'});});
   else if(act==='plan-reject')serial(async()=>{send('control',{action:'plan-decide',planId:btn.dataset.id,outcome:'rejected'});});
   else if(act==='toggle-sessions')serial(async()=>{sessionsExpanded=!sessionsExpanded;await openPanelView();});
+  else if(act==='gen-report')serial(async()=>{
+    const period=btn.dataset.period==='week'?'week':'today';
+    const model=panelData.reports?.[period];
+    const dataUrl=generateReportCardDataUrl(model);
+    if(dataUrl){reportPreview={period,dataUrl};await openPanelView();}
+  });
+  else if(act==='save-report')serial(async()=>{
+    if(!reportPreview?.dataUrl)return;
+    let targetPath;
+    try{
+      if(typeof Neutralino?.os?.showSaveDialog==='function'){
+        targetPath=await Neutralino.os.showSaveDialog('保存 Vibe Coding 战报卡',{defaultPath:`kurowhale-report-${reportPreview.period}.png`,filters:[{name:'PNG Image',extensions:['png']}]});
+      }
+    }catch{}
+    send('reportCardSave',{period:reportPreview.period,dataUrl:reportPreview.dataUrl,targetPath});
+  });
+  else if(act==='copy-report')serial(async()=>{
+    if(!reportPreview?.dataUrl)return;
+    send('reportCardCopy',{period:reportPreview.period,dataUrl:reportPreview.dataUrl});
+  });
   else if(act==='stop')serial(async()=>{send('control',{action:'cancel-session',alias:btn.dataset.alias});});
   else if(act==='focus')serial(async()=>{await closeOverlays();send('control',{action:'focus'});});
 };

@@ -13,7 +13,7 @@ import tarfile
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
-PLUGIN_FILES = ["package.json", "index.js", "animations.js", "commands.js", "diagnostics.js", "display.js", "notify.js", "overlay.js", "resources.js", "stats.js",
+PLUGIN_FILES = ["package.json", "index.js", "animations.js", "commands.js", "diagnostics.js", "display.js", "notify.js", "overlay.js", "report-card.js", "resources.js", "stats.js",
                 "cordis.patch.yml", "LICENSE", "THIRD_PARTY_NOTICES.md",
                 "native/index.html", "native/neutralino.js", "native/tray.png",
                 "native/LICENSE-neutralinojs.txt"]

@@ -125,3 +125,33 @@ test('native panel collapses 3+ active sessions and renders question and plan-re
  assert.match(elements.get('panelBody').innerHTML,/session-3/);
  assert.match(elements.get('panelBody').innerHTML,/收起多余会话/);
 });
+
+test('native frontend generates geek report card PNG via local Canvas and triggers save/copy events',async()=>{
+ const html=await readFile(new URL('../native/index.html',import.meta.url),'utf8');
+ const source=[...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].at(-1)[1];
+ const listeners=new Map(),sent=[],elements=new Map();
+ const fakeCtx={
+  clearRect(){},drawImage(){},fillRect(){},beginPath(){},moveTo(){},lineTo(){},quadraticCurveTo(){},closePath(){},stroke(){},fill(){},fillText(){},
+  measureText:t=>({width:t.length*8}),
+  createLinearGradient:()=>({addColorStop(){}}),
+  createRadialGradient:()=>({addColorStop(){}}),
+ };
+ const element=id=>{if(!elements.has(id))elements.set(id,{style:{},getBoundingClientRect:()=>({width:160,height:232}),getContext:()=>fakeCtx});return elements.get(id);};
+ const dispatch=(name,data)=>listeners.get(name)?.({detail:data});
+ const fakeDoc={
+  getElementById:element,
+  createElement:tag=>tag==='canvas'?({width:0,height:0,getContext:()=>fakeCtx,toDataURL:()=>'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='}):element(tag),
+ };
+ const sandbox={console,Date,Math,Set,Promise,Number,Boolean,performance:{now:()=>100},devicePixelRatio:1.5,innerWidth:160,innerHeight:232,screen:{availLeft:0,availTop:0,availWidth:1707,availHeight:1020},document:fakeDoc,setInterval:()=>0,setTimeout:()=>0,clearTimeout:()=>{},
+ Image:class{naturalWidth=1536;naturalHeight=2496;set src(_){queueMicrotask(()=>this.onload());}},
+ Neutralino:{init:()=>Promise.resolve(),app:{exit:()=>Promise.resolve()},extensions:{getStats:async()=>({connected:['kurowhaleHost']})},os:{setTray:()=>Promise.resolve()},window:{move:async()=>{},setSize:async()=>{}},events:{on:(n,fn)=>listeners.set(n,fn),broadcast:async(n,data)=>{sent.push({n,data});queueMicrotask(()=>dispatch(n,data));}}}};
+ vm.runInNewContext(source,sandbox);
+ await dispatch('kw.initialize',{width:240,height:438,petWidth:240,petHeight:260,bubbleSpace:68,x:120,y:120,scale:1.25,topmost:true});
+ for(let i=0;i<20;i++)await Promise.resolve();
+ await dispatch('kw.renderReportCard',{model:{period:'today',title:'Vibe Coding 今日陪伴战报',subtitle:'2026-11-28',streakDays:3,fishStock:2,brand:'dsh-kurowhale-pet',metrics:[{label:'陪伴时长',value:'30m'}],badges:[]}});
+ for(let i=0;i<20;i++)await Promise.resolve();
+ assert.match(elements.get('panelBody').innerHTML,/保存 PNG/);
+ elements.get('panel').onclick({target:{dataset:{act:'copy-report'}}});
+ for(let i=0;i<20;i++)await Promise.resolve();
+ assert.ok(sent.some(e=>e.n==='kw.reportCardCopy'&&e.data.dataUrl.startsWith('data:image/png;base64,')));
+});

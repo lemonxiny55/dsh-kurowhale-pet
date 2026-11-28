@@ -479,3 +479,50 @@ test('tiered chimes, DND gating, unfocused Windows Toast click, and question/pla
     await cleanup();cleanup=null;
   }finally{if(cleanup)await cleanup();if(previous===undefined)delete process.env.DSH_HOME;else process.env.DSH_HOME=previous;await rm(temp,{recursive:true,force:true});}
 });
+
+test('dried-fish stock earns from work, consumes on feed, unlocks milestone fx, and saves/copies report PNG',async()=>{
+  const temp=await mkdtemp(join(tmpdir(),'kurowhale-m3-'));const previous=process.env.DSH_HOME;process.env.DSH_HOME=temp;
+  let cleanup,onEvent,sessionHandler,registered;
+  const fxCalls=[],copiedImgs=[];
+  try{
+    const dir=join(temp,'kurowhale-pet');await mkdir(dir);
+    await writeFile(join(dir,'local.json'),JSON.stringify({patrol:false}));
+    await writeFile(join(dir,'pet.json'),JSON.stringify({spritesheetPath:'spritesheet.webp'}));
+    await writeFile(join(dir,'stats.json'),JSON.stringify({
+      today:{date:'2026-11-28',companionSec:600,turnsCompleted:4,turnsFailed:0,toolCalls:4,toolsByKind:{coding:4},approvalsHandled:0,approvalsQuickAllowed:0,approvalsQuickRejected:0,tokens:{input:0,output:0,cached:0,total:0}},
+      lifetimeTurns:4,lifetimeCompanionSec:600,lifetimeFeeds:4,fish:{stock:2,totalEarned:6,totalFed:4,progress:{toolRemainder:4}},
+      streak:{currentDays:2,longestDays:2,lastActiveDate:'2026-11-28'},milestones:{unlocked:[]},
+    }));
+    const now=new Date(2026,10,28,16,0,0);
+    apply({
+      effect:fn=>{cleanup=fn();},
+      on:(ev,fn)=>{if(ev==='session/event')sessionHandler=fn;return ()=>{};},
+      commands:{register:def=>{registered=def;return ()=>{};}},
+    },{
+      nowFn:()=>now,
+      copyImageToClipboard:async p=>{copiedImgs.push(p);return true;},
+      resolveResources:async()=>({assetDirectory:dir,runtimePath:'custom-runtime'}),
+      createOverlay:async options=>{
+        onEvent=options.onEvent;
+        return {pid:701,destroy(){},frame(){},bubble(){},panel(){},prefs(){},fx:f=>fxCalls.push(f),exportReportCard(){},inspect:async()=>({visible:true}),hide:async()=>{},show:async()=>{}};
+      },
+    });
+    await wait(40);
+    // 5th tool call + 1 completed turn -> earns +2 fish (2 -> 4).
+    sessionHandler({id:'s1'},{type:'tool/call',data:{name:'edit_file'}});
+    sessionHandler({id:'s1'},{type:'turn/end',data:{reason:{kind:'completed'}}});
+    await wait(25);
+    const feedRes=await registered.handler({rawInput:'feed'});
+    assert.equal(feedRes.kind,'success');
+    assert.match(feedRes.text,/剩余 3 条/);
+    assert.equal(fxCalls.at(-1).kind,'milestone','5th lifetime feed must trigger milestone particles');
+
+    // Simulate reportCardCopy event from frontend Canvas.
+    onEvent('reportCardCopy',{period:'today',dataUrl:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='});
+    await wait(40);
+    assert.equal(copiedImgs.length,1);
+    assert.match(copiedImgs[0],/kurowhale-report-today-/);
+
+    await cleanup();cleanup=null;
+  }finally{if(cleanup)await cleanup();if(previous===undefined)delete process.env.DSH_HOME;else process.env.DSH_HOME=previous;await rm(temp,{recursive:true,force:true});}
+});

@@ -21,6 +21,8 @@ test('parseSlashInput handles control, preference and diagnostic subcommands', (
   assert.deepEqual(parseSlashInput('toast off'), { kind: 'command', command: { action: 'pref', key: 'toast', value: false, toggle: false } });
   assert.deepEqual(parseSlashInput('care off'), { kind: 'command', command: { action: 'pref', key: 'careReminders', value: false, toggle: false } });
   assert.deepEqual(parseSlashInput('stats'), { kind: 'stats' });
+  assert.deepEqual(parseSlashInput('stats export week'), { kind: 'command', command: { action: 'export-report', period: 'week', mode: 'save' } });
+  assert.deepEqual(parseSlashInput('report'), { kind: 'command', command: { action: 'export-report', period: 'today', mode: 'save' } });
   assert.deepEqual(parseSlashInput('panel'), { kind: 'command', command: { action: 'panel' } });
   assert.deepEqual(parseSlashInput('approve req-1'), { kind: 'command', command: { action: 'approval-decide', approvalId: 'req-1', outcome: 'allowed-once' } });
   assert.deepEqual(parseSlashInput('reject'), { kind: 'command', command: { action: 'approval-decide', approvalId: undefined, outcome: 'rejected' } });

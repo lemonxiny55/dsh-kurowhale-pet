@@ -7,6 +7,7 @@ import { buildDiagnosticReport, copyTextToClipboard, readRecentErrors } from './
 import { computeAnchor, normalizeDisplays, queryWindowsDisplays, resolveSafePosition } from './display.js';
 import { isHostWindowFocused, sendWindowsToast, shouldTriggerAlert } from './notify.js';
 import { computeWindowLayout, createOverlay, focusHostWindow } from './overlay.js';
+import { buildReportCardModel, copyImageFileToClipboard, saveReportCardPng } from './report-card.js';
 import { resolveResources } from './resources.js';
 import { createCareMonitor, createStatsTracker, formatCompanionTime, formatTokens } from './stats.js';
 
@@ -27,6 +28,7 @@ export function apply(ctx, dependencies = {}) {
     ?? (dependencies.createOverlay ? async () => true : isHostWindowFocused);
   const toastSender = dependencies.sendToast
     ?? (dependencies.createOverlay ? async () => false : sendWindowsToast);
+  const imageClipboardCopier = dependencies.copyImageToClipboard ?? copyImageFileToClipboard;
   const nowFn = dependencies.nowFn ?? (() => new Date());
   const restartDelays = dependencies.restartDelays ?? [1500, 4000, 8000];
   const directory = join(process.env.DSH_HOME || join(homedir(), '.dsh'), 'kurowhale-pet');
@@ -216,7 +218,8 @@ export function apply(ctx, dependencies = {}) {
 
     const buildPanelPayload = () => {
       const nowMs = Date.now();
-      const t = statsTracker.snapshot().today;
+      const snap = statsTracker.snapshot();
+      const t = snap.today;
       const pendingApprovals = collectPendingApprovals();
       const questions = collectPendingQuestions();
       const planReviews = collectPendingPlans();
@@ -247,6 +250,13 @@ export function apply(ctx, dependencies = {}) {
           turns: t.turnsCompleted,
           tools: t.toolCalls,
           tokens: t.tokens.total > 0 ? formatTokens(t.tokens.total) : '',
+          fishStock: snap.fish?.stock ?? 0,
+          feeds: t.feeds ?? 0,
+          streakDays: snap.streak?.currentDays ?? 1,
+        },
+        reports: {
+          today: buildReportCardModel(snap, 'today', preferences.locale),
+          week: buildReportCardModel(snap, 'week', preferences.locale),
         },
       };
     };
@@ -715,11 +725,32 @@ export function apply(ctx, dependencies = {}) {
         return;
       }
       if (kind === 'feed') {
+        const feedResult = statsTracker.feedFish();
+        persistStats();
+        pushPanel();
+        if (!feedResult.consumed) {
+          const emptyLine = pickInteractionLine('feed-empty', loc, interactLines++);
+          setState('eating', 'interact', true);
+          overlay?.fx?.({ kind: 'heart', bounce: true });
+          showBubble({ text: emptyLine, tone: 'chat', ttlMs: 3200 });
+          interactTimer = setTimeout(() => { if (!closed && !diagnostic && !dragging && source === 'interact') resume(); }, 2200);
+          return loc === 'en' ? 'KuroWhale: fish jar is empty (0 left), finish turns or approvals to earn more!' : 'KuroWhale：小鱼干库存为 0，先比个心，完成任务会掉小鱼干哦～';
+        }
         setState('eating', 'interact', true);
-        overlay?.fx?.({ kind: 'sparkle', bounce: true });
-        showBubble({ text: line, tone: 'chat', ttlMs: 3200 });
+        const unlocked = feedResult.newlyUnlocked ?? [];
+        if (unlocked.length > 0) {
+          const badge = loc === 'en' ? unlocked[0].en : unlocked[0].zh;
+          overlay?.fx?.({ kind: 'milestone', bounce: true });
+          showBubble({ text: loc === 'en' ? `Milestone! ${badge}` : `解锁里程碑：${badge}`, tone: 'review', ttlMs: 3800 });
+        } else {
+          overlay?.fx?.({ kind: 'sparkle', bounce: true });
+          const leftMsg = loc === 'en' ? `${line} (${feedResult.stock} left)` : `${line}（余 ${feedResult.stock} 条）`;
+          showBubble({ text: leftMsg, tone: 'chat', ttlMs: 3200 });
+        }
         interactTimer = setTimeout(() => { if (!closed && !diagnostic && !dragging && source === 'interact') resume(); }, 3400);
-        return loc === 'en' ? 'KuroWhale: nibbling a dried fish snack~' : 'KuroWhale：正在啃小鱼干～';
+        return loc === 'en'
+          ? `KuroWhale: nibbling a dried fish snack~ (${feedResult.stock} left)`
+          : `KuroWhale：正在啃小鱼干～（剩余 ${feedResult.stock} 条）`;
       }
       if (kind === 'doze') {
         setState('dozing', 'interact', true);
@@ -846,6 +877,36 @@ export function apply(ctx, dependencies = {}) {
           if (event === 'click') void handleInteractionClick();
           if (event === 'dblclick') void enqueue({ action: 'focus', id: crypto.randomUUID() }).catch(() => {});
           if (event === 'control') void enqueue({ ...data, id: crypto.randomUUID() }).catch(() => {});
+          if (event === 'reportCardSave' || event === 'reportCardCopy') {
+            void (async () => {
+              try {
+                const snap = statsTracker.snapshot();
+                const savedPath = saveReportCardPng({
+                  dataUrl: data?.dataUrl,
+                  directory,
+                  period: data?.period === 'week' ? 'week' : 'today',
+                  dateKey: snap.today.date,
+                  targetPath: data?.targetPath,
+                });
+                let copied = false;
+                if (event === 'reportCardCopy') {
+                  copied = await imageClipboardCopier(savedPath);
+                }
+                audit('report-card-exported', { kind: event, period: data?.period ?? 'today', copied });
+                if (preferences.bubbles) {
+                  const zh = event === 'reportCardCopy'
+                    ? (copied ? '战报卡已复制到剪贴板！' : `战报已保存至 ${basename(savedPath)}`)
+                    : `战报已保存：${basename(savedPath)}`;
+                  const en = event === 'reportCardCopy'
+                    ? (copied ? 'Report card copied to clipboard!' : `Saved report: ${basename(savedPath)}`)
+                    : `Report saved: ${basename(savedPath)}`;
+                  showBubble({ text: preferences.locale === 'en' ? en : zh, tone: 'review', ttlMs: 3000 });
+                }
+              } catch (err) {
+                audit('report-card-error', { error: String(err?.message || err) });
+              }
+            })();
+          }
           if (event === 'native-exited') {
             status.rendererReady = false; status.nativePid = null; overlay = undefined;
             status.lastError = 'Native window exited unexpectedly';
@@ -1034,6 +1095,20 @@ export function apply(ctx, dependencies = {}) {
           note = `KuroWhale: plan ${outcome}.`;
           break;
         }
+        case 'export-report': {
+          const period = c.period === 'week' ? 'week' : 'today';
+          const snap = statsTracker.snapshot();
+          const model = buildReportCardModel(snap, period, preferences.locale);
+          if (overlay && status.rendererReady && typeof overlay.exportReportCard === 'function') {
+            overlay.exportReportCard(model, c.mode ?? 'save');
+            note = preferences.locale === 'en'
+              ? `KuroWhale: generating ${period} Vibe Coding report card in overlay.`
+              : `KuroWhale：正在生成${period === 'week' ? '本周' : '今日'} Vibe Coding 战报卡，请在浮卡内保存或复制。`;
+          } else {
+            note = `KuroWhale ${model.title} (${model.subtitle}): ` + model.metrics.map(m => `${m.label} ${m.value}`).join(' · ');
+          }
+          break;
+        }
         case 'diagnostics': {
           if (!currentDisplays.length) {
             try {
@@ -1204,6 +1279,7 @@ export function apply(ctx, dependencies = {}) {
         if (reason !== 'blocked') {
           statsTracker.recordTurnEnd(reason === 'completed');
           persistStats();
+          if (reason === 'completed') pushPanel();
         }
       }
       eventCounts[type] = (eventCounts[type] ?? 0) + 1;

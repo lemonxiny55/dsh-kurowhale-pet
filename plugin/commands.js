@@ -15,7 +15,8 @@ function parseBool(token) {
 const HELP_TEXT = [
   'KuroWhale commands (/kurowhale <action>):',
   '  status              Show pet state, scale and preferences',
-  '  stats               Show today companion metrics and token summary',
+  '  stats [export [today|week]]  Show companion stats or export PNG report card',
+  '  report [today|week] Generate today or weekly Vibe Coding report card',
   '  panel               Toggle the multi-session approval & stats card',
   '  approve [id]        Allow a pending approval once',
   '  reject [id]         Reject a pending approval',
@@ -52,7 +53,15 @@ export function parseSlashInput(rawInput = '') {
       return { kind: 'status' };
     case 'stats':
     case 'today':
+      if (arg === 'export') {
+        const period = parts[2]?.toLowerCase() === 'week' ? 'week' : 'today';
+        return { kind: 'command', command: { action: 'export-report', period, mode: 'save' } };
+      }
       return { kind: 'stats' };
+    case 'report': {
+      const period = arg?.toLowerCase() === 'week' ? 'week' : 'today';
+      return { kind: 'command', command: { action: 'export-report', period, mode: 'save' } };
+    }
     case 'panel':
     case 'card':
       return { kind: 'command', command: { action: 'panel' } };
@@ -219,17 +228,23 @@ export function registerKuroWhaleCommand(ctx, controller) {
             const s = controller.getSummary();
             const t = s.stats?.today;
             if (!t) return { kind: 'success', text: 'KuroWhale: no stats recorded yet.' };
+            const fishStock = s.stats?.fish?.stock ?? 0;
+            const streakDays = s.stats?.streak?.currentDays ?? 1;
             const parts = [
               `KuroWhale 今日统计 (${t.date}):`,
               `陪伴 ${formatCompanionTime(t.companionSec)}`,
               `完成 ${t.turnsCompleted} 轮`,
               `工具 ${t.toolCalls} 次`,
               `审批 ${t.approvalsHandled} 次`,
+              `小鱼干库存 ${fishStock} 条`,
+              `喂鱼 ${t.feeds ?? 0} 次`,
+              `连续 ${streakDays} 天`,
             ];
             if (t.tokens?.total > 0) {
               const cached = t.tokens.cached > 0 ? ` (缓存 ${formatTokens(t.tokens.cached)})` : '';
               parts.push(`Token ${formatTokens(t.tokens.total)}${cached}`);
             }
+            parts.push('导出战报: /kurowhale stats export [today|week]');
             return { kind: 'success', text: parts.join(' · ') };
           }
           try {

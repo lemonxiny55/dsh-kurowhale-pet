@@ -118,6 +118,10 @@ const INTERACTION_LINES = {
     zh: ['咔嚓咔嚓，小鱼干真香', '投喂收到～', '能量补充完毕'],
     en: ['Crunch crunch, tasty fish!', 'Snack received~'],
   },
+  'feed-empty': {
+    zh: ['小鱼干罐子空啦，多跑两轮任务就攒满～', '口袋里还没有小鱼干，先给你比个心！', '小鱼干库存 0，再完成 1 轮或 1 次审批就掉鱼干啦'],
+    en: ['Fish jar is empty — finish a turn or approval to earn more!', 'Zero fish left, sending a heart instead~'],
+  },
   doze: {
     zh: ['有点困了…', '眯一小会…', 'zZz…'],
     en: ['Getting sleepy…', 'Short nap…'],

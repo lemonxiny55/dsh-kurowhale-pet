@@ -72,7 +72,7 @@ export async function createOverlay(options) {
     applicationId: 'community.kurowhale.pet', defaultMode: 'window', documentRoot: '/resources/', url: '/',
     enableServer: true, enableNativeAPI: true, enableExtensions: true, exportAuthInfo: true,
     extensions: [{ id: 'kurowhaleHost' }], logging: { enabled: false, writeToLogFile: false },
-    nativeAllowList: ['app.*', 'events.*', 'window.*', 'os.setTray', 'extensions.getStats', 'computer.getDisplays', 'clipboard.writeText'],
+    nativeAllowList: ['app.*', 'events.*', 'window.*', 'os.setTray', 'os.showSaveDialog', 'extensions.getStats', 'computer.getDisplays', 'clipboard.writeText'],
     modes: {
       window: {
         title: 'KuroWhale · DSH', width: layout.width, height: layout.height, x: options.x, y: options.y,
@@ -165,6 +165,7 @@ export async function createOverlay(options) {
       fx: data => { void broadcast('kw.fx', data ?? {}).catch(() => {}); },
       chime: tone => { void broadcast('kw.chime', { tone: tone ?? 'waiting' }).catch(() => {}); },
       prefs: preferences => { void broadcast('kw.prefs', preferences).catch(() => {}); },
+      exportReportCard: (model, mode = 'save') => { void broadcast('kw.renderReportCard', { model, mode }).catch(() => {}); },
       setClickThrough: async (enabled, meta = {}) => {
         const applied = await setWindowClickThrough(child.pid, Boolean(enabled));
         void broadcast('kw.clickThrough', { enabled: Boolean(enabled), ...meta }).catch(() => {});
