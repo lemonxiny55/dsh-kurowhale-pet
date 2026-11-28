@@ -5,6 +5,7 @@ import { animations, activityState, activityDetail, resolveActivities, bubbleFor
 import { registerKuroWhaleCommand } from './commands.js';
 import { buildDiagnosticReport, copyTextToClipboard, readRecentErrors } from './diagnostics.js';
 import { computeAnchor, normalizeDisplays, queryWindowsDisplays, resolveSafePosition } from './display.js';
+import { isHostWindowFocused, sendWindowsToast, shouldTriggerAlert } from './notify.js';
 import { computeWindowLayout, createOverlay, focusHostWindow } from './overlay.js';
 import { resolveResources } from './resources.js';
 import { createCareMonitor, createStatsTracker, formatCompanionTime, formatTokens } from './stats.js';
@@ -22,6 +23,10 @@ export function apply(ctx, dependencies = {}) {
   const displayQuerier = dependencies.queryDisplays
     ?? (dependencies.createOverlay ? async () => [] : queryWindowsDisplays);
   const clipboardCopier = dependencies.copyToClipboard ?? copyTextToClipboard;
+  const hostFocusChecker = dependencies.isHostWindowFocused
+    ?? (dependencies.createOverlay ? async () => true : isHostWindowFocused);
+  const toastSender = dependencies.sendToast
+    ?? (dependencies.createOverlay ? async () => false : sendWindowsToast);
   const nowFn = dependencies.nowFn ?? (() => new Date());
   const restartDelays = dependencies.restartDelays ?? [1500, 4000, 8000];
   const directory = join(process.env.DSH_HOME || join(homedir(), '.dsh'), 'kurowhale-pet');
@@ -55,6 +60,10 @@ export function apply(ctx, dependencies = {}) {
       hideWhenIdle: saved.hideWhenIdle ?? config.hideWhenIdle ?? false,
       clickThrough: saved.clickThrough ?? config.clickThrough ?? false,
       sound: saved.sound ?? config.sound ?? false,
+      dndEnabled: saved.dndEnabled ?? config.dndEnabled ?? false,
+      dndStart: saved.dndStart ?? config.dndStart ?? '23:00',
+      dndEnd: saved.dndEnd ?? config.dndEnd ?? '08:00',
+      toast: saved.toast ?? config.toast ?? true,
       careReminders: saved.careReminders ?? config.careReminders ?? true,
       quickApprove: saved.quickApprove ?? config.quickApprove ?? true,
       locale: saved.locale ?? config.locale ?? 'zh',
@@ -68,11 +77,15 @@ export function apply(ctx, dependencies = {}) {
     let state = 'idle', source = 'agent', index = 0, diagnostic = false, dragging = false;
     let clickCount = 0, restartAttempts = 0, screenBounds = null;
     let currentDisplays = [], overlayOpen = false, clickThroughSuspended = false;
+    let lastChimeAt = 0, lastChimeTone = '', lastToastAt = 0, lastToastKind = '';
     const activities = new Map(), details = new Map(), toolNames = new Map(), turnStarts = new Map();
     // Session-level approval audit metadata from `approval/asked` events: key -> Map<approvalId, meta>
     const approvals = new Map();
+    // Session-level pending questions & plan-review items (gracefully populated when DSH emits optional fields).
+    const pendingQuestions = new Map(), pendingPlans = new Map();
     // Live interactive approval requests intercepted via `approval/request` waterfall: id -> entry
     const liveRequests = new Map();
+    const liveQuestionRequests = new Map(), livePlanRequests = new Map();
     // Track approval ids already counted via quick action so `approval/decided` doesn't double-count.
     const quickCountedApprovals = new Set();
     // Weak references to live agents for safe in-process cancellation without leaking memory.
@@ -143,12 +156,76 @@ export function apply(ctx, dependencies = {}) {
       return items;
     };
 
+    const collectPendingQuestions = () => {
+      const items = [];
+      const seenIds = new Set();
+      for (const req of liveQuestionRequests.values()) {
+        items.push({
+          id: req.id,
+          session: alias(req.sessionKey),
+          prompt: req.prompt || '',
+          options: req.options ?? [],
+          canAnswer: true,
+        });
+        seenIds.add(`${req.sessionKey}:${req.rawId ?? req.prompt}`);
+      }
+      for (const [sessionKey, map] of pendingQuestions) {
+        for (const [id, meta] of map) {
+          const dedup = `${sessionKey}:${meta.id ?? meta.prompt}`;
+          if (seenIds.has(dedup)) continue;
+          items.push({
+            id,
+            session: alias(sessionKey),
+            prompt: meta.prompt || '',
+            options: meta.options ?? [],
+            canAnswer: false,
+          });
+        }
+      }
+      return items;
+    };
+
+    const collectPendingPlans = () => {
+      const items = [];
+      const seenIds = new Set();
+      for (const req of livePlanRequests.values()) {
+        items.push({
+          id: req.id,
+          session: alias(req.sessionKey),
+          title: req.title || '',
+          summary: req.summary || '',
+          canDecide: true,
+        });
+        seenIds.add(`${req.sessionKey}:${req.rawId ?? req.title}`);
+      }
+      for (const [sessionKey, map] of pendingPlans) {
+        for (const [id, meta] of map) {
+          const dedup = `${sessionKey}:${meta.id ?? meta.title}`;
+          if (seenIds.has(dedup)) continue;
+          items.push({
+            id,
+            session: alias(sessionKey),
+            title: meta.title || '',
+            summary: meta.summary || '',
+            canDecide: false,
+          });
+        }
+      }
+      return items;
+    };
+
     const buildPanelPayload = () => {
       const nowMs = Date.now();
       const t = statsTracker.snapshot().today;
       const pendingApprovals = collectPendingApprovals();
+      const questions = collectPendingQuestions();
+      const planReviews = collectPendingPlans();
       const sessionRows = [...activities].map(([key, value]) => {
-        const eff = (approvals.get(key)?.size || [...liveRequests.values()].some(r => r.sessionKey === key)) ? 'waiting' : value;
+        const hasWait = approvals.get(key)?.size
+          || pendingQuestions.get(key)?.size
+          || pendingPlans.get(key)?.size
+          || [...liveRequests.values(), ...liveQuestionRequests.values(), ...livePlanRequests.values()].some(r => r.sessionKey === key);
+        const eff = hasWait ? 'waiting' : value;
         const started = turnStarts.get(key);
         return {
           alias: alias(key),
@@ -162,6 +239,8 @@ export function apply(ctx, dependencies = {}) {
       return {
         state,
         approvals: pendingApprovals,
+        questions,
+        planReviews,
         sessions: sessionRows,
         stats: {
           companion: formatCompanionTime(t.companionSec),
@@ -184,11 +263,13 @@ export function apply(ctx, dependencies = {}) {
       preferences: { ...preferences }, lastCommand,
       sessions: [...activities].map(([key, value]) => ({
         alias: alias(key),
-        state: (approvals.get(key)?.size || [...liveRequests.values()].some(r => r.sessionKey === key)) ? 'waiting' : value,
+        state: (approvals.get(key)?.size || pendingQuestions.get(key)?.size || pendingPlans.get(key)?.size || [...liveRequests.values(), ...liveQuestionRequests.values(), ...livePlanRequests.values()].some(r => r.sessionKey === key)) ? 'waiting' : value,
         detail: details.get(key),
         ...(toolNames.get(key) ? { toolName: toolNames.get(key) } : {}),
       })),
       pendingApprovals: collectPendingApprovals(),
+      pendingQuestions: collectPendingQuestions(),
+      pendingPlans: collectPendingPlans(),
       stats: statsTracker.snapshot(),
       framesDrawn: Object.fromEntries([...seen].map(([k, v]) => [k, [...v].sort((a, b) => a - b)])),
       eventCounts,
@@ -438,14 +519,68 @@ export function apply(ctx, dependencies = {}) {
       return { activeCount, waitingCount, primaryDetail, firstApproval: pendingList[0] };
     };
 
+    const dispatchAlert = async (tone, message) => {
+      const now = nowFn();
+      const nowMs = now.getTime();
+      if (shouldTriggerAlert({
+        enabled: Boolean(preferences.sound),
+        dndEnabled: Boolean(preferences.dndEnabled),
+        dndStart: preferences.dndStart,
+        dndEnd: preferences.dndEnd,
+        now,
+      })) {
+        if (tone !== lastChimeTone || nowMs - lastChimeAt >= 1200) {
+          lastChimeTone = tone;
+          lastChimeAt = nowMs;
+          overlay?.chime?.(tone);
+        }
+      }
+      if (!shouldTriggerAlert({
+        enabled: preferences.toast !== false,
+        dndEnabled: Boolean(preferences.dndEnabled),
+        dndStart: preferences.dndStart,
+        dndEnd: preferences.dndEnd,
+        now,
+      })) return;
+      if (!message || (tone === lastToastKind && nowMs - lastToastAt < 4000)) return;
+      let focused = false;
+      try { focused = await hostFocusChecker(); } catch {}
+      if (closed || focused) return;
+      lastToastKind = tone;
+      lastToastAt = nowMs;
+      const en = preferences.locale === 'en';
+      const title = tone === 'waiting'
+        ? (en ? 'KuroWhale · Waiting for input' : 'KuroWhale · 等待你的确认')
+        : tone === 'review'
+          ? (en ? 'KuroWhale · Turn completed' : 'KuroWhale · 本轮已完成')
+          : (en ? 'KuroWhale · Attention needed' : 'KuroWhale · 遇到异常');
+      audit('toast-sent', { tone });
+      void toastSender({
+        title,
+        body: message,
+        kind: tone,
+        onAction: actionKind => {
+          if (closed) return;
+          if (actionKind === 'panel' && overlay && status.rendererReady) {
+            void enqueue({ action: 'panel', value: true, id: crypto.randomUUID() }).catch(() => {});
+          } else {
+            void enqueue({ action: 'focus', id: crypto.randomUUID() }).catch(() => {});
+          }
+        },
+      }).catch(() => {});
+    };
+
     const resume = (bubbleOptions) => {
       diagnostic = false;
       clearTimeout(cycleTimer);
       const effectiveStates = [...activities].map(([key, value]) => {
-        const hasPending = approvals.get(key)?.size || [...liveRequests.values()].some(r => r.sessionKey === key);
+        const hasPending = approvals.get(key)?.size
+          || pendingQuestions.get(key)?.size
+          || pendingPlans.get(key)?.size
+          || [...liveRequests.values(), ...liveQuestionRequests.values(), ...livePlanRequests.values()].some(r => r.sessionKey === key);
         return hasPending ? 'waiting' : value;
       });
-      if (liveRequests.size > 0) effectiveStates.push('waiting');
+      if (liveRequests.size > 0 || liveQuestionRequests.size > 0 || livePlanRequests.size > 0) effectiveStates.push('waiting');
       const next = resolveActivities(effectiveStates);
       const prevState = state;
       if (next !== 'idle') void wakeFromAutoHide();
@@ -464,24 +599,29 @@ export function apply(ctx, dependencies = {}) {
         return;
       }
       const { activeCount, waitingCount, primaryDetail, firstApproval } = aggregateContext();
+      const totalWaiting = waitingCount + collectPendingQuestions().length + collectPendingPlans().length;
       const bubble = bubbleForState({
         state: next,
         detail: bubbleOptions?.detail ?? primaryDetail,
         activeCount,
-        waitingCount,
+        waitingCount: totalWaiting,
         durationMs: bubbleOptions?.durationMs,
         locale: preferences.locale,
       });
       if (bubble) {
-        if (next === 'waiting' && firstApproval?.toolName && waitingCount === 1) {
+        if (next === 'waiting' && firstApproval?.toolName && totalWaiting === 1) {
           bubble.text = preferences.locale === 'en'
             ? `Approve ${firstApproval.toolName}`
             : `待审批 · ${firstApproval.toolName}`;
         }
         showBubble(bubble);
       }
-      if (next === 'waiting' && (prevState !== 'waiting' || bubbleOptions?.newApproval) && preferences.sound) {
-        overlay?.chime?.('waiting');
+      if (next === 'waiting' && (prevState !== 'waiting' || bubbleOptions?.newApproval)) {
+        void dispatchAlert('waiting', bubble?.text ?? 'Approval needed');
+      } else if (next === 'review' && prevState !== 'review') {
+        void dispatchAlert('review', bubble?.text ?? 'Completed');
+      } else if (next === 'failed' && prevState !== 'failed') {
+        void dispatchAlert('failed', bubble?.text ?? 'Failed');
       }
     };
 
@@ -823,7 +963,7 @@ export function apply(ctx, dependencies = {}) {
         }
         case 'pref': {
           const key = c.key;
-          if (!['bubbles', 'patrol', 'hideWhenIdle', 'clickThrough', 'sound', 'careReminders', 'quickApprove', 'locale'].includes(key)) {
+          if (!['bubbles', 'patrol', 'hideWhenIdle', 'clickThrough', 'sound', 'dndEnabled', 'toast', 'careReminders', 'quickApprove', 'locale'].includes(key)) {
             throw Error(`Unknown preference: ${key}`);
           }
           if (key === 'locale') {
@@ -850,6 +990,48 @@ export function apply(ctx, dependencies = {}) {
           if (key === 'careReminders' && preferences.careReminders) careMonitor.resetFocus();
           audit('preference', { key, value: preferences[key] });
           snapshot();
+          break;
+        }
+        case 'dnd-range': {
+          preferences.dndEnabled = true;
+          preferences.dndStart = c.start;
+          preferences.dndEnd = c.end;
+          persist();
+          overlay?.prefs?.({ ...preferences });
+          audit('preference', { key: 'dndRange', start: c.start, end: c.end });
+          snapshot();
+          note = `KuroWhale: DND enabled (${c.start}-${c.end}).`;
+          break;
+        }
+        case 'question-answer': {
+          const target = c.questionId ? liveQuestionRequests.get(c.questionId) : liveQuestionRequests.values().next().value;
+          if (!target) {
+            await hostFocuser();
+            note = 'Switched to DSH to answer question.';
+            break;
+          }
+          liveQuestionRequests.delete(target.id);
+          target.resolve(c.answer ?? '');
+          audit('question-quick-answered', { id: target.id });
+          pushPanel();
+          if (!diagnostic && !dragging) resume();
+          note = `KuroWhale: answered "${String(c.answer ?? '')}".`;
+          break;
+        }
+        case 'plan-decide': {
+          const outcome = c.outcome === 'approved' ? 'approved' : 'rejected';
+          const target = c.planId ? livePlanRequests.get(c.planId) : livePlanRequests.values().next().value;
+          if (!target) {
+            await hostFocuser();
+            note = 'Switched to DSH to review plan.';
+            break;
+          }
+          livePlanRequests.delete(target.id);
+          target.resolve(outcome);
+          audit('plan-quick-decided', { id: target.id, outcome });
+          pushPanel();
+          if (!diagnostic && !dragging) resume();
+          note = `KuroWhale: plan ${outcome}.`;
           break;
         }
         case 'diagnostics': {
@@ -957,6 +1139,8 @@ export function apply(ctx, dependencies = {}) {
       let durationMs;
       if (type === 'turn/start') {
         approvals.delete(key);
+        pendingQuestions.delete(key);
+        pendingPlans.delete(key);
         toolNames.delete(key);
         turnStarts.set(key, Date.now());
       }
@@ -983,8 +1167,37 @@ export function apply(ctx, dependencies = {}) {
           persistStats();
         }
       }
+      if (type === 'question/asked' || type === 'input/requested') {
+        if (!pendingQuestions.has(key)) pendingQuestions.set(key, new Map());
+        const qId = event.data?.id ?? 'question-pending';
+        if (!pendingQuestions.get(key).has(qId)) newApproval = true;
+        const rawOptions = Array.isArray(event.data?.options ?? event.data?.choices) ? (event.data.options ?? event.data.choices) : [];
+        const options = rawOptions.slice(0, 4).map(opt => (typeof opt === 'string' ? opt : String(opt?.label ?? opt?.title ?? opt?.value ?? ''))).filter(Boolean);
+        const promptText = event.data?.question ?? event.data?.prompt ?? event.data?.title ?? event.data?.text ?? '';
+        pendingQuestions.get(key).set(qId, { id: qId, prompt: String(promptText), options });
+      }
+      if (type === 'question/answered' || type === 'input/resolved') {
+        const qId = event.data?.id ?? 'question-pending';
+        pendingQuestions.get(key)?.delete(qId);
+      }
+      if (type === 'plan/review' || type === 'plan/proposed') {
+        if (!pendingPlans.has(key)) pendingPlans.set(key, new Map());
+        const pId = event.data?.id ?? 'plan-pending';
+        if (!pendingPlans.get(key).has(pId)) newApproval = true;
+        const title = event.data?.title ?? event.data?.name ?? '';
+        const summary = event.data?.summary ?? event.data?.reason ?? event.data?.description ?? '';
+        pendingPlans.get(key).set(pId, { id: pId, title: String(title), summary: String(summary) });
+      }
+      if (type === 'plan/decided' || type === 'plan/approved' || type === 'plan/rejected') {
+        const pId = event.data?.id ?? 'plan-pending';
+        pendingPlans.get(key)?.delete(pId);
+      }
       if (type === 'turn/end') {
-        if (next !== 'waiting') approvals.delete(key);
+        if (next !== 'waiting') {
+          approvals.delete(key);
+          pendingQuestions.delete(key);
+          pendingPlans.delete(key);
+        }
         const started = turnStarts.get(key);
         if (started) { durationMs = Date.now() - started; turnStarts.delete(key); }
         const reason = event.data?.reason?.kind ?? event.data?.reason;
@@ -1062,6 +1275,7 @@ export function apply(ctx, dependencies = {}) {
       const key = agent?.session?.id ?? agent?.id;
       if (!key) return;
       activities.delete(key); details.delete(key); toolNames.delete(key); approvals.delete(key);
+      pendingQuestions.delete(key); pendingPlans.delete(key);
       turnStarts.delete(key); agentRefs.delete(key);
       clearTimeout(timeouts.get(key)); timeouts.delete(key);
       if (!diagnostic && !dragging) resume();
@@ -1109,6 +1323,10 @@ export function apply(ctx, dependencies = {}) {
       stopPatrol(); stopIdleHide();
       for (const req of liveRequests.values()) req.resolve('cancelled');
       liveRequests.clear();
+      for (const req of liveQuestionRequests.values()) req.resolve(null);
+      liveQuestionRequests.clear();
+      for (const req of livePlanRequests.values()) req.resolve('cancelled');
+      livePlanRequests.clear();
       for (const t of timeouts.values()) clearTimeout(t);
       offEvent(); offApprovalRequest?.(); offStatus(); offDisposed(); offCommand();
       persistStats();

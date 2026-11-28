@@ -90,3 +90,38 @@ test('native frontend supports 12-row v0.3.0 atlas, 9-row skin fallback, and kw.
  assert.equal(await runCase(2496),9*208,'12-row atlas must draw row 9 directly');
  assert.equal(await runCase(1872),3*208,'9-row custom skin must gracefully fall back row 9 -> row 3');
 });
+
+test('native panel collapses 3+ active sessions and renders question and plan-review cards safely',async()=>{
+ const html=await readFile(new URL('../native/index.html',import.meta.url),'utf8');
+ const source=[...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].at(-1)[1];
+ const listeners=new Map(),elements=new Map();
+ const element=id=>{if(!elements.has(id))elements.set(id,{style:{},getBoundingClientRect:()=>({width:160,height:232}),getContext:()=>({clearRect(){},drawImage(){}})});return elements.get(id);};
+ const dispatch=(name,data)=>listeners.get(name)?.({detail:data});
+ const sandbox={console,Date,Math,Set,Promise,Number,Boolean,performance:{now:()=>100},devicePixelRatio:1.5,innerWidth:160,innerHeight:232,screen:{availLeft:0,availTop:0,availWidth:1707,availHeight:1020},document:{getElementById:element},setInterval:()=>0,setTimeout:()=>0,clearTimeout:()=>{},
+ Image:class{naturalWidth=1536;naturalHeight=2496;set src(_){queueMicrotask(()=>this.onload());}},
+ Neutralino:{init:()=>Promise.resolve(),app:{exit:()=>Promise.resolve()},extensions:{getStats:async()=>({connected:['kurowhaleHost']})},os:{setTray:()=>Promise.resolve()},window:{move:async()=>{},setSize:async()=>{}},events:{on:(n,fn)=>listeners.set(n,fn),broadcast:async(n,data)=>{queueMicrotask(()=>dispatch(n,data));}}}};
+ vm.runInNewContext(source,sandbox);
+ await dispatch('kw.initialize',{width:240,height:438,petWidth:240,petHeight:260,bubbleSpace:68,x:120,y:120,scale:1.25,topmost:true});
+ for(let i=0;i<20;i++)await Promise.resolve();
+ dispatch('kw.panel',{
+  state:'waiting',
+  approvals:[],
+  questions:[{id:'q1',session:'session-1',prompt:'Pick <mode>?',options:['Fast','Safe'],canAnswer:true}],
+  planReviews:[{id:'p1',session:'session-2',title:'Plan A',summary:'Check <diff>',canDecide:false}],
+  sessions:[
+   {alias:'session-1',state:'waiting',toolName:'bash',elapsedSec:5},
+   {alias:'session-2',state:'running',toolName:'edit',elapsedSec:8},
+   {alias:'session-3',state:'running',toolName:'grep',elapsedSec:2},
+  ],
+  stats:{companion:'5m',turns:1,tools:2,tokens:''},
+ });
+ const bodyHtml=elements.get('panelBody').innerHTML;
+ assert.match(bodyHtml,/Pick &lt;mode&gt;\?/);
+ assert.match(bodyHtml,/Plan A/);
+ assert.match(bodyHtml,/展开全部 3 个活跃会话/);
+ assert.doesNotMatch(bodyHtml,/session-3/);
+ elements.get('panel').onclick({target:{dataset:{act:'toggle-sessions'}}});
+ for(let i=0;i<20;i++)await Promise.resolve();
+ assert.match(elements.get('panelBody').innerHTML,/session-3/);
+ assert.match(elements.get('panelBody').innerHTML,/收起多余会话/);
+});

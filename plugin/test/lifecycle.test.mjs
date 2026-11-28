@@ -412,3 +412,70 @@ test('smart click-through wakes on approval/failure, restores afterward, and dia
     await cleanup();cleanup=null;
   }finally{if(cleanup)await cleanup();if(previous===undefined)delete process.env.DSH_HOME;else process.env.DSH_HOME=previous;await rm(temp,{recursive:true,force:true});}
 });
+
+test('tiered chimes, DND gating, unfocused Windows Toast click, and question/plan fallback work end-to-end',async()=>{
+  const temp=await mkdtemp(join(tmpdir(),'kurowhale-m2-'));const previous=process.env.DSH_HOME;process.env.DSH_HOME=temp;
+  let cleanup,sessionHandler,registered;
+  const chimes=[],toasts=[],panels=[],panelToggles=[];let focused=0,hostIsFocused=false;
+  let fakeNow=new Date(2026,10,28,15,0,0);
+  try{
+    const dir=join(temp,'kurowhale-pet');await mkdir(dir);
+    await writeFile(join(dir,'local.json'),JSON.stringify({patrol:false,sound:true,toast:true}));
+    await writeFile(join(dir,'pet.json'),JSON.stringify({spritesheetPath:'spritesheet.webp'}));
+    apply({
+      effect:fn=>{cleanup=fn();},
+      on:(ev,fn)=>{if(ev==='session/event')sessionHandler=fn;return ()=>{};},
+      commands:{register:def=>{registered=def;return ()=>{};}},
+    },{
+      nowFn:()=>fakeNow,
+      isHostWindowFocused:async()=>hostIsFocused,
+      focusHostWindow:async()=>{focused++;return true;},
+      sendToast:async opts=>{toasts.push(opts);opts.onAction?.(opts.kind==='waiting'?'panel':'focus');return true;},
+      resolveResources:async()=>({assetDirectory:dir,runtimePath:'custom-runtime'}),
+      createOverlay:async()=>({
+        pid:601,destroy(){},frame(){},bubble(){},prefs(){},
+        chime:tone=>chimes.push(tone),
+        panel:p=>panels.push(p),
+        togglePanel:open=>panelToggles.push(open),
+        inspect:async()=>({visible:true}),hide:async()=>{},show:async()=>{},
+      }),
+    });
+    await wait(40);
+
+    // Waiting question (with missing optional fields) triggers waiting chime + Toast -> opens panel.
+    sessionHandler({id:'s1'},{type:'question/asked',data:{id:'q1'}});
+    await wait(30);
+    assert.equal(chimes.at(-1),'waiting');
+    assert.equal(toasts.at(-1).kind,'waiting');
+    assert.equal(panelToggles.at(-1),true);
+    assert.equal(panels.at(-1).questions.length,1);
+
+    // Completion review triggers review chime + Toast -> focuses DSH.
+    sessionHandler({id:'s1'},{type:'question/answered',data:{id:'q1'}});
+    sessionHandler({id:'s1'},{type:'turn/end',data:{reason:{kind:'completed'}}});
+    await wait(30);
+    assert.equal(chimes.at(-1),'review');
+    assert.equal(toasts.at(-1).kind,'review');
+    assert.ok(focused>=1);
+
+    // Failure triggers failed chime when DSH is focused (suppresses Toast, keeps chime).
+    hostIsFocused=true;
+    const toastCountBefore=toasts.length;
+    sessionHandler({id:'s2'},{type:'turn/end',data:{reason:{kind:'error'}}});
+    await wait(30);
+    assert.equal(chimes.at(-1),'failed');
+    assert.equal(toasts.length,toastCountBefore,'Toast should be suppressed when DSH is already focused');
+
+    // Enable DND 23:00-08:00 and move clock to 23:30: both chime and Toast are suppressed.
+    await registered.handler({rawInput:'dnd 23:00-08:00'});
+    fakeNow=new Date(2026,10,28,23,30,0);
+    hostIsFocused=false;
+    const chimesBeforeDnd=chimes.length,toastsBeforeDnd=toasts.length;
+    sessionHandler({id:'s3'},{type:'plan/review',data:{id:'p1'}});
+    await wait(30);
+    assert.equal(chimes.length,chimesBeforeDnd,'chime should be muted during DND');
+    assert.equal(toasts.length,toastsBeforeDnd,'toast should be suppressed during DND');
+
+    await cleanup();cleanup=null;
+  }finally{if(cleanup)await cleanup();if(previous===undefined)delete process.env.DSH_HOME;else process.env.DSH_HOME=previous;await rm(temp,{recursive:true,force:true});}
+});

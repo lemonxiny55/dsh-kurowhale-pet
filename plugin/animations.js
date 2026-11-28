@@ -28,15 +28,15 @@ export function classifyTool(toolName) {
 }
 
 export function activityState(type, data = {}) {
-  if (type === 'approval/asked') return 'waiting';
-  if (type === 'approval/decided') return 'running';
+  if (type === 'approval/asked' || type === 'question/asked' || type === 'input/requested' || type === 'plan/review' || type === 'plan/proposed') return 'waiting';
+  if (type === 'approval/decided' || type === 'question/answered' || type === 'input/resolved' || type === 'plan/decided' || type === 'plan/approved' || type === 'plan/rejected') return 'running';
   if ([
     'turn/start', 'step/start', 'assistant/chunk', 'tool/call', 'tool/result',
     'command/run', 'subagent/start', 'subagent/progress',
   ].includes(type)) return 'running';
   if (type === 'turn/end') {
     const reason = data.reason?.kind ?? data.reason;
-    if (reason === 'blocked') return 'waiting';
+    if (reason === 'blocked' || reason === 'question' || reason === 'plan-review') return 'waiting';
     if (reason === 'interrupted' || reason === 'cancelled') return 'failed';
     return reason === 'completed' ? 'review' : 'failed';
   }
@@ -45,7 +45,9 @@ export function activityState(type, data = {}) {
 
 export function activityDetail(type, data = {}) {
   if (type === 'approval/asked') return 'approval';
-  if (type === 'approval/decided') return 'working';
+  if (type === 'question/asked' || type === 'input/requested') return 'question';
+  if (type === 'plan/review' || type === 'plan/proposed') return 'plan-review';
+  if (type === 'approval/decided' || type === 'question/answered' || type === 'input/resolved' || type === 'plan/decided' || type === 'plan/approved' || type === 'plan/rejected') return 'working';
   if (type === 'command/run') return 'command';
   if (type === 'subagent/start' || type === 'subagent/progress') return 'subagent';
   if (type === 'tool/call') return classifyTool(data.name ?? data.toolName ?? data.tool?.name);
@@ -59,6 +61,8 @@ export function activityDetail(type, data = {}) {
   if (type === 'turn/end') {
     const reason = data.reason?.kind ?? data.reason;
     if (reason === 'blocked') return 'approval';
+    if (reason === 'question') return 'question';
+    if (reason === 'plan-review') return 'plan-review';
     if (reason === 'completed') return 'completed';
     if (reason === 'interrupted' || reason === 'cancelled') return 'interrupted';
     return 'error';
@@ -171,9 +175,16 @@ export function bubbleForState({
   const dur = formatDuration(durationMs);
 
   if (state === 'waiting') {
-    const text = waitingCount > 1
-      ? (en ? `${waitingCount} approvals pending` : `${waitingCount} 项待审批`)
-      : (en ? 'Approval needed' : '等待审批');
+    let text;
+    if (waitingCount > 1) {
+      text = en ? `${waitingCount} items waiting` : `${waitingCount} 项待处理`;
+    } else if (detail === 'question') {
+      text = en ? 'Question waiting' : '等待回答问题';
+    } else if (detail === 'plan-review') {
+      text = en ? 'Plan review ready' : '待评审方案';
+    } else {
+      text = en ? 'Approval needed' : '等待审批';
+    }
     return { text, tone: 'waiting', ttlMs: 0, sticky: true, clickable: true };
   }
 

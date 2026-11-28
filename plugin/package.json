@@ -25,6 +25,7 @@
     "commands.js",
     "diagnostics.js",
     "display.js",
+    "notify.js",
     "overlay.js",
     "stats.js",
     "native/",

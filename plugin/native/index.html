@@ -36,6 +36,12 @@ canvas:active{cursor:grabbing}
 .p-sec{margin-bottom:8px}
 .p-label{font-size:10.5px;font-weight:600;color:#7a7e92;letter-spacing:.4px;margin-bottom:5px;text-transform:uppercase}
 .p-card{background:#fffaf0;border:1px solid rgba(224,148,42,.28);border-left:3px solid #e0942a;border-radius:9px;padding:7px 9px;margin-bottom:6px}
+.p-card-q{background:#f2f7ff;border:1px solid rgba(76,142,245,.28);border-left:3px solid #4c8ef5}
+.p-card-plan{background:#f5f4ff;border:1px solid rgba(110,98,214,.28);border-left:3px solid #6e62d6}
+.p-chip{border:1px solid rgba(76,142,245,.28);background:#fff;color:#264c8f;border-radius:999px;padding:3px 9px;font-size:11px;cursor:pointer;margin:0;width:auto}
+.p-chip:hover{background:#e7f0ff}
+.p-toggle-link{display:block;width:100%;border:1px dashed rgba(28,30,42,.14);background:transparent;color:#5a5e73;border-radius:7px;padding:4px 6px;font-size:11px;cursor:pointer;text-align:center;margin-top:2px}
+.p-toggle-link:hover{background:rgba(28,30,42,.04)}
 .p-tool{font-weight:600;font-size:12px;color:#1d1f2b;word-break:break-all}
 .p-reason{font-size:11px;color:#5a5d70;margin:3px 0 7px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
 .p-btns{display:flex;gap:5px;flex-wrap:wrap}
@@ -96,6 +102,8 @@ small{display:block;color:#a59cb8;font-size:10.5px;margin-top:3px}
     <button id="clickThrough">专注穿透：关</button>
     <button id="care">关怀：开</button>
     <button id="sound">提示音：关</button>
+    <button id="dnd">勿扰：关</button>
+    <button id="toast">桌面通知：开</button>
   </div>
   <div class="row"><button id="center">回中央</button><button id="hide">隐藏</button><button id="close" class="danger">关闭</button></div>
   <details><summary>开发者诊断</summary>
@@ -111,10 +119,10 @@ const later=typeof setTimeout==='function'?setTimeout:()=>0;
 const cancelLater=typeof clearTimeout==='function'?clearTimeout:()=>{};
 const raf=typeof requestAnimationFrame==='function'?requestAnimationFrame:null;
 let initialized=false,loaded=false,atlasRows=9,layout,position={x:80,y:80},drag=null,directive={row:0,index:0,state:'idle'},seen=new Set(),missingHost=0,onTop=true,uiQueue=Promise.resolve();
-let prefs={bubbles:true,patrol:true,hideWhenIdle:false,clickThrough:false,sound:false,careReminders:true};
-let clickThroughActive=false,wakeHighlight=false,displaysCache=[],lastScreenSig='';
+let prefs={bubbles:true,patrol:true,hideWhenIdle:false,clickThrough:false,sound:false,dndEnabled:false,dndStart:'23:00',dndEnd:'08:00',toast:true,careReminders:true};
+let clickThroughActive=false,wakeHighlight=false,displaysCache=[],lastScreenSig='',sessionsExpanded=false;
 let bubbleTimer=0,bubbleClickable=false,bubbleTone='chat',lastClickAt=0,clickTimer=0,menuOpen=false,panelOpen=false;
-let panelData={state:'idle',approvals:[],sessions:[],stats:{companion:'<1m',turns:0,tools:0,tokens:''}};
+let panelData={state:'idle',approvals:[],questions:[],planReviews:[],sessions:[],stats:{companion:'<1m',turns:0,tools:0,tokens:''}};
 
 // Smooth 60fps true side-profile turn -> walk -> return-turn motion state & micro-particles.
 let bounceAnim=null,patrolAnim=null,shakeAnim=null,particles=[],dozeParticleAt=0,rafId=0,moveBusy=false,dragTilt=0;
@@ -311,12 +319,16 @@ function syncMenuLabels(){
   set('clickThrough','专注穿透：'+(prefs.clickThrough?'开':'关'));
   set('care','关怀：'+(prefs.careReminders!==false?'开':'关'));
   set('sound','提示音：'+(prefs.sound?'开':'关'));
+  set('dnd','勿扰：'+(prefs.dndEnabled?'开':'关'));
+  set('toast','桌面通知：'+(prefs.toast!==false?'开':'关'));
   if(badgeEl)badgeEl.textContent=directive.state||'idle';
 }
 function renderPanel(){
   if(!panelBody)return;
   if(panelDot)panelDot.className='p-dot '+(panelData.state||'idle');
   const approvals=Array.isArray(panelData.approvals)?panelData.approvals:[];
+  const questions=Array.isArray(panelData.questions)?panelData.questions:[];
+  const planReviews=Array.isArray(panelData.planReviews)?panelData.planReviews:[];
   const sessions=Array.isArray(panelData.sessions)?panelData.sessions:[];
   const stats=panelData.stats||{};
   const parts=[];
@@ -334,17 +346,50 @@ function renderPanel(){
     }
     parts.push('</div>');
   }
+  if(questions.length){
+    parts.push('<div class="p-sec"><div class="p-label">待回答问题 ('+questions.length+')</div>');
+    for(const q of questions){
+      parts.push('<div class="p-card p-card-q"><div class="p-tool">'+esc(q.session||'提问')+'</div>');
+      if(q.prompt)parts.push('<div class="p-reason">'+esc(q.prompt)+'</div>');
+      parts.push('<div class="p-btns">');
+      if(q.canAnswer&&Array.isArray(q.options)&&q.options.length){
+        for(const opt of q.options.slice(0,3)){
+          parts.push('<button class="p-chip" data-act="answer-q" data-id="'+esc(q.id)+'" data-ans="'+esc(opt)+'">'+esc(opt)+'</button>');
+        }
+      }
+      parts.push('<button class="p-btn-sub" data-act="focus">切到 DSH</button></div></div>');
+    }
+    parts.push('</div>');
+  }
+  if(planReviews.length){
+    parts.push('<div class="p-sec"><div class="p-label">待评审方案 ('+planReviews.length+')</div>');
+    for(const p of planReviews){
+      parts.push('<div class="p-card p-card-plan"><div class="p-tool">'+esc(p.title||'执行计划')+'</div>');
+      if(p.summary)parts.push('<div class="p-reason">'+esc(p.summary)+'</div>');
+      parts.push('<div class="p-btns">');
+      if(p.canDecide){
+        parts.push('<button class="p-btn-primary" data-act="plan-approve" data-id="'+esc(p.id)+'">通过</button>');
+        parts.push('<button class="p-btn-sub" data-act="plan-reject" data-id="'+esc(p.id)+'">退回</button>');
+      }
+      parts.push('<button class="p-btn-sub" data-act="focus">切到 DSH 评审</button></div></div>');
+    }
+    parts.push('</div>');
+  }
   const active=sessions.filter(s=>s.state!=='idle');
   parts.push('<div class="p-sec"><div class="p-label">活跃会话 ('+active.length+')</div>');
   if(!active.length){
     parts.push('<div class="p-empty">当前无进行中的会话</div>');
   }else{
-    for(const s of active){
+    const visibleSessions=(!sessionsExpanded&&active.length>2)?active.slice(0,2):active;
+    for(const s of visibleSessions){
       const label=s.toolName?s.toolName:(s.detail||s.state);
       const dur=s.elapsedSec>0?(' · '+s.elapsedSec+'s'):'';
       parts.push('<div class="p-row"><div class="p-row-info"><span class="p-dot '+esc(s.state)+'"></span><span>'+esc(s.alias)+' · '+esc(label)+'</span><span class="p-meta">'+esc(dur)+'</span></div>');
       if(s.canCancel)parts.push('<button class="p-btn-danger" data-act="stop" data-alias="'+esc(s.alias)+'">停止</button>');
       parts.push('</div>');
+    }
+    if(active.length>2){
+      parts.push('<button class="p-toggle-link" data-act="toggle-sessions">'+(sessionsExpanded?'收起多余会话 ▴':'展开全部 '+active.length+' 个活跃会话 ▾')+'</button>');
     }
   }
   parts.push('</div>');
@@ -410,21 +455,27 @@ function showBubble(payload){
   bubbleEl.style.display=(menuOpen||panelOpen)?'none':'block';
   if(!payload.sticky&&payload.ttlMs>0){bubbleTimer=later(()=>{bubbleEl.style.display='none';bubbleClickable=false;},payload.ttlMs);}
 }
-function playChime(){
+function playChime(tone='waiting'){
   try{
     const AC=typeof AudioContext!=='undefined'?AudioContext:(typeof webkitAudioContext!=='undefined'?webkitAudioContext:null);
     if(!AC)return;
     const ac=new AC();const now=ac.currentTime;
-    for(const [freq,offset] of [[659.25,0],[880,0.11]]){
+    const profiles={
+      waiting:{type:'sine',notes:[[659.25,0,0.06,0.22],[880,0.11,0.06,0.22]]},
+      review:{type:'triangle',notes:[[523.25,0,0.045,0.16],[659.25,0.09,0.045,0.18],[783.99,0.18,0.05,0.22]]},
+      failed:{type:'sine',notes:[[293.66,0,0.055,0.18],[246.94,0.13,0.055,0.24]]},
+    };
+    const spec=profiles[tone]||profiles.waiting;
+    for(const [freq,offset,peak,dur] of spec.notes){
       const osc=ac.createOscillator(),gain=ac.createGain();
-      osc.type='sine';osc.frequency.setValueAtTime(freq,now+offset);
+      osc.type=spec.type;osc.frequency.setValueAtTime(freq,now+offset);
       gain.gain.setValueAtTime(0.001,now+offset);
-      gain.gain.exponentialRampToValueAtTime(0.06,now+offset+0.02);
-      gain.gain.exponentialRampToValueAtTime(0.001,now+offset+0.22);
+      gain.gain.exponentialRampToValueAtTime(peak,now+offset+0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001,now+offset+dur);
       osc.connect(gain);gain.connect(ac.destination);
-      osc.start(now+offset);osc.stop(now+offset+0.24);
+      osc.start(now+offset);osc.stop(now+offset+dur+0.02);
     }
-    later(()=>{try{ac.close();}catch{}},450);
+    later(()=>{try{ac.close();}catch{}},650);
   }catch{}
 }
 atlas.onload=()=>{
@@ -476,7 +527,7 @@ Neutralino.events.on('kw.togglePanel',e=>serial(async()=>{
   if(next)await openPanelView();else await closeOverlays();
 }));
 Neutralino.events.on('kw.fx',e=>triggerFx(e.detail||{}));
-Neutralino.events.on('kw.chime',()=>{if(prefs.sound)playChime();});
+Neutralino.events.on('kw.chime',e=>{if(prefs.sound)playChime(e.detail?.tone||'waiting');});
 Neutralino.events.on('kw.reposition',e=>serial(()=>move(e.detail)));
 Neutralino.events.on('kw.frame',e=>{directive=e.detail;if(badgeEl)badgeEl.textContent=directive.state||'idle';if(directive.state==='dozing'&&raf&&performance.now()-dozeParticleAt>=950){dozeParticleAt=performance.now();spawnParticles('zzz');}draw();});
 Neutralino.events.on('extClientDisconnect',e=>{if(e.detail==='kurowhaleHost')Neutralino.app.exit().catch(()=>{});});
@@ -539,11 +590,13 @@ async function openPanelView(){
   panelOpen=true;menuOpen=false;stopLocalPatrol();drag=null;send('dragEnd',position);showBubble({clear:true});renderPanel();
   send('overlayState',{open:true});
   if(menu)menu.style.display='none';
-  const h=panelData.approvals?.length?300:230;
-  await openBeside(panelEl,264,h);
+  const hasWaiting=(panelData.approvals?.length||0)+(panelData.questions?.length||0)+(panelData.planReviews?.length||0)>0;
+  const activeCount=(panelData.sessions||[]).filter(s=>s.state!=='idle').length;
+  const h=(hasWaiting?320:230)+(sessionsExpanded&&activeCount>2?Math.min(120,(activeCount-2)*34):0);
+  await openBeside(panelEl,272,h);
 }
 if(bubbleEl)bubbleEl.onclick=()=>{
-  if(bubbleTone==='waiting'||panelData.approvals?.length)serial(openPanelView);
+  if(bubbleTone==='waiting'||panelData.approvals?.length||panelData.questions?.length||panelData.planReviews?.length)serial(openPanelView);
   else if(bubbleClickable)send('control',{action:'focus'});
   else send('click');
 };
@@ -553,6 +606,10 @@ if(panelEl)panelEl.onclick=e=>{
   if(!act)return;
   if(act==='approve')serial(async()=>{send('control',{action:'approval-decide',approvalId:btn.dataset.id,outcome:'allowed-once'});});
   else if(act==='reject')serial(async()=>{send('control',{action:'approval-decide',approvalId:btn.dataset.id,outcome:'rejected'});});
+  else if(act==='answer-q')serial(async()=>{send('control',{action:'question-answer',questionId:btn.dataset.id,answer:btn.dataset.ans});});
+  else if(act==='plan-approve')serial(async()=>{send('control',{action:'plan-decide',planId:btn.dataset.id,outcome:'approved'});});
+  else if(act==='plan-reject')serial(async()=>{send('control',{action:'plan-decide',planId:btn.dataset.id,outcome:'rejected'});});
+  else if(act==='toggle-sessions')serial(async()=>{sessionsExpanded=!sessionsExpanded;await openPanelView();});
   else if(act==='stop')serial(async()=>{send('control',{action:'cancel-session',alias:btn.dataset.alias});});
   else if(act==='focus')serial(async()=>{await closeOverlays();send('control',{action:'focus'});});
 };
@@ -630,8 +687,8 @@ for(const [id,action,value] of [['resume','resume'],['larger','scale',.25],['sma
   bind(id,()=>serial(async()=>{await closeOverlays();send('control',{action,value,relative:action==='scale'});}));
 }
 bind('topmost',()=>serial(async()=>{onTop=!onTop;await closeOverlays();send('control',{action:'topmost',value:onTop});}));
-for(const [id,key] of [['bubbles','bubbles'],['patrol','patrol'],['quiet','hideWhenIdle'],['clickThrough','clickThrough'],['care','careReminders'],['sound','sound']]){
-  bind(id,()=>serial(async()=>{const isDefaultOn=(key==='bubbles'||key==='patrol'||key==='careReminders');const cur=isDefaultOn?prefs[key]!==false:prefs[key]===true;await closeOverlays();send('control',{action:'pref',key,value:!cur});}));
+for(const [id,key] of [['bubbles','bubbles'],['patrol','patrol'],['quiet','hideWhenIdle'],['clickThrough','clickThrough'],['care','careReminders'],['sound','sound'],['dnd','dndEnabled'],['toast','toast']]){
+  bind(id,()=>serial(async()=>{const isDefaultOn=(key==='bubbles'||key==='patrol'||key==='careReminders'||key==='toast');const cur=isDefaultOn?prefs[key]!==false:prefs[key]===true;await closeOverlays();send('control',{action:'pref',key,value:!cur});}));
 }
 bind('copyDiag',()=>serial(async()=>{await closeOverlays();send('control',{action:'diagnostics'});}));
 Neutralino.events.on('trayMenuItemClicked',e=>{
@@ -640,6 +697,8 @@ Neutralino.events.on('trayMenuItemClicked',e=>{
   else if(id==='bubbles')send('control',{action:'pref',key:'bubbles',toggle:true});
   else if(id==='quiet')send('control',{action:'pref',key:'hideWhenIdle',toggle:true});
   else if(id==='clickThrough')send('control',{action:'pref',key:'clickThrough',toggle:true});
+  else if(id==='sound')send('control',{action:'pref',key:'sound',toggle:true});
+  else if(id==='dnd')send('control',{action:'pref',key:'dndEnabled',toggle:true});
   else if(id==='diag')send('control',{action:'diagnostics'});
   else{const action={show:'show',hide:'hide',center:'center',focus:'focus',close:'close'}[id];if(action)send('control',{action});}
 });
@@ -655,6 +714,8 @@ async function setupTray(){
       {id:'bubbles',text:'切换状态胶囊'},
       {id:'quiet',text:'切换空闲隐藏'},
       {id:'clickThrough',text:'切换专注穿透模式'},
+      {id:'sound',text:'一键静音 / 提示音'},
+      {id:'dnd',text:'切换勿扰时段'},
       {id:'diag',text:'复制脱敏诊断信息'},
       {text:'-'},
       {id:'close',text:'关闭桌宠'},

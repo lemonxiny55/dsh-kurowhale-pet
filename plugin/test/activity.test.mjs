@@ -21,6 +21,14 @@ test('session events distinguish approval, work, subagent and completion', () =>
   assert.equal(activityState('turn/end', { reason: { kind: 'error' } }), 'failed');
   assert.equal(activityState('turn/end', { reason: { kind: 'blocked' } }), 'waiting');
   assert.equal(activityState('turn/end', { reason: { kind: 'aborted' } }), 'failed');
+  assert.equal(activityState('question/asked'), 'waiting');
+  assert.equal(activityState('question/answered'), 'running');
+  assert.equal(activityState('plan/review'), 'waiting');
+  assert.equal(activityState('plan/approved'), 'running');
+  assert.equal(activityState('turn/end', { reason: { kind: 'question' } }), 'waiting');
+  assert.equal(activityState('turn/end', { reason: { kind: 'plan-review' } }), 'waiting');
+  assert.equal(activityDetail('question/asked'), 'question');
+  assert.equal(activityDetail('plan/review'), 'plan-review');
   assert.equal(activityState('unrelated'), undefined);
 });
 

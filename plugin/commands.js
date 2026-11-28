@@ -1,4 +1,5 @@
 import { animations } from './animations.js';
+import { parseDndRange } from './notify.js';
 import { formatCompanionTime, formatTokens } from './stats.js';
 
 const VALID_ANIMATIONS = new Set(animations.map(([name]) => name));
@@ -28,6 +29,9 @@ const HELP_TEXT = [
   '  quiet [on|off]      Toggle hide-when-idle focus mode',
   '  clickthrough [on|off] Toggle smart click-through focus mode',
   '  sound [on|off]      Toggle gentle approval chime',
+  '  mute [on|off]       Mute or unmute alert sounds',
+  '  dnd [on|off|HH:MM-HH:MM]  Configure quiet-hours DND window',
+  '  toast [on|off]      Toggle Windows Toast when DSH is unfocused',
   '  care [on|off]       Toggle gentle focus-break & late-night reminders',
   '  diag                Copy redacted diagnostics to clipboard',
   '  pet | feed | doze | cheer  Trigger playful interactive reactions',
@@ -136,6 +140,28 @@ export function parseSlashInput(rawInput = '') {
       if (arg && value === undefined) return { kind: 'error', text: 'Usage: /kurowhale sound [on|off]' };
       return { kind: 'command', command: { action: 'pref', key: 'sound', value, toggle: value === undefined } };
     }
+    case 'mute': {
+      const value = parseBool(arg);
+      if (arg && value === undefined) return { kind: 'error', text: 'Usage: /kurowhale mute [on|off]' };
+      return {
+        kind: 'command',
+        command: { action: 'pref', key: 'sound', value: value === undefined ? undefined : !value, toggle: value === undefined },
+      };
+    }
+    case 'dnd': {
+      if (!arg) return { kind: 'command', command: { action: 'pref', key: 'dndEnabled', toggle: true } };
+      const value = parseBool(arg);
+      if (value !== undefined) return { kind: 'command', command: { action: 'pref', key: 'dndEnabled', value, toggle: false } };
+      const range = parseDndRange(arg);
+      if (!range) return { kind: 'error', text: 'Usage: /kurowhale dnd [on|off|HH:MM-HH:MM]' };
+      return { kind: 'command', command: { action: 'dnd-range', ...range } };
+    }
+    case 'toast':
+    case 'notify': {
+      const value = parseBool(arg);
+      if (arg && value === undefined) return { kind: 'error', text: 'Usage: /kurowhale toast [on|off]' };
+      return { kind: 'command', command: { action: 'pref', key: 'toast', value, toggle: value === undefined } };
+    }
     case 'care':
     case 'remind': {
       const value = parseBool(arg);
@@ -186,7 +212,7 @@ export function registerKuroWhaleCommand(ctx, controller) {
             const prefs = s.preferences ?? {};
             return {
               kind: 'success',
-              text: `KuroWhale v${s.version}: state=${s.state} (${s.source}), visible=${s.visible}, scale=${s.scale}x, topmost=${s.topmost}, bubbles=${prefs.bubbles !== false}, patrol=${prefs.patrol !== false}, quiet=${Boolean(prefs.hideWhenIdle)}, clickThrough=${Boolean(prefs.clickThrough)}, sound=${Boolean(prefs.sound)}, care=${prefs.careReminders !== false}, sessions=${s.sessions.length}, approvals=${(s.pendingApprovals ?? []).length}`,
+              text: `KuroWhale v${s.version}: state=${s.state} (${s.source}), visible=${s.visible}, scale=${s.scale}x, topmost=${s.topmost}, bubbles=${prefs.bubbles !== false}, patrol=${prefs.patrol !== false}, quiet=${Boolean(prefs.hideWhenIdle)}, clickThrough=${Boolean(prefs.clickThrough)}, sound=${Boolean(prefs.sound)}, dnd=${Boolean(prefs.dndEnabled)}(${prefs.dndStart ?? '23:00'}-${prefs.dndEnd ?? '08:00'}), toast=${prefs.toast !== false}, care=${prefs.careReminders !== false}, sessions=${s.sessions.length}, approvals=${(s.pendingApprovals ?? []).length}`,
             };
           }
           if (parsed.kind === 'stats') {

@@ -11,16 +11,16 @@ if (action === 'stats') { console.log(await readFile(join(directory, 'stats.json
 
 const valid = [
   'state', 'all', 'resume', 'show', 'hide', 'scale', 'topmost', 'center', 'focus', 'close',
-  'bubbles', 'patrol', 'quiet', 'clickthrough', 'sound', 'care', 'panel', 'approve', 'reject', 'stop', 'bubble', 'diag',
+  'bubbles', 'patrol', 'quiet', 'clickthrough', 'sound', 'dnd', 'toast', 'care', 'panel', 'approve', 'reject', 'stop', 'bubble', 'diag',
 ];
 if (!valid.includes(action)) {
-  throw Error('Usage: status | stats | panel | approve [id] | reject [id] | stop [alias] | state <name> | all | resume | show | hide | scale <0.5..2> | topmost <true|false> | center | focus | bubbles <true|false> | patrol <true|false> | quiet <true|false> | clickthrough <true|false> | sound <true|false> | care <true|false> | diag | bubble <text> | close');
+  throw Error('Usage: status | stats | panel | approve [id] | reject [id] | stop [alias] | state <name> | all | resume | show | hide | scale <0.5..2> | topmost <true|false> | center | focus | bubbles <true|false> | patrol <true|false> | quiet <true|false> | clickthrough <true|false> | sound <true|false> | dnd <true|false> | toast <true|false> | care <true|false> | diag | bubble <text> | close');
 }
 
 const id = randomUUID();
 let c;
-if (['bubbles', 'patrol', 'quiet', 'clickthrough', 'sound', 'care'].includes(action)) {
-  const key = action === 'quiet' ? 'hideWhenIdle' : action === 'care' ? 'careReminders' : action === 'clickthrough' ? 'clickThrough' : action;
+if (['bubbles', 'patrol', 'quiet', 'clickthrough', 'sound', 'dnd', 'toast', 'care'].includes(action)) {
+  const key = action === 'quiet' ? 'hideWhenIdle' : action === 'care' ? 'careReminders' : action === 'clickthrough' ? 'clickThrough' : action === 'dnd' ? 'dndEnabled' : action;
   c = { id, action: 'pref', key, value: value === undefined ? undefined : value !== 'false', toggle: value === undefined };
 } else if (action === 'diag') {
   c = { id, action: 'diagnostics' };
